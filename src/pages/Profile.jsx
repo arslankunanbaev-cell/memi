@@ -218,9 +218,18 @@ export default function Profile() {
         <div className="flex items-center gap-4">
           <div
             className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-            style={{ width: 48, height: 48, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 20, fontWeight: 300 }}
+            style={{ width: 52, height: 52, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 20, fontWeight: 300, overflow: 'hidden', flexShrink: 0 }}
           >
-            {name[0]?.toUpperCase() ?? 'M'}
+            {currentUser?.photo_url ? (
+              <img
+                src={currentUser.photo_url}
+                alt={name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
+              />
+            ) : (
+              name[0]?.toUpperCase() ?? 'M'
+            )}
           </div>
           <div>
             <p className="font-sans font-medium" style={{ fontSize: 16, color: 'var(--text)' }}>{name}</p>

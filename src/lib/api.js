@@ -22,11 +22,16 @@ export async function saveUser(tgUser) {
 
   if (existing) {
     console.log('[saveUser] ✅ existing user:', JSON.stringify(existing))
-    // Обновляем имя на случай если пользователь сменил его в Telegram
-    const newName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
-    if (existing.name !== newName) {
-      await sb.from('users').update({ name: newName }).eq('id', existing.id)
-      existing.name = newName
+    // Обновляем имя и фото на случай если пользователь сменил их в Telegram
+    const newName     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
+    const newPhotoUrl = tgUser.photo_url ?? null
+    const needsUpdate = existing.name !== newName || existing.photo_url !== newPhotoUrl
+    if (needsUpdate) {
+      await sb.from('users')
+        .update({ name: newName, photo_url: newPhotoUrl })
+        .eq('id', existing.id)
+      existing.name      = newName
+      existing.photo_url = newPhotoUrl
     }
     return { user: existing, isNew: false }
   }
@@ -35,7 +40,7 @@ export async function saveUser(tgUser) {
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
   const { data: newUser, error: insertError } = await sb
     .from('users')
-    .insert({ telegram_id: tgUser.id, name })
+    .insert({ telegram_id: tgUser.id, name, photo_url: tgUser.photo_url ?? null })
     .select()
     .single()
 

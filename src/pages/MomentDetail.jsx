@@ -46,78 +46,54 @@ export default function MomentDetail() {
   const hasPeople = moment.people?.length > 0
 
   return (
-    <div style={{ backgroundColor: 'var(--base)', overflowY: 'auto', height: '100%' }}>
-
-      {/* ── Фото-зона 760px — топбар абсолютный поверх ── */}
-      <div style={{ position: 'relative', height: 760, flexShrink: 0, overflow: 'hidden' }}>
-
-        {/* Фото / заглушка */}
-        {moment.photo_url ? (
-          <img
-            src={moment.photo_url}
-            alt={moment.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #C8A478, #8C5830)' }} />
-        )}
-
-        {/* Gradient overlay */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.72) 0%, transparent 55%)' }} />
-
-        {/* Топбар — поверх фото */}
-        <div
-          className="flex items-center justify-between px-4"
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-            paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
-            paddingBottom: '0.75rem',
-          }}
+    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
+      {/* Topbar */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center justify-center transition-opacity active:opacity-60"
+          style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
         >
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center transition-opacity active:opacity-60"
-            style={{
-              width: 36, height: 36, borderRadius: '50%', border: 'none',
-              backgroundColor: 'rgba(23,20,14,0.45)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </button>
-
-          <span className="font-sans font-medium" style={{ fontSize: 15, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}>
-            Момент
-          </span>
-
-          <button
-            onClick={() => setShowMenu(true)}
-            className="flex items-center justify-center transition-opacity active:opacity-60"
-            style={{
-              width: 36, height: 36, borderRadius: '50%', border: 'none',
-              backgroundColor: 'rgba(23,20,14,0.45)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <span style={{ fontSize: 16, letterSpacing: '-1px', color: '#fff' }}>•••</span>
-          </button>
-        </div>
-
-        {/* Заголовок — снизу слева поверх фото */}
-        <div style={{ position: 'absolute', bottom: 20, left: 18, right: 18, zIndex: 5 }}>
-          <h1
-            className="font-serif uppercase"
-            style={{ fontSize: 36, color: '#fff', fontWeight: 400, lineHeight: 1.1, letterSpacing: '1.5px' }}
-          >
-            {moment.title}
-          </h1>
-        </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text)" strokeWidth="2" strokeLinecap="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </button>
+        <span className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>Момент</span>
+        <button
+          onClick={() => setShowMenu(true)}
+          className="flex items-center justify-center transition-opacity active:opacity-60"
+          style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
+        >
+          <span style={{ fontSize: 18, letterSpacing: '-1px', color: 'var(--text)' }}>•••</span>
+        </button>
       </div>
 
-      {/* ── Body ── */}
-      <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="flex-1 overflow-y-auto pb-4">
+        {/* Photo zone */}
+        <div style={{ position: 'relative', height: 260, overflow: 'hidden' }}>
+          {moment.photo_url ? (
+            <img src={moment.photo_url} alt={moment.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #C8A478, #8C5830)' }} />
+          )}
+          {/* Gradient overlay */}
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.72) 0%, transparent 55%)' }} />
+          {/* Title */}
+          <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
+            <h1
+              className="font-serif uppercase"
+              style={{ fontSize: 36, color: '#fff', fontWeight: 400, lineHeight: 1.1, letterSpacing: '1.5px' }}
+            >
+              {moment.title}
+            </h1>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* Date */}
           <p className="font-sans" style={{ fontSize: 10, color: 'var(--soft)', letterSpacing: '0.3px' }}>
             {formatFull(moment.created_at)}
@@ -189,15 +165,12 @@ export default function MomentDetail() {
             </div>
           )}
         </div>
+      </div>
 
-      {/* ── Actions ── */}
+      {/* Actions */}
       <div
         className="flex items-center gap-3 px-4"
-        style={{
-          paddingTop: 12,
-          paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
-          backgroundColor: 'var(--base)',
-        }}
+        style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))', paddingTop: 8 }}
       >
         <button
           onClick={() => navigate(`/story-preview/${moment.id}`)}
