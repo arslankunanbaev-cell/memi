@@ -196,3 +196,32 @@ export async function deletePerson(personId) {
   const { error } = await sb.from('people').delete().eq('id', personId)
   if (error) throw error
 }
+
+export async function getPersonById(personId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('people').select('*').eq('id', personId).single()
+  if (error) throw error
+  return data
+}
+
+export async function getMomentsByPerson(userId, personId) {
+  const sb = assertSupabase()
+  // Получаем id моментов где есть этот человек
+  const { data: links, error: linkError } = await sb
+    .from('moment_people')
+    .select('moment_id')
+    .eq('person_id', personId)
+  if (linkError) throw linkError
+  if (!links?.length) return []
+
+  const momentIds = links.map((r) => r.moment_id)
+  const { data: moments, error: momError } = await sb
+    .from('moments')
+    .select('*')
+    .in('id', momentIds)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  if (momError) throw momError
+  return moments ?? []
+}

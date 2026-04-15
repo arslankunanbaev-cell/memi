@@ -183,10 +183,8 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function Profile() {
-  const navigate = useNavigate()
   const currentUser = useAppStore((s) => s.currentUser)
   const moments     = useAppStore((s) => s.moments)
-  const people      = useAppStore((s) => s.people)
   const capsule     = useAppStore((s) => s.capsule)
   const addToCapsule = useAppStore((s) => s.addToCapsule)
   const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
@@ -280,19 +278,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* My people link */}
-        <button
-          onClick={() => navigate('/people')}
-          className="flex items-center gap-3 px-4 py-4 rounded-2xl transition-opacity active:opacity-60 w-full text-left"
-          style={{ backgroundColor: 'var(--surface)', border: 'none' }}
-        >
-          <span style={{ fontSize: 20 }}>👥</span>
-          <div className="flex-1">
-            <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)' }}>Мои люди</p>
-            <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>{people.length} человек</p>
-          </div>
-          <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
-        </button>
       </div>
 
       <BottomNav active="profile" />

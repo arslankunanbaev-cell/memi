@@ -8,6 +8,7 @@ import Home from './pages/Home'
 import Archive from './pages/Archive'
 import Profile from './pages/Profile'
 import People from './pages/People'
+import PersonDetail from './pages/PersonDetail'
 import MomentDetail from './pages/MomentDetail'
 import MomentSaved from './pages/MomentSaved'
 import StoryPreview from './pages/StoryPreview'
@@ -87,6 +88,7 @@ export default function App() {
       <Route path="/archive"           element={<Archive />} />
       <Route path="/profile"           element={<Profile />} />
       <Route path="/people"            element={<People />} />
+      <Route path="/people/:id"        element={<PersonDetail />} />
       <Route path="/moment/:id"        element={<MomentDetail />} />
       <Route path="/moment-saved"      element={<MomentSaved />} />
       <Route path="/story/:id"         element={<StoryPreview />} />

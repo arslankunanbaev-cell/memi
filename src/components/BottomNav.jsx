@@ -25,6 +25,19 @@ const TABS = [
     ),
   },
   {
+    id: 'people',
+    path: '/people',
+    label: 'Люди',
+    icon: (active) => (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <circle cx="8" cy="7" r="3" stroke="currentColor" strokeWidth={active ? 1.5 : 1.3} />
+        <path d="M2 18c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" strokeWidth={active ? 1.5 : 1.3} strokeLinecap="round" />
+        <circle cx="16" cy="7" r="2.5" stroke="currentColor" strokeWidth={active ? 1.4 : 1.2} opacity="0.6" />
+        <path d="M16 13c1.5 0 4 0.8 4 3.5" stroke="currentColor" strokeWidth={active ? 1.4 : 1.2} strokeLinecap="round" opacity="0.6" />
+      </svg>
+    ),
+  },
+  {
     id: 'profile',
     path: '/profile',
     label: 'Профиль',
@@ -42,7 +55,7 @@ export default function BottomNav({ active }) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 flex items-center pb-safe"
+      className="fixed bottom-0 left-0 right-0 flex items-center"
       style={{
         backgroundColor: 'var(--base)',
         borderTop: '1px solid var(--surface)',
