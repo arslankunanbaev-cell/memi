@@ -5,6 +5,11 @@ export const useAppStore = create((set) => ({
   currentUser: null,
   setCurrentUser: (u) => set({ currentUser: u }),
 
+  // Init state — используется Splash для навигации
+  initDone: false,   // true когда saveUser отработал
+  isNew: null,       // true = первый раз, false = уже был
+  setInitResult: (user, isNew) => set({ currentUser: user, initDone: true, isNew }),
+
   // Moments
   moments: [],
   setMoments: (moments) => set({ moments }),

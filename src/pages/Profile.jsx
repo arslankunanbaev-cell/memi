@@ -157,7 +157,8 @@ export default function Profile() {
 
   const [pickSlot, setPickSlot] = useState(null) // index | null
 
-  const name = currentUser?.name ?? 'Гость'
+  // Показываем реальное имя из Telegram (сохраняется в users.name через saveUser)
+  const name  = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
   const stats = useMemo(() => ({
     total: moments.length,

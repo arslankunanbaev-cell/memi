@@ -1,13 +1,37 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAppStore } from '../store/useAppStore'
 
 export default function Splash() {
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
+  const initDone   = useAppStore((s) => s.initDone)
+  const isNew      = useAppStore((s) => s.isNew)
+  const timerDone  = useRef(false)
+  const navigated  = useRef(false)
 
+  // Функция-навигатор — вызывается когда ОБА условия выполнены
+  function tryNavigate(done, newUser) {
+    if (navigated.current) return
+    if (!timerDone.current || !done) return
+    navigated.current = true
+    navigate(newUser ? '/onboarding' : '/home', { replace: true })
+  }
+
+  // 1.5 секунды — минимальное время Splash
   useEffect(() => {
-    const t = setTimeout(() => navigate('/welcome', { replace: true }), 1500)
+    const t = setTimeout(() => {
+      timerDone.current = true
+      tryNavigate(initDone, isNew)
+    }, 1500)
     return () => clearTimeout(t)
-  }, [navigate])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Реагируем на завершение init (может прийти после таймера)
+  useEffect(() => {
+    if (initDone) {
+      tryNavigate(true, isNew)
+    }
+  }, [initDone, isNew]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div

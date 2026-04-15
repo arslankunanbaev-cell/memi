@@ -2,26 +2,50 @@ import { assertSupabase } from './supabase'
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 
+// Возвращает { user, isNew }
+// isNew = true если пользователь только что создан, false если уже был
 export async function saveUser(tgUser) {
   console.log('[saveUser] called with:', JSON.stringify(tgUser))
   const sb = assertSupabase()
-  const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
-  const payload = { telegram_id: tgUser.id, name }
-  console.log('[saveUser] upsert payload:', JSON.stringify(payload))
 
-  const { data, error } = await sb
+  // ── 1. Проверяем — существует ли уже ───────────────────────────────────────
+  const { data: existing, error: selectError } = await sb
     .from('users')
-    .upsert(payload, { onConflict: 'telegram_id' })
+    .select('*')
+    .eq('telegram_id', tgUser.id)
+    .maybeSingle()   // не бросает ошибку если 0 строк (в отличие от .single())
+
+  if (selectError) {
+    console.error('[saveUser] ❌ select error:', JSON.stringify(selectError, null, 2))
+    throw selectError
+  }
+
+  if (existing) {
+    console.log('[saveUser] ✅ existing user:', JSON.stringify(existing))
+    // Обновляем имя на случай если пользователь сменил его в Telegram
+    const newName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
+    if (existing.name !== newName) {
+      await sb.from('users').update({ name: newName }).eq('id', existing.id)
+      existing.name = newName
+    }
+    return { user: existing, isNew: false }
+  }
+
+  // ── 2. Создаём нового ──────────────────────────────────────────────────────
+  const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
+  const { data: newUser, error: insertError } = await sb
+    .from('users')
+    .insert({ telegram_id: tgUser.id, name })
     .select()
     .single()
 
-  if (error) {
-    console.error('[saveUser] ❌ error:', JSON.stringify(error, null, 2))
-    console.error('[saveUser] ❌ code:', error.code, '| message:', error.message)
-    throw error
+  if (insertError) {
+    console.error('[saveUser] ❌ insert error:', JSON.stringify(insertError, null, 2))
+    throw insertError
   }
-  console.log('[saveUser] ✅ data:', JSON.stringify(data))
-  return data
+
+  console.log('[saveUser] ✅ new user created:', JSON.stringify(newUser))
+  return { user: newUser, isNew: true }
 }
 
 // ── Moments ───────────────────────────────────────────────────────────────────
