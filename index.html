@@ -2,16 +2,14 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <!-- Telegram WebApp SDK — должен быть ПЕРВЫМ скриптом -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Memi</title>
+    <title>Memi | Ваши воспоминания</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- eruda: мобильный отладчик — удали после отладки -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
   </head>
   <body>
     <div id="root"></div>
