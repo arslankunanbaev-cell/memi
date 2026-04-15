@@ -110,7 +110,9 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
   )
 }
 
-export default function AddMoment({ onClose }) {
+// afterSave(moment) — опциональный callback для встроенного режима (капсула).
+// Если передан — вызывается вместо navigate('/moment-saved').
+export default function AddMoment({ onClose, afterSave }) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
   const people       = useAppStore((s) => s.people)
@@ -201,8 +203,15 @@ export default function AddMoment({ onClose }) {
         peopleIds: selectedPeople,
       })
 
-      addMoment({ ...saved, people: people.filter((p) => selectedPeople.includes(p.id)) })
-      navigate('/moment-saved', { state: { moment: saved }, replace: false })
+      const full = { ...saved, people: people.filter((p) => selectedPeople.includes(p.id)) }
+      addMoment(full)
+
+      if (afterSave) {
+        // Режим капсулы — возвращаем момент наверх, не уходим со страницы
+        afterSave(full)
+      } else {
+        navigate('/moment-saved', { state: { moment: saved }, replace: false })
+      }
     } catch (err) {
       console.error(err)
       setError('Не удалось сохранить. Попробуй ещё раз.')

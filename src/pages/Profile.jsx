@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import AddMoment from './AddMoment'
 
 const RU_MONTHS = ['январе','феврале','марте','апреле','мае','июне','июле','августе','сентябре','октябре','ноябре','декабре']
 const STOP_WORDS = new Set(['в','на','и','с','а','но','или','что','как','это','я','ты','он','она','мы','вы','они','не','по','за','до','из','от','у','к'])
@@ -115,13 +116,45 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
 
 // ── Pick moment sheet ─────────────────────────────────────────────────────────
 
-function PickMomentSheet({ onClose, onPick }) {
+function PickMomentSheet({ onClose, onPick, onCreateNew }) {
   const moments = useAppStore((s) => s.moments)
   return (
-    <BottomSheet onClose={onClose} title="Выбери момент">
-      <div className="overflow-y-auto" style={{ maxHeight: '60dvh' }}>
+    <BottomSheet onClose={onClose} title="В капсулу">
+      <div className="overflow-y-auto" style={{ maxHeight: '65dvh' }}>
+
+        {/* ── Кнопка «Создать момент» ── */}
+        <button
+          onClick={() => { onClose(); onCreateNew() }}
+          className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+          style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--surface)' }}
+        >
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: 'var(--accent)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </div>
+          <div className="flex-1 text-left">
+            <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)' }}>Создать момент</p>
+            <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>Новый — сразу в капсулу</p>
+          </div>
+          <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
+        </button>
+
+        {/* ── Разделитель ── */}
+        {moments.length > 0 && (
+          <p className="font-sans px-5 py-2" style={{ fontSize: 10, color: 'var(--soft)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Или выбери существующий
+          </p>
+        )}
+
+        {/* ── Список существующих моментов ── */}
         {moments.length === 0 && (
-          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>Нет моментов</p>
+          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>
+            Пока нет моментов — создай первый ↑
+          </p>
         )}
         {moments.map((m) => (
           <button
@@ -136,7 +169,10 @@ function PickMomentSheet({ onClose, onPick }) {
             }}>
               {m.photo_url && <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <span className="font-sans flex-1 text-left" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.title}</span>
+            <span className="font-sans flex-1 text-left" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {m.title}
+            </span>
+            <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
           </button>
         ))}
       </div>
@@ -155,7 +191,8 @@ export default function Profile() {
   const addToCapsule = useAppStore((s) => s.addToCapsule)
   const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
 
-  const [pickSlot, setPickSlot] = useState(null) // index | null
+  const [pickSlot, setPickSlot]         = useState(null)  // index | null — шит выбора
+  const [addMomentSlot, setAddMomentSlot] = useState(null) // index | null — оверлей создания
 
   // Показываем реальное имя из Telegram (сохраняется в users.name через saveUser)
   const name  = currentUser?.name || 'Пользователь'
@@ -251,10 +288,23 @@ export default function Profile() {
 
       <BottomNav active="profile" />
 
+      {/* Шит выбора момента для капсулы */}
       {pickSlot !== null && (
         <PickMomentSheet
           onClose={() => setPickSlot(null)}
           onPick={(m) => addToCapsule(pickSlot, m)}
+          onCreateNew={() => setAddMomentSlot(pickSlot)}
+        />
+      )}
+
+      {/* Оверлей создания нового момента прямо в капсулу */}
+      {addMomentSlot !== null && (
+        <AddMoment
+          onClose={() => setAddMomentSlot(null)}
+          afterSave={(moment) => {
+            addToCapsule(addMomentSlot, moment)
+            setAddMomentSlot(null)
+          }}
         />
       )}
     </div>
