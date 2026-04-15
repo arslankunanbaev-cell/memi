@@ -1,18 +1,31 @@
-export const tg = window.Telegram?.WebApp ?? null
+// ⚠️ Всегда читаем через геттер — SDK может загрузиться позже импорта модуля
+function getWebApp() {
+  return window.Telegram?.WebApp ?? null
+}
+
+/** @deprecated use getWebApp() — оставлено для совместимости */
+export const tg = typeof window !== 'undefined' ? (window.Telegram?.WebApp ?? null) : null
 
 export function tgReady() {
-  tg?.ready()
-  tg?.expand()
+  const wa = getWebApp()
+  console.log('[tgReady] WebApp object:', wa)
+  wa?.ready()
+  wa?.expand()
 }
 
 export function getTgUser() {
-  return tg?.initDataUnsafe?.user ?? null
+  const wa = getWebApp()
+  const user = wa?.initDataUnsafe?.user ?? null
+  console.log('[getTgUser] WebApp:', wa ? '✅ present' : '❌ null')
+  console.log('[getTgUser] initDataUnsafe:', wa?.initDataUnsafe)
+  console.log('[getTgUser] user:', user)
+  return user
 }
 
 export function tgClose() {
-  tg?.close()
+  getWebApp()?.close()
 }
 
 export function tgHaptic(type = 'light') {
-  tg?.HapticFeedback?.impactOccurred(type)
+  getWebApp()?.HapticFeedback?.impactOccurred(type)
 }

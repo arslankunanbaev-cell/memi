@@ -55,6 +55,19 @@ export default function AddMoment({ onClose }) {
     setSaving(true)
     setError(null)
     try {
+      // ── Диагностика перед сохранением ──────────────────────────────────────
+      console.log('[AddMoment] ── handleSave called ──')
+      console.log('[AddMoment] currentUser:', JSON.stringify(currentUser))
+      console.log('[AddMoment] window.Telegram?.WebApp?.initDataUnsafe?.user:',
+        window.Telegram?.WebApp?.initDataUnsafe?.user)
+
+      if (!currentUser) {
+        throw new Error('currentUser не загружен. Проверь консоль — App.jsx init.')
+      }
+      if (!currentUser.id) {
+        throw new Error(`currentUser.id отсутствует: ${JSON.stringify(currentUser)}`)
+      }
+
       const fields = {
         title: title.trim(),
         description: body.trim() || null,
@@ -66,8 +79,8 @@ export default function AddMoment({ onClose }) {
       }
       if (location.trim()) addRecentLocation(location.trim())
 
-      console.log('[AddMoment] currentUser at save time:', currentUser)
-      console.log('[AddMoment] fields:', fields)
+      console.log('[AddMoment] userId to use:', currentUser.id)
+      console.log('[AddMoment] fields:', JSON.stringify(fields))
 
       const saved = await saveMoment({
         userId: currentUser?.id ?? 'local',

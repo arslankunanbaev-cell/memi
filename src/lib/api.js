@@ -3,14 +3,24 @@ import { assertSupabase } from './supabase'
 // ── Users ─────────────────────────────────────────────────────────────────────
 
 export async function saveUser(tgUser) {
+  console.log('[saveUser] called with:', JSON.stringify(tgUser))
   const sb = assertSupabase()
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
+  const payload = { telegram_id: tgUser.id, name }
+  console.log('[saveUser] upsert payload:', JSON.stringify(payload))
+
   const { data, error } = await sb
     .from('users')
-    .upsert({ telegram_id: tgUser.id, name }, { onConflict: 'telegram_id' })
+    .upsert(payload, { onConflict: 'telegram_id' })
     .select()
     .single()
-  if (error) throw error
+
+  if (error) {
+    console.error('[saveUser] ❌ error:', JSON.stringify(error, null, 2))
+    console.error('[saveUser] ❌ code:', error.code, '| message:', error.message)
+    throw error
+  }
+  console.log('[saveUser] ✅ data:', JSON.stringify(data))
   return data
 }
 
