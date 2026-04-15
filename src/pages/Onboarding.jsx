@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
+import { createPerson } from '../lib/api'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
 
@@ -28,29 +29,43 @@ function PersonChip({ person }) {
 }
 
 function AddPersonSheet({ onClose }) {
-  const addPerson = useAppStore((s) => s.addPerson)
-  const [name, setName] = useState('')
+  const addPersonStore = useAppStore((s) => s.addPerson)
+  const currentUser   = useAppStore((s) => s.currentUser)
+  const [name, setName]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState(null)
   const [color] = useState(() => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)])
   const fileRef = useRef(null)
+  const [photoFile, setPhotoFile]     = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
 
   function handleFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    const url = URL.createObjectURL(file)
-    setPhotoPreview(url)
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
   }
 
-  function handleAdd() {
-    if (!name.trim()) return
+  async function handleAdd() {
+    if (!name.trim() || saving) return
     tgHaptic('medium')
-    addPerson({
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      avatar_color: color,
-      photo_url: photoPreview ?? null,
-    })
-    onClose()
+    setSaving(true)
+    setError(null)
+    try {
+      // Сохраняем в Supabase — получаем реальный UUID
+      const saved = await createPerson({
+        userId:      currentUser?.id,
+        name:        name.trim(),
+        avatarColor: color,
+        photoFile:   photoFile ?? null,
+      })
+      addPersonStore(saved)   // кладём объект с реальным Supabase id
+      onClose()
+    } catch (err) {
+      console.error('[AddPersonSheet] ❌', err)
+      setError('Не удалось сохранить. Попробуй ещё раз.')
+      setSaving(false)
+    }
   }
 
   return (
@@ -96,21 +111,26 @@ function AddPersonSheet({ onClose }) {
           }}
         />
 
+        {/* Error */}
+        {error && (
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
+        )}
+
         {/* Actions */}
         <button
           onClick={handleAdd}
-          disabled={!name.trim()}
+          disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: name.trim() ? 'var(--accent)' : 'var(--surface)',
-            color: name.trim() ? '#fff' : 'var(--soft)',
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            color: name.trim() && !saving ? '#fff' : 'var(--soft)',
             borderRadius: 9999,
             padding: '13px 0',
             fontSize: 15,
             border: 'none',
           }}
         >
-          Добавить
+          {saving ? 'Сохранение...' : 'Добавить'}
         </button>
 
         <button

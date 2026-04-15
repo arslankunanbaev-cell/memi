@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { updatePerson, deletePerson } from '../lib/api'
+import { createPerson, updatePerson, deletePerson } from '../lib/api'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
 
@@ -224,26 +224,46 @@ export default function People() {
   )
 }
 
-// Inline add person sheet (reuses logic from Onboarding)
+// Inline add person sheet
 const AVATAR_COLORS_LIST = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
 function AddPersonSheetInline({ onClose, onAdd }) {
-  const [name, setName] = useState('')
+  const currentUser = useAppStore((s) => s.currentUser)
+  const [name, setName]     = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState(null)
+  const [photoFile, setPhotoFile]       = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
-  const color = AVATAR_COLORS_LIST[Math.floor(Math.random() * AVATAR_COLORS_LIST.length)]
+  const [color] = useState(() => AVATAR_COLORS_LIST[Math.floor(Math.random() * AVATAR_COLORS_LIST.length)])
   const fileRef = useRef(null)
 
   function handleFile(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
   }
 
-  function handleAdd() {
-    if (!name.trim()) return
+  async function handleAdd() {
+    if (!name.trim() || saving) return
     tgHaptic('medium')
-    onAdd({ id: crypto.randomUUID(), name: name.trim(), avatar_color: color, photo_url: photoPreview ?? null })
-    onClose()
+    setSaving(true)
+    setError(null)
+    try {
+      // Сохраняем в Supabase — получаем объект с реальным UUID
+      const saved = await createPerson({
+        userId:      currentUser?.id,
+        name:        name.trim(),
+        avatarColor: color,
+        photoFile:   photoFile ?? null,
+      })
+      onAdd(saved)   // в store добавляем объект с настоящим id из БД
+      onClose()
+    } catch (err) {
+      console.error('[AddPerson] ❌', err)
+      setError('Не удалось сохранить. Попробуй ещё раз.')
+      setSaving(false)
+    }
   }
 
   return (
@@ -255,10 +275,13 @@ function AddPersonSheetInline({ onClose, onAdd }) {
             className="flex items-center justify-center transition-opacity active:opacity-70"
             style={{ width: 60, height: 60, borderRadius: '50%', border: photoPreview ? 'none' : '2px dashed var(--accent)', backgroundColor: photoPreview ? 'transparent' : 'var(--surface)', overflow: 'hidden' }}
           >
-            {photoPreview ? <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 22 }}>📷</span>}
+            {photoPreview
+              ? <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span style={{ fontSize: 22 }}>📷</span>}
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
+
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -267,14 +290,20 @@ function AddPersonSheetInline({ onClose, onAdd }) {
           className="w-full font-sans outline-none"
           style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none' }}
         />
+
+        {error && (
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
+        )}
+
         <button
           onClick={handleAdd}
-          disabled={!name.trim()}
+          disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
-          style={{ backgroundColor: name.trim() ? 'var(--accent)' : 'var(--surface)', color: name.trim() ? '#fff' : 'var(--soft)', borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none' }}
+          style={{ backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)', color: name.trim() && !saving ? '#fff' : 'var(--soft)', borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none' }}
         >
-          Добавить
+          {saving ? 'Сохранение...' : 'Добавить'}
         </button>
+
         <button onClick={onClose} className="font-sans transition-opacity active:opacity-60" style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}>Отмена</button>
       </div>
     </BottomSheet>
