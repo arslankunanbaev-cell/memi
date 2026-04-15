@@ -2,17 +2,120 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
-import { saveMoment } from '../lib/api'
+import { saveMoment, createPerson } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
+import BottomSheet from '../components/BottomSheet'
 
-const EMOJIS = ['✨', '❄️', '🌅', '🌿', '🎵', '📖', '☕', '🌙', '💫', '🌊', '🍃', '🕯️']
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
+const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
+
+// ── Мини-шит добавления нового человека прямо из формы момента ───────────────
+function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
+  const [name, setName]       = useState('')
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState(null)
+  const [color]  = useState(() => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)])
+  const fileRef  = useRef(null)
+  const [photoFile, setPhotoFile]         = useState(null)
+  const [photoPreview, setPhotoPreview]   = useState(null)
+
+  function handleFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
+  async function handleAdd() {
+    if (!name.trim() || saving) return
+    tgHaptic('medium')
+    setSaving(true)
+    setError(null)
+    try {
+      const saved = await createPerson({
+        userId:      currentUserId,
+        name:        name.trim(),
+        avatarColor: color,
+        photoFile:   photoFile ?? null,
+      })
+      onCreated(saved)   // добавляет в стор + автовыбирает
+      onClose()
+    } catch (err) {
+      console.error('[AddPersonMini] ❌', err)
+      setError('Не удалось сохранить. Попробуй ещё раз.')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <BottomSheet onClose={onClose} title="Новый человек">
+      <div className="px-5 flex flex-col gap-4 pb-5">
+        {/* Аватар */}
+        <div className="flex justify-center pt-1">
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex items-center justify-center transition-opacity active:opacity-70"
+            style={{
+              width: 56, height: 56, borderRadius: '50%', overflow: 'hidden',
+              border: photoPreview ? 'none' : '2px dashed var(--accent)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
+            }}
+          >
+            {photoPreview
+              ? <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span style={{ fontSize: 20 }}>📷</span>}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        </div>
+
+        {/* Имя */}
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Как зовут?"
+          autoFocus
+          className="w-full font-sans outline-none"
+          style={{
+            backgroundColor: 'var(--surface)', borderRadius: 10,
+            padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none',
+          }}
+        />
+
+        {error && (
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
+        )}
+
+        <button
+          onClick={handleAdd}
+          disabled={!name.trim() || saving}
+          className="w-full font-sans font-medium transition-opacity active:opacity-70"
+          style={{
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            color: name.trim() && !saving ? '#fff' : 'var(--soft)',
+            borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
+          }}
+        >
+          {saving ? 'Сохранение...' : 'Добавить и выбрать'}
+        </button>
+
+        <button
+          onClick={onClose}
+          className="font-sans transition-opacity active:opacity-60"
+          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}
+        >
+          Отмена
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
 
 export default function AddMoment({ onClose }) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
   const people       = useAppStore((s) => s.people)
   const addMoment    = useAppStore((s) => s.addMoment)
+  const addPerson    = useAppStore((s) => s.addPerson)
   const addRecentLocation = useAppStore((s) => s.addRecentLocation)
 
   // Form state
@@ -35,6 +138,15 @@ export default function AddMoment({ onClose }) {
   // Saving
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
+
+  // Add person inline
+  const [showAddPerson, setShowAddPerson] = useState(false)
+
+  // Когда новый человек создан — добавляем в стор и сразу выбираем
+  function handlePersonCreated(person) {
+    addPerson(person)
+    setSelectedPeople((prev) => [...prev, person.id])
+  }
 
   function handlePhoto(e) {
     const file = e.target.files?.[0]
@@ -286,46 +398,72 @@ export default function AddMoment({ onClose }) {
           )}
         </div>
 
-        {/* People */}
-        {people.length > 0 && (
-          <div>
-            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
-              С кем
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {people.map((p) => {
-                const active = selectedPeople.includes(p.id)
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => togglePerson(p.id)}
-                    className="flex items-center gap-2 transition-opacity active:opacity-70"
+        {/* People — всегда видна, можно добавить нового прямо здесь */}
+        <div>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
+            С кем
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {/* Существующие люди */}
+            {people.map((p) => {
+              const active = selectedPeople.includes(p.id)
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => togglePerson(p.id)}
+                  className="flex items-center gap-2 transition-all active:opacity-70"
+                  style={{
+                    borderRadius: 9999,
+                    padding: '6px 12px 6px 8px',
+                    backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
+                    border: active ? '2px solid transparent' : '2px solid transparent',
+                  }}
+                >
+                  <div
+                    className="flex items-center justify-center rounded-full font-sans font-medium"
                     style={{
-                      borderRadius: 9999,
-                      padding: '6px 12px 6px 8px',
-                      backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
-                      border: 'none',
+                      width: 22, height: 22,
+                      backgroundColor: active ? 'rgba(255,255,255,0.3)' : (p.avatar_color ?? 'var(--accent)'),
+                      color: '#fff', fontSize: 10, flexShrink: 0,
                     }}
                   >
-                    <div
-                      className="flex items-center justify-center rounded-full font-sans font-medium"
-                      style={{
-                        width: 22, height: 22,
-                        backgroundColor: active ? 'rgba(255,255,255,0.3)' : (p.avatar_color ?? 'var(--accent)'),
-                        color: '#fff', fontSize: 10, flexShrink: 0,
-                      }}
-                    >
-                      {p.name[0].toUpperCase()}
-                    </div>
-                    <span className="font-sans" style={{ fontSize: 13, color: active ? '#fff' : 'var(--text)' }}>
-                      {p.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+                    {p.name[0].toUpperCase()}
+                  </div>
+                  <span className="font-sans" style={{ fontSize: 13, color: active ? '#fff' : 'var(--text)' }}>
+                    {p.name}
+                  </span>
+                </button>
+              )
+            })}
+
+            {/* Кнопка — добавить нового человека */}
+            <button
+              onClick={() => setShowAddPerson(true)}
+              className="flex items-center gap-2 transition-opacity active:opacity-70"
+              style={{
+                borderRadius: 9999,
+                padding: '6px 12px 6px 8px',
+                backgroundColor: 'var(--surface)',
+                border: '1.5px dashed rgba(217,139,82,0.5)',
+              }}
+            >
+              <div
+                className="flex items-center justify-center rounded-full"
+                style={{
+                  width: 22, height: 22,
+                  backgroundColor: 'rgba(217,139,82,0.15)',
+                  color: 'var(--accent)', fontSize: 14, flexShrink: 0,
+                  lineHeight: 1,
+                }}
+              >
+                +
+              </div>
+              <span className="font-sans" style={{ fontSize: 13, color: 'var(--accent)' }}>
+                {people.length === 0 ? 'Добавить человека' : 'Новый'}
+              </span>
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Song search bottom sheet */}
@@ -333,6 +471,15 @@ export default function AddMoment({ onClose }) {
         <SongSearchSheet
           onClose={() => setShowSongSheet(false)}
           onSelect={(track) => setSong(track)}
+        />
+      )}
+
+      {/* Add person mini sheet */}
+      {showAddPerson && (
+        <AddPersonMiniSheet
+          currentUserId={currentUser?.id}
+          onClose={() => setShowAddPerson(false)}
+          onCreated={handlePersonCreated}
         />
       )}
     </div>
