@@ -180,11 +180,12 @@ export async function createPerson({ userId, name, avatarColor, photoFile }) {
   return data
 }
 
-export async function updatePerson(personId, { name, photoUrl }) {
+export async function updatePerson(personId, { name, photoUrl, metYear }) {
   const sb = assertSupabase()
   const payload = {}
   if (name !== undefined) payload.name = name
   if (photoUrl !== undefined) payload.photo_url = photoUrl
+  if (metYear !== undefined) payload.met_year = metYear || null
   const { data, error } = await sb
     .from('people').update(payload).eq('id', personId).select().single()
   if (error) throw error

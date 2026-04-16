@@ -8,16 +8,12 @@ import AddMoment from './AddMoment'
 import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
 
-const STOP_WORDS = new Set(['в','на','и','с','а','но','или','что','как','это','я','ты','он','она','мы','вы','они','не','по','за','до','из','от','у','к'])
+const CURRENT_YEAR = new Date().getFullYear()
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1949 }, (_, i) => CURRENT_YEAR - i)
 
-function topWord(moments) {
-  const freq = {}
-  for (const m of moments) {
-    for (const w of (m.title ?? '').toLowerCase().split(/\s+/)) {
-      if (w.length > 2 && !STOP_WORDS.has(w)) freq[w] = (freq[w] ?? 0) + 1
-    }
-  }
-  return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
+function yearsKnown(metYear) {
+  if (!metYear) return null
+  return CURRENT_YEAR - metYear
 }
 
 function uniqueMonths(moments) {
@@ -30,6 +26,7 @@ function uniqueMonths(moments) {
 // ── EditPersonSheet ───────────────────────────────────────────────────────────
 function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
   const [name, setName]           = useState(person.name)
+  const [metYear, setMetYear]     = useState(person.met_year ?? '')
   const [saving, setSaving]       = useState(false)
   const [deleting, setDeleting]   = useState(false)
   const [error, setError]         = useState(null)
@@ -61,7 +58,7 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
         const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
         photo_url = urlData.publicUrl
       }
-      const updated = await updatePerson(person.id, { name: name.trim(), photoUrl: photo_url })
+      const updated = await updatePerson(person.id, { name: name.trim(), photoUrl: photo_url, metYear: metYear ? Number(metYear) : null })
       onSaved(updated)
       onClose()
     } catch (err) {
@@ -117,6 +114,22 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
           className="w-full font-sans outline-none"
           style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none' }}
         />
+
+        {/* Год знакомства */}
+        <div className="flex flex-col gap-1">
+          <label className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>Год знакомства</label>
+          <select
+            value={metYear}
+            onChange={(e) => setMetYear(e.target.value)}
+            className="w-full font-sans outline-none"
+            style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '11px 14px', fontSize: 15, color: metYear ? 'var(--text)' : 'var(--soft)', border: 'none', appearance: 'none', WebkitAppearance: 'none' }}
+          >
+            <option value="">Не указан</option>
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
 
         {error && <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>}
 
@@ -184,10 +197,11 @@ export default function PersonDetail() {
     )
   }
 
+  const known = yearsKnown(person.met_year)
   const stats = {
     total: personMoments.length,
     months: uniqueMonths(personMoments),
-    word: topWord(personMoments),
+    known,
   }
 
   const momentCount = personMoments.length
@@ -282,7 +296,7 @@ export default function PersonDetail() {
             {[
               { label: plural.момент(stats.total),  value: stats.total },
               { label: plural.месяц(stats.months),  value: stats.months },
-              { label: 'Слово',                     value: stats.word },
+              { label: stats.known != null ? plural.год(stats.known) : 'знакомы', value: stats.known ?? '—' },
             ].map((s) => (
               <div
                 key={s.label}
@@ -291,7 +305,7 @@ export default function PersonDetail() {
               >
                 <span
                   className="font-serif"
-                  style={{ fontSize: typeof s.value === 'number' ? 22 : 12, color: 'var(--accent)', fontWeight: 300, lineHeight: 1.1 }}
+                  style={{ fontSize: typeof s.value === 'number' ? 22 : 16, color: 'var(--accent)', fontWeight: 300, lineHeight: 1.1 }}
                 >
                   {s.value}
                 </span>
