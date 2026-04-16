@@ -2,66 +2,64 @@ import { useState, useEffect, useRef } from 'react'
 import BottomSheet from './BottomSheet'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
+import { enrichWithCover, enrichTracksWithCovers, artistColor } from '../lib/musicCovers'
 
 const LASTFM_KEY = import.meta.env.VITE_LASTFM_API_KEY
 
-// Last.fm — поиск (надёжно работает в любом окружении)
+// ── Last.fm search ────────────────────────────────────────────────────────────
 async function searchTracks(query) {
-  const url = `https://ws.audioscrobbler.com/2.0/?method=track.search&track=${encodeURIComponent(query)}&api_key=${LASTFM_KEY}&format=json&limit=12`
-  const res = await fetch(url)
+  const url =
+    `https://ws.audioscrobbler.com/2.0/?method=track.search` +
+    `&track=${encodeURIComponent(query)}&api_key=${LASTFM_KEY}&format=json&limit=12`
+  const res  = await fetch(url, { signal: AbortSignal.timeout(8000) })
   const json = await res.json()
   const tracks = json?.results?.trackmatches?.track
   if (!Array.isArray(tracks)) return []
-  return tracks.map((t) => ({
-    name: t.name,
-    artist: t.artist,
-    cover: null, // обложка подтягивается отдельно через iTunes
-  }))
+  return tracks.map((t) => ({ name: t.name, artist: t.artist, cover: null, coverSource: null }))
 }
 
-// iTunes — обложка для одного трека (вызывается лениво в TrackRow)
-async function fetchCover(name, artist) {
-  try {
-    const q = encodeURIComponent(`${name} ${artist}`)
-    const r = await fetch(
-      `https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`,
-      { signal: AbortSignal.timeout(4000) }
-    )
-    const j = await r.json()
-    const art = j.results?.[0]?.artworkUrl100
-    return art ? art.replace('100x100bb', '300x300bb') : null
-  } catch {
-    return null
-  }
-}
-
-// Генерирует стабильный цвет-заглушку по имени артиста
-function artistColor(artist = '') {
-  const COLORS = ['#D98B52','#7A6B8A','#6B8F71','#A05E2C','#8A7A6A','#5B7FA6']
-  let h = 0
-  for (let i = 0; i < artist.length; i++) h = (h * 31 + artist.charCodeAt(i)) & 0xffff
-  return COLORS[h % COLORS.length]
-}
-
+// ── TrackRow ──────────────────────────────────────────────────────────────────
 function TrackRow({ track, onAdd }) {
-  const [cover, setCover] = useState(track.cover)
+  // cover can arrive from cache immediately (synchronous) or after fetch
+  const [cover, setCover]       = useState(track.cover ?? null)
+  const [coverLoading, setLoading] = useState(!track.cover)
   const [imgError, setImgError] = useState(false)
 
-  // Ленивая загрузка обложки из iTunes
   useEffect(() => {
-    if (cover) return
+    if (track.cover) {
+      setCover(track.cover)
+      setLoading(false)
+      return
+    }
     let cancelled = false
-    fetchCover(track.name, track.artist).then((url) => {
-      if (!cancelled && url) setCover(url)
+    setLoading(true)
+    enrichWithCover(track.name, track.artist).then(({ url }) => {
+      if (cancelled) return
+      setCover(url)
+      setLoading(false)
     })
     return () => { cancelled = true }
-  }, [track.name, track.artist]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [track.name, track.artist, track.cover])
 
   const showImg = cover && !imgError
 
   return (
-    <div className="flex items-center gap-3 px-5 py-3 active:opacity-60 transition-opacity">
-      {showImg ? (
+    <button
+      onClick={() => onAdd({ ...track, cover: cover ?? null })}
+      className="w-full flex items-center gap-3 px-5 py-3 transition-opacity active:opacity-60"
+      style={{ background: 'none', border: 'none', textAlign: 'left' }}
+    >
+      {/* Cover / shimmer / placeholder */}
+      {coverLoading ? (
+        // Shimmer skeleton while fetching
+        <div
+          style={{
+            width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+            backgroundColor: 'var(--surface)',
+            animation: 'pulse 1.4s ease-in-out infinite',
+          }}
+        />
+      ) : showImg ? (
         <img
           src={cover}
           alt={track.name}
@@ -69,6 +67,7 @@ function TrackRow({ track, onAdd }) {
           style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
         />
       ) : (
+        // Colored placeholder with note icon
         <div
           style={{
             width: 40, height: 40, borderRadius: 8, flexShrink: 0,
@@ -80,6 +79,8 @@ function TrackRow({ track, onAdd }) {
           🎵
         </div>
       )}
+
+      {/* Text */}
       <div className="flex-1 min-w-0">
         <p
           className="font-sans"
@@ -91,31 +92,32 @@ function TrackRow({ track, onAdd }) {
           {track.artist}
         </p>
       </div>
-      <button
-        onClick={() => onAdd({ ...track, cover: cover ?? null })}
-        className="font-sans font-medium transition-opacity active:opacity-60 flex-shrink-0"
+
+      {/* Add button */}
+      <span
+        className="font-sans font-medium flex-shrink-0"
         style={{
           backgroundColor: 'var(--surface)',
           color: 'var(--accent)',
-          border: 'none',
           borderRadius: 9999,
           padding: '5px 12px',
           fontSize: 12,
         }}
       >
         + добавить
-      </button>
-    </div>
+      </span>
+    </button>
   )
 }
 
+// ── SongSearchSheet ───────────────────────────────────────────────────────────
 export default function SongSearchSheet({ onClose, onSelect }) {
-  const recentSongs = useAppStore((s) => s.recentSongs)
+  const recentSongs   = useAppStore((s) => s.recentSongs)
   const addRecentSong = useAppStore((s) => s.addRecentSong)
 
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [query,    setQuery]    = useState('')
+  const [results,  setResults]  = useState([])
+  const [loading,  setLoading]  = useState(false)
   const [searched, setSearched] = useState(false)
   const debounceRef = useRef(null)
 
@@ -129,16 +131,21 @@ export default function SongSearchSheet({ onClose, onSelect }) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
+        // 1) Get tracks from Last.fm immediately (renders the list fast)
         const tracks = await searchTracks(query.trim())
         setResults(tracks)
         setSearched(true)
+        setLoading(false)
+
+        // 2) Enrich covers in background — each TrackRow handles its own cover
+        //    via enrichWithCover (which reads from cache if already populated)
+        enrichTracksWithCovers(tracks) // pre-warms the cache; no await needed
       } catch {
         setResults([])
         setSearched(true)
-      } finally {
         setLoading(false)
       }
-    }, 500)
+    }, 400)
     return () => clearTimeout(debounceRef.current)
   }, [query])
 
@@ -149,9 +156,9 @@ export default function SongSearchSheet({ onClose, onSelect }) {
     onClose()
   }
 
-  const showRecent = !query.trim() && recentSongs.length > 0
+  const showRecent  = !query.trim() && recentSongs.length > 0
   const showResults = query.trim().length > 0
-  const noResults = searched && results.length === 0
+  const noResults   = searched && results.length === 0
 
   return (
     <BottomSheet onClose={onClose} title="Трек момента">
@@ -159,13 +166,11 @@ export default function SongSearchSheet({ onClose, onSelect }) {
       <div className="px-5 pb-3">
         <div
           className="flex items-center gap-2"
-          style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 10,
-            padding: '9px 12px',
-          }}
+          style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '9px 12px' }}
         >
-          <span style={{ fontSize: 15, color: 'var(--soft)' }}>🔍</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--soft)" strokeWidth="2" strokeLinecap="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -177,7 +182,7 @@ export default function SongSearchSheet({ onClose, onSelect }) {
           {query.length > 0 && (
             <button
               onClick={() => setQuery('')}
-              style={{ color: 'var(--soft)', background: 'none', border: 'none', fontSize: 16, lineHeight: 1 }}
+              style={{ color: 'var(--soft)', background: 'none', border: 'none', fontSize: 18, lineHeight: 1, padding: 0 }}
             >
               ×
             </button>
@@ -185,33 +190,30 @@ export default function SongSearchSheet({ onClose, onSelect }) {
         </div>
       </div>
 
-      <div style={{ minHeight: 200 }}>
-        {/* Loading */}
+      <div style={{ minHeight: 220, overflowY: 'auto', maxHeight: '60dvh' }}>
+        {/* Searching spinner */}
         {loading && (
           <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--soft)' }}>
             Поиск...
           </p>
         )}
 
-        {/* Recent songs */}
+        {/* Recent tracks */}
         {!loading && showRecent && (
           <>
-            <p
-              className="font-sans uppercase tracking-widest px-5 pb-2"
-              style={{ fontSize: 10, color: 'var(--soft)' }}
-            >
+            <p className="font-sans uppercase tracking-widest px-5 pb-2 pt-1" style={{ fontSize: 10, color: 'var(--soft)' }}>
               Недавние
             </p>
             {recentSongs.map((t, i) => (
-              <TrackRow key={i} track={t} onAdd={handleAdd} />
+              <TrackRow key={`recent-${i}`} track={t} onAdd={handleAdd} />
             ))}
           </>
         )}
 
         {/* Search results */}
-        {!loading && showResults && !noResults && (
-          results.map((t, i) => <TrackRow key={i} track={t} onAdd={handleAdd} />)
-        )}
+        {!loading && showResults && !noResults &&
+          results.map((t, i) => <TrackRow key={`res-${i}-${t.name}`} track={t} onAdd={handleAdd} />)
+        }
 
         {/* No results */}
         {!loading && noResults && (

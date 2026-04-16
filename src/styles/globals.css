@@ -39,6 +39,12 @@
   }
 }
 
+/* Shimmer keyframe for skeleton loaders */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
 @layer utilities {
   .bg-base    { background-color: var(--base); }
   .bg-surface { background-color: var(--surface); }
