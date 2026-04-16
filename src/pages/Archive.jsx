@@ -73,8 +73,8 @@ function GridCell({ moment }) {
 
 // ── Filter sheet ──────────────────────────────────────────────────────────────
 
-function FilterSheet({ onClose, onApply, people }) {
-  const [selectedPeople, setSelectedPeople] = useState([])
+function FilterSheet({ onClose, onApply, people, current }) {
+  const [selectedPeople, setSelectedPeople] = useState(current ?? [])
 
   function toggle(id) {
     setSelectedPeople((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
@@ -119,6 +119,15 @@ function FilterSheet({ onClose, onApply, people }) {
         >
           Применить
         </button>
+        {selectedPeople.length > 0 && (
+          <button
+            onClick={() => { onApply([]); onClose() }}
+            className="w-full font-sans transition-opacity active:opacity-60"
+            style={{ background: 'none', border: 'none', color: 'var(--mid)', fontSize: 13 }}
+          >
+            Сбросить фильтры
+          </button>
+        )}
       </div>
     </BottomSheet>
   )
@@ -173,16 +182,75 @@ export default function Archive() {
             {moments.length} {moments.length === 1 ? 'момент' : 'моментов'}
           </p>
         </div>
+        {/* Кнопка фильтра — оранжевая + бейдж когда активен */}
         <button
           onClick={() => setShowFilter(true)}
           className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
+          style={{
+            position: 'relative',
+            width: 36, height: 36, borderRadius: '50%', border: 'none',
+            backgroundColor: filterPeople.length > 0 ? 'var(--accent)' : 'var(--surface)',
+          }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text)" strokeWidth="2" strokeLinecap="round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke={filterPeople.length > 0 ? '#fff' : 'var(--text)'}
+            strokeWidth="2" strokeLinecap="round"
+          >
             <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
           </svg>
+          {filterPeople.length > 0 && (
+            <span
+              className="font-sans font-medium"
+              style={{
+                position: 'absolute', top: -3, right: -3,
+                width: 16, height: 16, borderRadius: '50%',
+                backgroundColor: 'var(--text)', color: 'var(--base)',
+                fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {filterPeople.length}
+            </span>
+          )}
         </button>
       </div>
+
+      {/* Активные фильтры — чипы под топбаром */}
+      {filterPeople.length > 0 && (
+        <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <span className="font-sans flex-shrink-0" style={{ fontSize: 11, color: 'var(--soft)' }}>Фильтр:</span>
+          {filterPeople.map((pid) => {
+            const p = people.find((x) => x.id === pid)
+            if (!p) return null
+            return (
+              <button
+                key={pid}
+                onClick={() => setFilterPeople((prev) => prev.filter((id) => id !== pid))}
+                className="flex items-center gap-1 flex-shrink-0 transition-opacity active:opacity-60"
+                style={{
+                  borderRadius: 9999, padding: '4px 8px 4px 6px',
+                  backgroundColor: 'var(--accent)', border: 'none',
+                }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full font-sans font-medium text-white flex-shrink-0"
+                  style={{ width: 16, height: 16, backgroundColor: 'rgba(255,255,255,0.3)', fontSize: 8 }}
+                >
+                  {p.name[0].toUpperCase()}
+                </div>
+                <span className="font-sans" style={{ fontSize: 12, color: '#fff' }}>{p.name}</span>
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1, marginLeft: 1 }}>×</span>
+              </button>
+            )
+          })}
+          <button
+            onClick={() => setFilterPeople([])}
+            className="flex-shrink-0 font-sans transition-opacity active:opacity-60"
+            style={{ background: 'none', border: 'none', fontSize: 11, color: 'var(--mid)', padding: '4px 0' }}
+          >
+            Сбросить
+          </button>
+        </div>
+      )}
 
       {/* Month scroll */}
       <div className="flex gap-2 px-5 pb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
@@ -251,6 +319,7 @@ export default function Archive() {
           onClose={() => setShowFilter(false)}
           onApply={setFilterPeople}
           people={people}
+          current={filterPeople}
         />
       )}
     </div>
