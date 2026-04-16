@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
+import { supabase } from '../lib/supabase'
 
 // ── Canvas renderer ────────────────────────────────────────────────────────────
 
@@ -180,6 +181,9 @@ export default function StoryPreview() {
   const canvasRef = useRef(null)
   const [rendering, setRendering] = useState(true)
   const [error, setError]         = useState(null)
+  const [sending, setSending]     = useState(false)
+  const [sent, setSent]           = useState(false)
+  const [sendError, setSendError] = useState(null)
 
   useEffect(() => {
     if (!moment || !canvasRef.current) return
@@ -209,6 +213,37 @@ export default function StoryPreview() {
         handleDownload()
       }
     }, 'image/jpeg', 0.92)
+  }
+
+  async function handleSendToTelegram() {
+    if (!canvasRef.current || sending || sent) return
+    setSendError(null)
+    const chatId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    if (!chatId) {
+      setSendError('Нет доступа к Telegram ID. Открой через бота.')
+      return
+    }
+    tgHaptic('medium')
+    setSending(true)
+    try {
+      const imageBase64 = canvasRef.current.toDataURL('image/jpeg', 0.80)
+      const caption = moment?.title ? `✨ ${moment.title}` : 'Мой момент'
+      console.log('[sendToTelegram] chatId:', chatId, 'size:', Math.round(imageBase64.length / 1024), 'KB')
+      const { data, error: fnError } = await supabase.functions.invoke('send-card', {
+        body: { imageBase64, chatId, caption },
+      })
+      console.log('[sendToTelegram] data:', data, 'fnError:', fnError)
+      if (fnError) throw new Error(fnError.message ?? JSON.stringify(fnError))
+      if (data?.error) throw new Error(data.error)
+      setSent(true)
+      tgHaptic('light')
+      setTimeout(() => setSent(false), 3000)
+    } catch (e) {
+      console.error('[sendToTelegram] FAIL:', e)
+      setSendError(e.message)
+    } finally {
+      setSending(false)
+    }
   }
 
   if (!moment) {
@@ -270,34 +305,61 @@ export default function StoryPreview() {
         </div>
       </div>
 
+      {/* Send error */}
+      {sendError && (
+        <div className="px-5 pb-2">
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252', backgroundColor: 'rgba(224,82,82,0.1)', borderRadius: 10, padding: '8px 12px' }}>
+            ❌ {sendError}
+          </p>
+        </div>
+      )}
+
       {/* Actions */}
       <div
-        className="flex items-center gap-3 px-5 pt-4"
+        className="flex flex-col gap-2 px-5 pt-4"
         style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
       >
+        {/* Send to Telegram */}
         <button
-          onClick={handleDownload}
-          disabled={rendering}
-          className="flex-1 font-sans font-medium transition-opacity active:opacity-70"
+          onClick={handleSendToTelegram}
+          disabled={rendering || sending}
+          className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: rendering ? 'rgba(217,139,82,0.4)' : '#D98B52',
+            backgroundColor: sent ? '#4CAF82' : rendering || sending ? 'rgba(217,139,82,0.4)' : '#D98B52',
             color: '#fff', borderRadius: 9999,
             padding: '14px 0', fontSize: 15, border: 'none',
+            transition: 'background-color 0.2s',
           }}
         >
-          Скачать
+          {sent ? '✓ Отправлено в Telegram' : sending ? 'Отправка...' : 'Получить в Telegram'}
         </button>
-        <button
-          onClick={handleShare}
-          disabled={rendering}
-          className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.1)', border: 'none', flexShrink: 0 }}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-          </svg>
-        </button>
+
+        {/* Download + Share row */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleDownload}
+            disabled={rendering}
+            className="flex-1 font-sans font-medium transition-opacity active:opacity-70"
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              color: rendering ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)',
+              borderRadius: 9999, padding: '12px 0', fontSize: 14, border: 'none',
+            }}
+          >
+            Скачать
+          </button>
+          <button
+            onClick={handleShare}
+            disabled={rendering}
+            className="flex items-center justify-center transition-opacity active:opacity-60"
+            style={{ width: 46, height: 46, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.08)', border: 'none', flexShrink: 0 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={rendering ? 'rgba(255,255,255,0.3)' : '#fff'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   )

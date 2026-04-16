@@ -177,7 +177,7 @@ export default function MomentDetail() {
         style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))', paddingTop: 8 }}
       >
         <button
-          onClick={() => navigate(`/story-preview/${moment.id}`)}
+          onClick={() => navigate(`/story/${moment.id}`)}
           className="flex-1 font-sans font-medium transition-opacity active:opacity-70"
           style={{ backgroundColor: 'var(--accent)', color: '#fff', borderRadius: 9999, padding: '13px 0', fontSize: 14, border: 'none' }}
         >
