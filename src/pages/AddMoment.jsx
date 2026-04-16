@@ -112,7 +112,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
 // afterSave(moment) — опциональный callback для встроенного режима (капсула).
 // Если передан — вызывается вместо navigate('/moment-saved').
-export default function AddMoment({ onClose, afterSave }) {
+export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
   const people       = useAppStore((s) => s.people)
@@ -126,7 +126,7 @@ export default function AddMoment({ onClose, afterSave }) {
   const [emoji, setEmoji]       = useState('✨')
   const [mood, setMood]         = useState('')
   const [location, setLocation] = useState('')
-  const [selectedPeople, setSelectedPeople] = useState([])
+  const [selectedPeople, setSelectedPeople] = useState(initialPeopleIds ?? [])
 
   // Song
   const [song, setSong]           = useState(null) // { name, artist, cover }

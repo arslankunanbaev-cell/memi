@@ -4,6 +4,7 @@ import { useAppStore } from '../store/useAppStore'
 import { deletePerson, updatePerson } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
 import BottomSheet from '../components/BottomSheet'
+import AddMoment from './AddMoment'
 import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
 
@@ -155,13 +156,15 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
 export default function PersonDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const people       = useAppStore((s) => s.people)
-  const moments      = useAppStore((s) => s.moments)
+  const people            = useAppStore((s) => s.people)
+  const moments           = useAppStore((s) => s.moments)
+  const addMomentStore    = useAppStore((s) => s.addMoment)
   const updatePersonStore = useAppStore((s) => s.updatePerson)
   const removePersonStore = useAppStore((s) => s.removePerson)
 
-  const [showMenu, setShowMenu]   = useState(false)
-  const [showEdit, setShowEdit]   = useState(false)
+  const [showMenu, setShowMenu]       = useState(false)
+  const [showEdit, setShowEdit]       = useState(false)
+  const [showAddMoment, setShowAddMoment] = useState(false)
 
   const person = people.find((p) => p.id === id)
 
@@ -299,13 +302,35 @@ export default function PersonDetail() {
 
           {/* Все моменты */}
           <div>
-            <p className="font-sans font-medium mb-2" style={{ fontSize: 12, color: 'var(--text)' }}>Все моменты</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="font-sans font-medium" style={{ fontSize: 12, color: 'var(--text)' }}>Все моменты</p>
+              <button
+                onClick={() => setShowAddMoment(true)}
+                className="flex items-center gap-1 transition-opacity active:opacity-60"
+                style={{ background: 'none', border: 'none', padding: 0 }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{ width: 22, height: 22, backgroundColor: 'var(--accent)' }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </div>
+                <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Создать</span>
+              </button>
+            </div>
 
             {personMoments.length === 0 ? (
-              <div className="flex flex-col items-center py-10 gap-2">
-                <span style={{ fontSize: 32 }}>📭</span>
-                <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>Моментов пока нет</p>
-              </div>
+              <button
+                onClick={() => setShowAddMoment(true)}
+                className="w-full flex flex-col items-center py-8 gap-2 transition-opacity active:opacity-70"
+                style={{ background: 'none', border: '1.5px dashed rgba(217,139,82,0.35)', borderRadius: 14 }}
+              >
+                <span style={{ fontSize: 28 }}>✨</span>
+                <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--accent)' }}>Создать первый момент</p>
+                <p className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>с {person.name}</p>
+              </button>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
                 {personMoments.map((m) => (
@@ -399,6 +424,18 @@ export default function PersonDetail() {
           onClose={() => setShowEdit(false)}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
+        />
+      )}
+
+      {/* ── AddMoment с предвыбранным человеком ───────────────────────────── */}
+      {showAddMoment && (
+        <AddMoment
+          onClose={() => setShowAddMoment(false)}
+          initialPeopleIds={[person.id]}
+          afterSave={(moment) => {
+            addMomentStore(moment)
+            setShowAddMoment(false)
+          }}
         />
       )}
     </div>
