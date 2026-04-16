@@ -228,7 +228,7 @@ export default function Profile() {
         className="px-5 pb-3"
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
       >
-        <h2 className="font-sans font-medium" style={{ fontSize: 22, color: 'var(--text)' }}>Профиль</h2>
+        <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-28 flex flex-col gap-4">
@@ -250,7 +250,7 @@ export default function Profile() {
             )}
           </div>
           <div>
-            <p className="font-sans font-medium" style={{ fontSize: 16, color: 'var(--text)' }}>{name}</p>
+            <p className="font-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
             {since && (
               <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>с memi с {since}</p>
             )}

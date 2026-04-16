@@ -28,6 +28,15 @@ function PersonChip({ person }) {
   )
 }
 
+function CameraIcon() {
+  return (
+    <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.5 1.5L7.5 4.5H3C1.9 4.5 1 5.4 1 6.5V19.5C1 20.6 1.9 21.5 3 21.5H23C24.1 21.5 25 20.6 25 19.5V6.5C25 5.4 24.1 4.5 23 4.5H18.5L16.5 1.5H9.5Z" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="13" cy="13" r="4.5" stroke="var(--accent)" strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
 function AddPersonSheet({ onClose }) {
   const addPersonStore = useAppStore((s) => s.addPerson)
   const currentUser   = useAppStore((s) => s.currentUser)
@@ -52,64 +61,77 @@ function AddPersonSheet({ onClose }) {
     setSaving(true)
     setError(null)
     try {
-      // Сохраняем в Supabase — получаем реальный UUID
       const saved = await createPerson({
         userId:      currentUser?.id,
         name:        name.trim(),
         avatarColor: color,
         photoFile:   photoFile ?? null,
       })
-      addPersonStore(saved)   // кладём объект с реальным Supabase id
+      addPersonStore(saved)
       onClose()
     } catch (err) {
       console.error('[AddPersonSheet] ❌', err)
-      setError('Не удалось сохранить. Попробуй ещё раз.')
+      setError(err?.message || 'Не удалось сохранить. Попробуй ещё раз.')
       setSaving(false)
     }
   }
 
   return (
-    <BottomSheet onClose={onClose} title="Добавить человека">
-      <div className="px-5 flex flex-col gap-5">
+    <BottomSheet onClose={onClose}>
+      <div className="px-5 flex flex-col gap-5 pb-2">
+        {/* Title */}
+        <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
+          Добавить человека
+        </p>
+
         {/* Avatar circle */}
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center">
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center transition-opacity active:opacity-70"
+            className="flex flex-col items-center justify-center gap-1 transition-opacity active:opacity-70"
             style={{
-              width: 60,
-              height: 60,
+              width: 80,
+              height: 80,
               borderRadius: '50%',
-              border: photoPreview ? 'none' : '2px dashed var(--accent)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
-              overflow: 'hidden',
+              border: photoPreview ? 'none' : '1.5px dashed var(--accent)',
+              backgroundColor: 'transparent',
+              overflow: photoPreview ? 'hidden' : 'visible',
             }}
           >
             {photoPreview ? (
-              <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
-              <span style={{ fontSize: 22 }}>📷</span>
+              <>
+                <CameraIcon />
+                <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Фото</span>
+              </>
             )}
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
 
         {/* Name input */}
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Как зовут?"
-          autoFocus
-          className="w-full font-sans outline-none"
-          style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: 10,
-            padding: '11px 14px',
-            fontSize: 15,
-            color: 'var(--text)',
-            border: 'none',
-          }}
-        />
+        <div className="flex flex-col gap-2">
+          <label className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>Как зовут?</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Введите имя"
+            autoFocus
+            className="w-full font-sans outline-none"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderRadius: 10,
+              padding: '11px 14px',
+              fontSize: 15,
+              color: 'var(--text)',
+              border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            }}
+          />
+          <p className="font-sans" style={{ fontSize: 12, color: 'var(--accent)', lineHeight: 1.45 }}>
+            Имя появится в карточках моментов, когда ты отметишь этого человека
+          </p>
+        </div>
 
         {/* Error */}
         {error && (

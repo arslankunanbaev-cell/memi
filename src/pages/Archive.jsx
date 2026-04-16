@@ -177,7 +177,7 @@ export default function Archive() {
         style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
       >
         <div>
-          <h2 className="font-sans font-medium" style={{ fontSize: 22, color: 'var(--text)' }}>Архив</h2>
+          <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Архив</h2>
           <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', marginTop: 1 }}>
             {moments.length} {moments.length === 1 ? 'момент' : 'моментов'}
           </p>

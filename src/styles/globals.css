@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+}
+
 @layer base {
   :root {
     --base: #F7F4F0;
@@ -30,13 +35,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .font-serif {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-  }
-
-  .font-sans {
-    font-family: 'Inter', sans-serif;
-  }
 }
 
 /* Shimmer keyframe for skeleton loaders */
