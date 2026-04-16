@@ -3,18 +3,18 @@ import BottomSheet from './BottomSheet'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
 
-const LASTFM_KEY = import.meta.env.VITE_LASTFM_API_KEY
-
 async function searchTracks(query) {
-  const url = `https://ws.audioscrobbler.com/2.0/?method=track.search&track=${encodeURIComponent(query)}&api_key=${LASTFM_KEY}&format=json&limit=10`
+  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=15`
   const res = await fetch(url)
   const json = await res.json()
-  const tracks = json?.results?.trackmatches?.track
-  if (!Array.isArray(tracks)) return []
-  return tracks.map((t) => ({
-    name: t.name,
-    artist: t.artist,
-    cover: Array.isArray(t.image) ? t.image[t.image.length - 1]['#text'] || null : null,
+  if (!Array.isArray(json.results)) return []
+  return json.results.map((t) => ({
+    name: t.trackName,
+    artist: t.artistName,
+    // artworkUrl100 — квадрат 100×100, заменяем на 300×300 для чёткости
+    cover: t.artworkUrl100
+      ? t.artworkUrl100.replace('100x100bb', '300x300bb')
+      : null,
   }))
 }
 
