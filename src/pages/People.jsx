@@ -14,14 +14,14 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col gap-3 text-left active:opacity-70 transition-opacity w-full"
-      style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: 14, border: 'none', cursor: 'pointer' }}
+      className="flex flex-col items-center gap-3 active:opacity-70 transition-opacity w-full"
+      style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: '16px 12px 14px', border: 'none', cursor: 'pointer' }}
     >
       {/* Аватар */}
       <div
         className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
         style={{
-          width: 44, height: 44,
+          width: 72, height: 72,
           backgroundColor: person.photo_url ? 'transparent' : (person.avatar_color ?? 'var(--accent)'),
           overflow: 'hidden',
         }}
@@ -29,25 +29,25 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
         {person.photo_url ? (
           <img src={person.photo_url} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <span style={{ fontSize: 18, color: '#fff', fontWeight: 300 }}>{person.name[0].toUpperCase()}</span>
+          <span style={{ fontSize: 28, color: '#fff', fontWeight: 300 }}>{person.name[0].toUpperCase()}</span>
         )}
       </div>
 
       {/* Имя + кол-во моментов */}
-      <div className="min-w-0">
-        <p className="font-sans font-medium truncate" style={{ fontSize: 12, color: 'var(--text)' }}>{person.name}</p>
-        <p className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>
+      <div className="min-w-0 w-full text-center">
+        <p className="font-sans font-medium truncate" style={{ fontSize: 15, color: 'var(--text)' }}>{person.name}</p>
+        <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
           {momentCount} {plural.момент(momentCount)}
         </p>
       </div>
 
       {/* Три последних фото */}
       {lastPhotos.length > 0 && (
-        <div className="flex gap-1">
+        <div className="flex gap-1 justify-center">
           {lastPhotos.map((url, i) => (
             <div
               key={i}
-              style={{ width: 18, height: 18, borderRadius: 3, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--base)' }}
+              style={{ width: 22, height: 22, borderRadius: 4, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--base)' }}
             >
               {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
@@ -55,6 +55,15 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
         </div>
       )}
     </button>
+  )
+}
+
+function CameraIcon() {
+  return (
+    <svg width="26" height="22" viewBox="0 0 26 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.5 1.5L7.5 4.5H3C1.9 4.5 1 5.4 1 6.5V19.5C1 20.6 1.9 21.5 3 21.5H23C24.1 21.5 25 20.6 25 19.5V6.5C25 5.4 24.1 4.5 23 4.5H18.5L16.5 1.5H9.5Z" stroke="var(--accent)" strokeWidth="1.5" strokeLinejoin="round"/>
+      <circle cx="13" cy="13" r="4.5" stroke="var(--accent)" strokeWidth="1.5"/>
+    </svg>
   )
 }
 
@@ -92,35 +101,67 @@ function AddPersonSheet({ onClose, onCreated }) {
       onClose()
     } catch (err) {
       console.error('[AddPerson] ❌', err)
-      setError('Не удалось сохранить. Попробуй ещё раз.')
+      setError(err?.message || 'Не удалось сохранить. Попробуй ещё раз.')
       setSaving(false)
     }
   }
 
   return (
-    <BottomSheet onClose={onClose} title="Добавить человека">
-      <div className="px-5 flex flex-col gap-4 pb-5">
-        <div className="flex justify-center pt-1">
+    <BottomSheet onClose={onClose}>
+      <div className="px-5 flex flex-col gap-5 pb-2">
+        {/* Title */}
+        <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
+          Добавить человека
+        </p>
+
+        {/* Avatar circle */}
+        <div className="flex justify-center">
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex items-center justify-center transition-opacity active:opacity-70"
-            style={{ width: 60, height: 60, borderRadius: '50%', overflow: 'hidden', border: photoPreview ? 'none' : '2px dashed var(--accent)', backgroundColor: photoPreview ? 'transparent' : 'var(--surface)' }}
+            className="flex flex-col items-center justify-center gap-1 transition-opacity active:opacity-70"
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              border: photoPreview ? 'none' : '1.5px dashed var(--accent)',
+              backgroundColor: 'transparent',
+              overflow: photoPreview ? 'hidden' : 'visible',
+            }}
           >
-            {photoPreview
-              ? <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ fontSize: 22 }}>📷</span>}
+            {photoPreview ? (
+              <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              <>
+                <CameraIcon />
+                <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Фото</span>
+              </>
+            )}
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
 
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Как зовут?"
-          autoFocus
-          className="w-full font-sans outline-none"
-          style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none' }}
-        />
+        {/* Name input */}
+        <div className="flex flex-col gap-2">
+          <label className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>Как зовут?</label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Введите имя"
+            autoFocus
+            className="w-full font-sans outline-none"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderRadius: 10,
+              padding: '11px 14px',
+              fontSize: 15,
+              color: 'var(--text)',
+              border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            }}
+          />
+          <p className="font-sans" style={{ fontSize: 12, color: 'var(--accent)', lineHeight: 1.45 }}>
+            Имя появится в карточках моментов, когда ты отметишь этого человека
+          </p>
+        </div>
 
         {error && <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>}
 
@@ -128,12 +169,19 @@ function AddPersonSheet({ onClose, onCreated }) {
           onClick={handleAdd}
           disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
-          style={{ backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)', color: name.trim() && !saving ? '#fff' : 'var(--soft)', borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none' }}
+          style={{
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            color: name.trim() && !saving ? '#fff' : 'var(--soft)',
+            borderRadius: 9999,
+            padding: '13px 0',
+            fontSize: 15,
+            border: 'none',
+          }}
         >
           {saving ? 'Сохранение...' : 'Добавить'}
         </button>
 
-        <button onClick={onClose} className="font-sans transition-opacity active:opacity-60" style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}>
+        <button onClick={onClose} className="font-sans transition-opacity active:opacity-60" style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none', paddingBottom: 4 }}>
           Отмена
         </button>
       </div>
@@ -168,7 +216,7 @@ export default function People() {
         className="flex items-center justify-between px-4"
         style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 12 }}
       >
-        <span className="font-sans" style={{ fontSize: 16, fontWeight: 500, color: 'var(--text)' }}>Люди</span>
+        <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
         <button
           onClick={() => setShowAdd(true)}
           className="flex items-center justify-center transition-opacity active:opacity-60"
