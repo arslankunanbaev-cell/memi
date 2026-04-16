@@ -127,6 +127,10 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const [mood, setMood]         = useState('')
   const [location, setLocation] = useState('')
   const [selectedPeople, setSelectedPeople] = useState(initialPeopleIds ?? [])
+  const [momentDate, setMomentDate] = useState(() => {
+    // default: today in YYYY-MM-DD format
+    return new Date().toISOString().slice(0, 10)
+  })
 
   // Song
   const [song, setSong]           = useState(null) // { name, artist, cover }
@@ -190,6 +194,12 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
+        // Выбранная дата + текущее время (чтобы не сбрасывалось на полночь)
+        created_at: (() => {
+          const now = new Date()
+          const [y, m, d] = momentDate.split('-').map(Number)
+          return new Date(y, m - 1, d, now.getHours(), now.getMinutes()).toISOString()
+        })(),
       }
       if (location.trim()) addRecentLocation(location.trim())
 
@@ -362,6 +372,36 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
               padding: '10px 12px', fontSize: 14, color: 'var(--text)', border: 'none',
             }}
           />
+        </div>
+
+        {/* Date */}
+        <div>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+            Дата
+          </p>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="date"
+              value={momentDate}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => e.target.value && setMomentDate(e.target.value)}
+              className="w-full font-sans outline-none"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderRadius: 10,
+                padding: '10px 12px',
+                fontSize: 14,
+                color: 'var(--text)',
+                border: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A7A6A' stroke-width='2' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 12px center',
+                paddingRight: 36,
+              }}
+            />
+          </div>
         </div>
 
         {/* Song */}
