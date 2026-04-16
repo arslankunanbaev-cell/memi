@@ -34,6 +34,13 @@ export const useAppStore = create((set) => ({
 
   // Capsule — 4 slots (null | moment)
   capsule: [null, null, null, null],
+  setCapsule: (rows) => set(() => {
+    const slots = [null, null, null, null]
+    for (const row of rows) {
+      if (row.slotIndex >= 0 && row.slotIndex <= 3) slots[row.slotIndex] = row.moment
+    }
+    return { capsule: slots }
+  }),
   addToCapsule: (slotIndex, moment) =>
     set((s) => {
       const next = [...s.capsule]

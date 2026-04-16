@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { deleteMoment } from '../lib/api'
+import { deleteMoment, saveCapsuleSlot } from '../lib/api'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
 
@@ -18,9 +18,13 @@ export default function MomentDetail() {
   const navigate = useNavigate()
   const moments = useAppStore((s) => s.moments)
   const removeMoment = useAppStore((s) => s.removeMoment)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const capsule = useAppStore((s) => s.capsule)
+  const addToCapsule = useAppStore((s) => s.addToCapsule)
   const moment = moments.find((m) => m.id === id)
 
   const [showMenu, setShowMenu] = useState(false)
+  const [showCapsuleSheet, setShowCapsuleSheet] = useState(false)
 
   if (!moment) {
     return (
@@ -200,20 +204,22 @@ export default function MomentDetail() {
       {showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)}>
           <div>
-            {[
-              { label: 'Редактировать', icon: '✏️', action: () => setShowMenu(false) },
-              { label: 'Добавить в капсулу', icon: '💊', action: () => setShowMenu(false) },
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={item.action}
-                className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-                style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
-              >
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
-                <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>{item.label}</span>
-              </button>
-            ))}
+            <button
+              onClick={() => { setShowMenu(false); navigate(`/edit-moment/${moment.id}`) }}
+              className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+              style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+            >
+              <span style={{ fontSize: 18 }}>✏️</span>
+              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Редактировать</span>
+            </button>
+            <button
+              onClick={() => { setShowMenu(false); setShowCapsuleSheet(true) }}
+              className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+              style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+            >
+              <span style={{ fontSize: 18 }}>💊</span>
+              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Добавить в капсулу</span>
+            </button>
             <button
               onClick={() => { setShowMenu(false); handleDelete() }}
               className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
@@ -222,6 +228,63 @@ export default function MomentDetail() {
               <span style={{ fontSize: 18 }}>🗑️</span>
               <span className="font-sans" style={{ fontSize: 15, color: '#E05252' }}>Удалить</span>
             </button>
+          </div>
+        </BottomSheet>
+      )}
+
+      {/* Capsule slot picker */}
+      {showCapsuleSheet && (
+        <BottomSheet onClose={() => setShowCapsuleSheet(false)} title="Добавить в капсулу">
+          <div className="pb-4">
+            {[0, 1, 2, 3].map((slotIndex) => {
+              const slotMoment = capsule[slotIndex]
+              const isOccupied = slotMoment !== null
+              return (
+                <button
+                  key={slotIndex}
+                  onClick={async () => {
+                    setShowCapsuleSheet(false)
+                    addToCapsule(slotIndex, moment)
+                    try {
+                      await saveCapsuleSlot(currentUser.id, slotIndex, moment.id)
+                    } catch (err) {
+                      console.error('[Capsule] save error:', err)
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+                  style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+                >
+                  <div
+                    style={{
+                      width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                      background: isOccupied && slotMoment.photo_url
+                        ? 'none'
+                        : isOccupied
+                          ? 'linear-gradient(135deg, #C8A478, #8C5830)'
+                          : 'var(--surface)',
+                      border: isOccupied ? 'none' : '1.5px dashed rgba(217,139,82,0.4)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >
+                    {isOccupied && slotMoment.photo_url && (
+                      <img src={slotMoment.photo_url} alt={slotMoment.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                    {!isOccupied && <span style={{ fontSize: 16, color: 'var(--accent)' }}>+</span>}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)' }}>
+                      Слот {slotIndex + 1}
+                    </p>
+                    <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
+                      {isOccupied ? slotMoment.title : 'Пусто'}
+                    </p>
+                  </div>
+                  {isOccupied && (
+                    <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>Заменить</span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </BottomSheet>
       )}

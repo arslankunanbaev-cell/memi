@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { saveUser, getPeople, getMoments } from './lib/api'
+import { saveUser, getPeople, getMoments, getCapsule } from './lib/api'
 import { useAppStore } from './store/useAppStore'
 import Splash from './pages/Splash'
 import Onboarding from './pages/Onboarding'
@@ -13,11 +13,13 @@ import MomentDetail from './pages/MomentDetail'
 import MomentSaved from './pages/MomentSaved'
 import StoryPreview from './pages/StoryPreview'
 import StoryPreviewScreen from './pages/StoryPreviewScreen'
+import EditMoment from './pages/EditMoment'
 
 export default function App() {
   const navigate   = useNavigate()
   const setPeople  = useAppStore((s) => s.setPeople)
   const setMoments = useAppStore((s) => s.setMoments)
+  const setCapsule = useAppStore((s) => s.setCapsule)
   const setInitResult = useAppStore((s) => s.setInitResult)
 
   useEffect(() => {
@@ -49,13 +51,15 @@ export default function App() {
         const { user, isNew } = await saveUser(tgUser)
         console.log('[App] ✅ user:', user.id, '| isNew:', isNew)
 
-        // Загружаем people + moments параллельно
-        const [fetchedPeople, fetchedMoments] = await Promise.all([
+        // Загружаем people + moments + capsule параллельно
+        const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
           getPeople(user.id),
           getMoments(user.id),
+          getCapsule(user.id),
         ])
         setPeople(fetchedPeople)
         setMoments(fetchedMoments)
+        setCapsule(fetchedCapsule)
         setInitResult(user, isNew)
 
         console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', fetchedMoments.length)
@@ -93,6 +97,7 @@ export default function App() {
       <Route path="/moment-saved"      element={<MomentSaved />} />
       <Route path="/story/:id"         element={<StoryPreview />} />
       <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
+      <Route path="/edit-moment/:id"   element={<EditMoment />} />
       <Route path="*"                  element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -225,3 +225,40 @@ export async function getMomentsByPerson(userId, personId) {
   if (momError) throw momError
   return moments ?? []
 }
+
+// ── Capsule ───────────────────────────────────────────────────────────────────
+
+export async function getCapsule(userId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('capsule')
+    .select('slot_index, moment:moments(*, people:moment_people(person:people(id, name, avatar_color, photo_url)))')
+    .eq('user_id', userId)
+    .order('slot_index')
+  if (error) throw error
+  return (data ?? []).map((row) => ({
+    slotIndex: row.slot_index,
+    moment: {
+      ...row.moment,
+      people: (row.moment?.people ?? []).map((mp) => mp.person),
+    },
+  }))
+}
+
+export async function saveCapsuleSlot(userId, slotIndex, momentId) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('capsule')
+    .upsert({ user_id: userId, slot_index: slotIndex, moment_id: momentId }, { onConflict: 'user_id,slot_index' })
+  if (error) throw error
+}
+
+export async function deleteCapsuleSlot(userId, slotIndex) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('capsule')
+    .delete()
+    .eq('user_id', userId)
+    .eq('slot_index', slotIndex)
+  if (error) throw error
+}

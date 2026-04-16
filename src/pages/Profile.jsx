@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
+import { saveCapsuleSlot, deleteCapsuleSlot } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import AddMoment from './AddMoment'
@@ -192,6 +193,24 @@ export default function Profile() {
   const [pickSlot, setPickSlot]         = useState(null)  // index | null — шит выбора
   const [addMomentSlot, setAddMomentSlot] = useState(null) // index | null — оверлей создания
 
+  async function handleAddToCapsule(slotIndex, moment) {
+    addToCapsule(slotIndex, moment)  // optimistic update
+    try {
+      await saveCapsuleSlot(currentUser.id, slotIndex, moment.id)
+    } catch (err) {
+      console.error('[Capsule] save error:', err)
+    }
+  }
+
+  async function handleRemoveFromCapsule(slotIndex) {
+    removeFromCapsule(slotIndex)  // optimistic update
+    try {
+      await deleteCapsuleSlot(currentUser.id, slotIndex)
+    } catch (err) {
+      console.error('[Capsule] delete error:', err)
+    }
+  }
+
   // Показываем реальное имя из Telegram (сохраняется в users.name через saveUser)
   const name  = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
@@ -272,7 +291,7 @@ export default function Profile() {
                 slot={slot}
                 index={i}
                 onEmpty={() => setPickSlot(i)}
-                onFilled={() => removeFromCapsule(i)}
+                onFilled={() => handleRemoveFromCapsule(i)}
               />
             ))}
           </div>
@@ -286,7 +305,7 @@ export default function Profile() {
       {pickSlot !== null && (
         <PickMomentSheet
           onClose={() => setPickSlot(null)}
-          onPick={(m) => addToCapsule(pickSlot, m)}
+          onPick={(m) => handleAddToCapsule(pickSlot, m)}
           onCreateNew={() => setAddMomentSlot(pickSlot)}
         />
       )}
@@ -296,7 +315,7 @@ export default function Profile() {
         <AddMoment
           onClose={() => setAddMomentSlot(null)}
           afterSave={(moment) => {
-            addToCapsule(addMomentSlot, moment)
+            handleAddToCapsule(addMomentSlot, moment)
             setAddMomentSlot(null)
           }}
         />
