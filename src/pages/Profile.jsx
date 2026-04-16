@@ -186,6 +186,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
 export default function Profile() {
   const currentUser = useAppStore((s) => s.currentUser)
   const moments     = useAppStore((s) => s.moments)
+  const people      = useAppStore((s) => s.people)
   const capsule     = useAppStore((s) => s.capsule)
   const addToCapsule = useAppStore((s) => s.addToCapsule)
   const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
@@ -217,8 +218,8 @@ export default function Profile() {
   const stats = useMemo(() => ({
     total: moments.length,
     months: uniqueMonths(moments),
-    word: topWord(moments),
-  }), [moments])
+    people: people.length,
+  }), [moments, people])
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
@@ -259,9 +260,9 @@ export default function Profile() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: plural.момент(stats.total),  value: stats.total },
-            { label: plural.месяц(stats.months),  value: stats.months },
-            { label: 'Слово',                     value: stats.word },
+            { label: plural.момент(stats.total),   value: stats.total },
+            { label: plural.месяц(stats.months),   value: stats.months },
+            { label: plural.человек(stats.people), value: stats.people },
           ].map((s) => (
             <div
               key={s.label}
