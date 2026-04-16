@@ -5,8 +5,8 @@ import { saveCapsuleSlot, deleteCapsuleSlot } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import AddMoment from './AddMoment'
+import { plural, MONTHS_GENITIVE } from '../lib/ruPlural'
 
-const RU_MONTHS = ['январе','феврале','марте','апреле','мае','июне','июле','августе','сентябре','октябре','ноябре','декабре']
 const STOP_WORDS = new Set(['в','на','и','с','а','но','или','что','как','это','я','ты','он','она','мы','вы','они','не','по','за','до','из','от','у','к'])
 
 function topWord(moments) {
@@ -29,7 +29,7 @@ function uniqueMonths(moments) {
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
   const d = new Date(createdAt)
-  return `${RU_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  return `${MONTHS_GENITIVE[d.getMonth()]} ${d.getFullYear()}`
 }
 
 // ── Capsule slot ──────────────────────────────────────────────────────────────
@@ -259,9 +259,9 @@ export default function Profile() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Моментов', value: stats.total },
-            { label: 'Месяцев', value: stats.months },
-            { label: 'Слово', value: stats.word },
+            { label: plural.момент(stats.total),  value: stats.total },
+            { label: plural.месяц(stats.months),  value: stats.months },
+            { label: 'Слово',                     value: stats.word },
           ].map((s) => (
             <div
               key={s.label}

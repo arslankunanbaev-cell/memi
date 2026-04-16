@@ -5,6 +5,7 @@ import { deletePerson, updatePerson } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
+import { plural } from '../lib/ruPlural'
 
 const STOP_WORDS = new Set(['в','на','и','с','а','но','или','что','как','это','я','ты','он','она','мы','вы','они','не','по','за','до','из','от','у','к'])
 
@@ -269,16 +270,16 @@ export default function PersonDetail() {
           <div>
             <h1 className="font-sans font-medium" style={{ fontSize: 18, color: 'var(--text)' }}>{person.name}</h1>
             <p className="font-sans" style={{ fontSize: 10, color: 'var(--soft)', marginTop: 2 }}>
-              {momentCount} момент{momentCount === 1 ? '' : momentCount < 5 ? 'а' : 'ов'} вместе
+              {momentCount} {plural.момент(momentCount)} вместе
             </p>
           </div>
 
           {/* Статистика */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
             {[
-              { label: 'Моментов', value: stats.total },
-              { label: 'Месяцев', value: stats.months },
-              { label: 'Слово', value: stats.word },
+              { label: plural.момент(stats.total),  value: stats.total },
+              { label: plural.месяц(stats.months),  value: stats.months },
+              { label: 'Слово',                     value: stats.word },
             ].map((s) => (
               <div
                 key={s.label}

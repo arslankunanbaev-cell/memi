@@ -5,6 +5,7 @@ import { createPerson } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
+import { plural } from '../lib/ruPlural'
 
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
@@ -36,7 +37,7 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
       <div className="min-w-0">
         <p className="font-sans font-medium truncate" style={{ fontSize: 12, color: 'var(--text)' }}>{person.name}</p>
         <p className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>
-          {momentCount} момент{momentCount === 1 ? '' : momentCount < 5 ? 'а' : 'ов'}
+          {momentCount} {plural.момент(momentCount)}
         </p>
       </div>
 
