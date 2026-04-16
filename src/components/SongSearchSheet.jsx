@@ -3,37 +3,78 @@ import BottomSheet from './BottomSheet'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
 
+const LASTFM_KEY = import.meta.env.VITE_LASTFM_API_KEY
+
+// Last.fm — поиск (надёжно работает в любом окружении)
 async function searchTracks(query) {
-  const url = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=music&entity=song&limit=15`
+  const url = `https://ws.audioscrobbler.com/2.0/?method=track.search&track=${encodeURIComponent(query)}&api_key=${LASTFM_KEY}&format=json&limit=12`
   const res = await fetch(url)
   const json = await res.json()
-  if (!Array.isArray(json.results)) return []
-  return json.results.map((t) => ({
-    name: t.trackName,
-    artist: t.artistName,
-    // artworkUrl100 — квадрат 100×100, заменяем на 300×300 для чёткости
-    cover: t.artworkUrl100
-      ? t.artworkUrl100.replace('100x100bb', '300x300bb')
-      : null,
+  const tracks = json?.results?.trackmatches?.track
+  if (!Array.isArray(tracks)) return []
+  return tracks.map((t) => ({
+    name: t.name,
+    artist: t.artist,
+    cover: null, // обложка подтягивается отдельно через iTunes
   }))
 }
 
+// iTunes — обложка для одного трека (вызывается лениво в TrackRow)
+async function fetchCover(name, artist) {
+  try {
+    const q = encodeURIComponent(`${name} ${artist}`)
+    const r = await fetch(
+      `https://itunes.apple.com/search?term=${q}&media=music&entity=song&limit=1`,
+      { signal: AbortSignal.timeout(4000) }
+    )
+    const j = await r.json()
+    const art = j.results?.[0]?.artworkUrl100
+    return art ? art.replace('100x100bb', '300x300bb') : null
+  } catch {
+    return null
+  }
+}
+
+// Генерирует стабильный цвет-заглушку по имени артиста
+function artistColor(artist = '') {
+  const COLORS = ['#D98B52','#7A6B8A','#6B8F71','#A05E2C','#8A7A6A','#5B7FA6']
+  let h = 0
+  for (let i = 0; i < artist.length; i++) h = (h * 31 + artist.charCodeAt(i)) & 0xffff
+  return COLORS[h % COLORS.length]
+}
+
 function TrackRow({ track, onAdd }) {
+  const [cover, setCover] = useState(track.cover)
+  const [imgError, setImgError] = useState(false)
+
+  // Ленивая загрузка обложки из iTunes
+  useEffect(() => {
+    if (cover) return
+    let cancelled = false
+    fetchCover(track.name, track.artist).then((url) => {
+      if (!cancelled && url) setCover(url)
+    })
+    return () => { cancelled = true }
+  }, [track.name, track.artist]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const showImg = cover && !imgError
+
   return (
     <div className="flex items-center gap-3 px-5 py-3 active:opacity-60 transition-opacity">
-      {track.cover ? (
+      {showImg ? (
         <img
-          src={track.cover}
+          src={cover}
           alt={track.name}
-          style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }}
+          onError={() => setImgError(true)}
+          style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
         />
       ) : (
         <div
           style={{
-            width: 34, height: 34, borderRadius: 6, flexShrink: 0,
-            backgroundColor: 'var(--surface)',
+            width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+            backgroundColor: artistColor(track.artist),
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 16,
+            fontSize: 18,
           }}
         >
           🎵
@@ -51,7 +92,7 @@ function TrackRow({ track, onAdd }) {
         </p>
       </div>
       <button
-        onClick={() => onAdd(track)}
+        onClick={() => onAdd({ ...track, cover: cover ?? null })}
         className="font-sans font-medium transition-opacity active:opacity-60 flex-shrink-0"
         style={{
           backgroundColor: 'var(--surface)',
