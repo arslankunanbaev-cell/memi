@@ -10,12 +10,12 @@ export default function MomentCard({ moment }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer flex"
-      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)', minHeight: 120 }}
+      className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
+      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
-      {/* Left: Photo */}
-      <div style={{ position: 'relative', width: 120, flexShrink: 0 }}>
+      {/* Photo / gradient top */}
+      <div style={{ position: 'relative', height: 130, overflow: 'hidden' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
@@ -31,29 +31,18 @@ export default function MomentCard({ moment }) {
             }}
           />
         )}
-        {/* subtle right-side fade to blend into card body */}
+
+        {/* Gradient overlay */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to right, transparent 60%, rgba(237,230,220,0.45) 100%)',
+            background: 'linear-gradient(to top, rgba(23,20,14,0.55) 0%, transparent 55%)',
           }}
         />
-      </div>
 
-      {/* Right: Content */}
-      <div
-        style={{
-          flex: 1,
-          padding: '10px 12px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          minWidth: 0,
-        }}
-      >
         {/* Title pill */}
-        <div>
+        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 16px)' }}>
           <span
             className="font-serif"
             style={{
@@ -74,82 +63,88 @@ export default function MomentCard({ moment }) {
             {moment.title}
           </span>
         </div>
+      </div>
 
+      {/* Body */}
+      <div style={{ padding: '10px 12px' }}>
         {/* Description */}
         {moment.description && (
           <p
             className="font-sans"
             style={{
-              fontSize: 12,
+              fontSize: 13,
               color: 'var(--mid)',
-              lineHeight: 1.5,
+              lineHeight: 1.55,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              margin: 0,
+              marginBottom: 8,
             }}
           >
             {moment.description}
           </p>
         )}
 
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* Song row */}
-        {moment.song_title && (
-          <div className="flex items-center gap-2">
-            {moment.song_cover ? (
-              <img
-                src={moment.song_cover}
-                alt="cover"
-                style={{ width: 28, height: 28, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 5,
-                  backgroundColor: 'var(--base)',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 13,
-                }}
-              >
-                🎵
-              </div>
-            )}
-            <div style={{ minWidth: 0 }}>
-              <p
-                className="font-sans"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--text)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  margin: 0,
-                }}
-              >
-                {moment.song_title}
-              </p>
-              {moment.song_artist && (
-                <p className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', margin: 0 }}>
-                  {moment.song_artist}
-                </p>
+        {/* Bottom horizontal row: music + meta */}
+        <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
+          {/* Song */}
+          {moment.song_title && (
+            <div className="flex items-center gap-1.5" style={{ minWidth: 0, flex: 1 }}>
+              {moment.song_cover ? (
+                <img
+                  src={moment.song_cover}
+                  alt="cover"
+                  style={{ width: 28, height: 28, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 5,
+                    backgroundColor: 'var(--base)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 13,
+                  }}
+                >
+                  🎵
+                </div>
               )}
+              <div style={{ minWidth: 0 }}>
+                <p
+                  className="font-sans"
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--text)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    margin: 0,
+                  }}
+                >
+                  {moment.song_title}
+                </p>
+                {moment.song_artist && (
+                  <p className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', margin: 0 }}>
+                    {moment.song_artist}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Meta row */}
-        <div className="flex items-center gap-2 flex-wrap">
+          {/* Divider if music exists */}
+          {moment.song_title && (hasPeople || moment.location || moment.mood) && (
+            <div style={{ width: 0.5, alignSelf: 'stretch', backgroundColor: 'var(--base)', flexShrink: 0 }} />
+          )}
+
+          {/* People avatars */}
           {hasPeople && (
-            <div className="flex -space-x-1">
+            <div className="flex -space-x-1" style={{ flexShrink: 0 }}>
               {moment.people.slice(0, 3).map((p) => (
                 <div
                   key={p.id}
@@ -170,10 +165,12 @@ export default function MomentCard({ moment }) {
             </div>
           )}
 
-          <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>
+          {/* Time */}
+          <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', flexShrink: 0 }}>
             {formatTime(moment.created_at)}
           </span>
 
+          {/* Location pill */}
           {moment.location && (
             <span
               className="font-sans"
@@ -183,14 +180,20 @@ export default function MomentCard({ moment }) {
                 backgroundColor: 'var(--base)',
                 borderRadius: 9999,
                 padding: '2px 7px',
+                flexShrink: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 90,
               }}
             >
               📍 {moment.location}
             </span>
           )}
 
+          {/* Mood emoji */}
           {moment.mood && (
-            <span style={{ fontSize: 13 }}>{moment.mood}</span>
+            <span style={{ fontSize: 13, flexShrink: 0 }}>{moment.mood}</span>
           )}
         </div>
       </div>
