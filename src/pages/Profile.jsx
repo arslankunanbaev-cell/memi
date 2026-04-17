@@ -202,9 +202,12 @@ export default function Profile() {
     const tgId    = currentUser?.telegram_id
       ?? window.Telegram?.WebApp?.initDataUnsafe?.user?.id
     const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
-    const link      = `https://t.me/${botName}?start=ref_${tgId}`
+    const appName = import.meta.env.VITE_APP_SHORT_NAME ?? 'app'
+    // t.me/BOT/APPNAME?startapp=... opens Mini App directly and passes start_param
+    const link    = `https://t.me/${botName}/${appName}?startapp=ref_${tgId}`
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Присоединяйся ко мне в memi 🌿')}`
     if (window.Telegram?.WebApp?.openTelegramLink) {
-      window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}`)
+      window.Telegram.WebApp.openTelegramLink(shareUrl)
     } else {
       navigator.clipboard?.writeText(link).catch(() => {})
     }
