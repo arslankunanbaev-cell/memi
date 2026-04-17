@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { saveCapsuleSlot, deleteCapsuleSlot, acceptFriendRequest } from '../lib/api'
+import { saveCapsuleSlot, deleteCapsuleSlot, acceptFriendRequest, getFriendships } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import AddMoment from './AddMoment'
@@ -197,6 +197,31 @@ export default function Profile() {
 
   const [pickSlot, setPickSlot]           = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
+  const [refreshing, setRefreshing]       = useState(false)
+
+  async function handleRefreshFriends() {
+    if (refreshing || !currentUser?.id) return
+    setRefreshing(true)
+    try {
+      const rows = await getFriendships(currentUser.id)
+      const accepted = []
+      const incoming = []
+      for (const f of rows) {
+        if (f.status === 'accepted') {
+          const friend = f.requester_id === currentUser.id ? f.receiver : f.requester
+          if (friend) accepted.push({ ...friend, friendship_id: f.id })
+        } else if (f.status === 'pending' && f.receiver_id === currentUser.id) {
+          if (f.requester) incoming.push({ ...f.requester, friendship_id: f.id })
+        }
+      }
+      setFriends(accepted)
+      setIncomingRequests(incoming)
+    } catch (err) {
+      console.error('[Profile] refresh friends error:', err)
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   function handleInvite() {
     const tgId    = currentUser?.telegram_id
@@ -311,14 +336,25 @@ export default function Profile() {
         {/* Friends */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)' }}>
-              Друзья
-              {friends.length > 0 && (
-                <span className="font-sans font-normal" style={{ color: 'var(--mid)', marginLeft: 6 }}>
-                  {friends.length}
+            <div className="flex items-center gap-2">
+              <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)' }}>
+                Друзья
+                {friends.length > 0 && (
+                  <span className="font-sans font-normal" style={{ color: 'var(--mid)', marginLeft: 6 }}>
+                    {friends.length}
+                  </span>
+                )}
+              </p>
+              <button
+                onClick={handleRefreshFriends}
+                className="transition-opacity active:opacity-60"
+                style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1 }}
+              >
+                <span style={{ fontSize: 13, display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
+                  ↻
                 </span>
-              )}
-            </p>
+              </button>
+            </div>
             <button
               onClick={handleInvite}
               className="font-sans font-medium transition-opacity active:opacity-60"

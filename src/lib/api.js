@@ -257,16 +257,28 @@ export async function sendFriendRequest(requesterId, receiverId) {
 
 export async function getFriendships(userId) {
   const sb = assertSupabase()
-  const { data, error } = await sb
+
+  const { data: rows, error } = await sb
     .from('friendships')
-    .select(`
-      id, status, requester_id, receiver_id,
-      requester:users!requester_id(id, name, photo_url, telegram_id),
-      receiver:users!receiver_id(id, name, photo_url, telegram_id)
-    `)
+    .select('id, status, requester_id, receiver_id')
     .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
   if (error) throw error
-  return data ?? []
+  if (!rows?.length) return []
+
+  // Fetch user details for all involved users in one query
+  const userIds = [...new Set(rows.flatMap((f) => [f.requester_id, f.receiver_id]))]
+  const { data: users, error: usersErr } = await sb
+    .from('users')
+    .select('id, name, photo_url, telegram_id')
+    .in('id', userIds)
+  if (usersErr) throw usersErr
+
+  const byId = Object.fromEntries((users ?? []).map((u) => [u.id, u]))
+  return rows.map((f) => ({
+    ...f,
+    requester: byId[f.requester_id] ?? null,
+    receiver:  byId[f.receiver_id]  ?? null,
+  }))
 }
 
 export async function acceptFriendRequest(friendshipId) {
