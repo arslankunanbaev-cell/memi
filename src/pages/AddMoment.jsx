@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
-import { saveMoment, createPerson } from '../lib/api'
+import { saveMoment, createPerson, addMomentParticipants } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 
@@ -116,6 +116,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
   const people       = useAppStore((s) => s.people)
+  const friends      = useAppStore((s) => s.friends)
   const addMoment    = useAppStore((s) => s.addMoment)
   const addPerson    = useAppStore((s) => s.addPerson)
   const addRecentLocation = useAppStore((s) => s.addRecentLocation)
@@ -144,6 +145,9 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   // Saving
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
+
+  // Tagged friends (platform users, not local people)
+  const [taggedFriends, setTaggedFriends] = useState([])
 
   // Add person inline
   const [showAddPerson, setShowAddPerson] = useState(false)
@@ -212,6 +216,15 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         photoFile,
         peopleIds: selectedPeople,
       })
+
+      // Tag friends as participants (non-fatal if it fails)
+      if (taggedFriends.length > 0) {
+        try {
+          await addMomentParticipants(saved.id, taggedFriends)
+        } catch (participantErr) {
+          console.warn('[AddMoment] ⚠ participant insert failed (non-fatal):', participantErr?.message)
+        }
+      }
 
       const full = { ...saved, people: people.filter((p) => selectedPeople.includes(p.id)) }
       addMoment(full)
@@ -512,6 +525,52 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             </button>
           </div>
         </div>
+
+        {/* Friends in memi — tag platform users */}
+        {friends.length > 0 && (
+          <div>
+            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
+              Друзья в memi
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {friends.map((f) => {
+                const active = taggedFriends.includes(f.id)
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() =>
+                      setTaggedFriends((prev) =>
+                        prev.includes(f.id) ? prev.filter((id) => id !== f.id) : [...prev, f.id]
+                      )
+                    }
+                    className="flex items-center gap-2 transition-all active:opacity-70"
+                    style={{
+                      borderRadius: 9999,
+                      padding: '6px 12px 6px 8px',
+                      backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
+                      style={{
+                        width: 22, height: 22,
+                        backgroundColor: active ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
+                        color: '#fff', fontSize: 10, flexShrink: 0,
+                      }}
+                    >
+                      {f.photo_url
+                        ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : f.name?.[0]?.toUpperCase() ?? '?'}
+                    </div>
+                    <span className="font-sans" style={{ fontSize: 13, color: active ? '#fff' : 'var(--text)' }}>
+                      {f.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Song search bottom sheet */}

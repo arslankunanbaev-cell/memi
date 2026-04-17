@@ -71,6 +71,12 @@ export const useAppStore = create((set) => ({
       recentLocations: [loc, ...s.recentLocations.filter((l) => l !== loc)].slice(0, 5),
     })),
 
+  // Friends (accepted) + incoming pending requests
+  friends: [],
+  incomingRequests: [],
+  setFriends: (friends) => set({ friends }),
+  setIncomingRequests: (reqs) => set({ incomingRequests }),
+
   // UI
   isOnboarded: false,
   setOnboarded: (v) => set({ isOnboarded: v }),

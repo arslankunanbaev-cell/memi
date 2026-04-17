@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { saveUser, getPeople, getMoments, getCapsule } from './lib/api'
+import { saveUser, getPeople, getMoments, getCapsule, getUserByTelegramId, sendFriendRequest, getFriendships, getSharedMoments } from './lib/api'
 import { useAppStore } from './store/useAppStore'
 import Splash from './pages/Splash'
 import Onboarding from './pages/Onboarding'
@@ -17,10 +17,12 @@ import EditMoment from './pages/EditMoment'
 
 export default function App() {
   const navigate   = useNavigate()
-  const setPeople  = useAppStore((s) => s.setPeople)
-  const setMoments = useAppStore((s) => s.setMoments)
-  const setCapsule = useAppStore((s) => s.setCapsule)
-  const setInitResult = useAppStore((s) => s.setInitResult)
+  const setPeople          = useAppStore((s) => s.setPeople)
+  const setMoments         = useAppStore((s) => s.setMoments)
+  const setCapsule         = useAppStore((s) => s.setCapsule)
+  const setInitResult      = useAppStore((s) => s.setInitResult)
+  const setFriends         = useAppStore((s) => s.setFriends)
+  const setIncomingRequests = useAppStore((s) => s.setIncomingRequests)
 
   useEffect(() => {
     // ── Страховочный таймаут — если через 5с init не завершился → /home ──────
@@ -51,18 +53,60 @@ export default function App() {
         const { user, isNew } = await saveUser(tgUser)
         console.log('[App] ✅ user:', user.id, '| isNew:', isNew)
 
-        // Загружаем people + moments + capsule параллельно
-        const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
+        // ── Обрабатываем start_param (реферальная ссылка) ─────────────────────
+        try {
+          const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+          if (startParam.startsWith('ref_')) {
+            const refTelegramId = Number(startParam.slice(4))
+            if (refTelegramId && refTelegramId !== tgUser.id) {
+              const refUser = await getUserByTelegramId(refTelegramId)
+              if (refUser) {
+                await sendFriendRequest(user.id, refUser.id)
+                console.log('[App] ✅ friend request sent to:', refUser.id)
+              }
+            }
+          }
+        } catch (refErr) {
+          console.warn('[App] ⚠ friend request failed (non-fatal):', refErr?.message)
+        }
+
+        // Загружаем people + moments + capsule + friendships + shared параллельно
+        const [fetchedPeople, fetchedMoments, fetchedCapsule, fetchedFriendships, fetchedShared] = await Promise.all([
           getPeople(user.id),
           getMoments(user.id),
           getCapsule(user.id),
+          getFriendships(user.id).catch(() => []),
+          getSharedMoments(user.id).catch(() => []),
         ])
         setPeople(fetchedPeople)
-        setMoments(fetchedMoments)
+
+        // Merge own + shared moments, deduplicating by id
+        const ownIds = new Set(fetchedMoments.map((m) => m.id))
+        const allMoments = [
+          ...fetchedMoments,
+          ...fetchedShared.filter((m) => !ownIds.has(m.id)),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        setMoments(allMoments)
+
         setCapsule(fetchedCapsule)
+
+        // Split friendships into accepted friends + incoming pending requests
+        const accepted = []
+        const incoming = []
+        for (const f of fetchedFriendships) {
+          if (f.status === 'accepted') {
+            const friend = f.requester_id === user.id ? f.receiver : f.requester
+            accepted.push({ ...friend, friendship_id: f.id })
+          } else if (f.status === 'pending' && f.receiver_id === user.id) {
+            incoming.push({ ...f.requester, friendship_id: f.id })
+          }
+        }
+        setFriends(accepted)
+        setIncomingRequests(incoming)
+
         setInitResult(user, isNew)
 
-        console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', fetchedMoments.length)
+        console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', allMoments.length, 'friends:', accepted.length)
         console.log('[App] ══ INIT END — navigating to:', isNew ? '/onboarding' : '/home')
 
         // Навигация — вся логика здесь, Splash ничего не решает

@@ -227,6 +227,93 @@ export async function getMomentsByPerson(userId, personId) {
   return moments ?? []
 }
 
+// ── Friends ───────────────────────────────────────────────────────────────────
+
+export async function getUserByTelegramId(telegramId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('users')
+    .select('id, name, photo_url, telegram_id')
+    .eq('telegram_id', telegramId)
+    .maybeSingle()
+  if (error) throw error
+  return data // null if not found
+}
+
+export async function sendFriendRequest(requesterId, receiverId) {
+  if (!requesterId || !receiverId || requesterId === receiverId) return null
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('friendships')
+    .upsert(
+      { requester_id: requesterId, receiver_id: receiverId, status: 'pending' },
+      { onConflict: 'requester_id,receiver_id', ignoreDuplicates: true }
+    )
+    .select()
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function getFriendships(userId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('friendships')
+    .select(`
+      id, status, requester_id, receiver_id,
+      requester:users!requester_id(id, name, photo_url, telegram_id),
+      receiver:users!receiver_id(id, name, photo_url, telegram_id)
+    `)
+    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function acceptFriendRequest(friendshipId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('friendships')
+    .update({ status: 'accepted' })
+    .eq('id', friendshipId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ── Shared moments (via moment_participants) ───────────────────────────────────
+
+export async function addMomentParticipants(momentId, userIds) {
+  if (!userIds?.length) return
+  const sb = assertSupabase()
+  const rows = userIds.map((user_id) => ({ moment_id: momentId, user_id }))
+  const { error } = await sb.from('moment_participants').insert(rows)
+  if (error) throw error
+}
+
+export async function getSharedMoments(userId) {
+  const sb = assertSupabase()
+  const { data: links, error: linkError } = await sb
+    .from('moment_participants')
+    .select('moment_id')
+    .eq('user_id', userId)
+  if (linkError) throw linkError
+  if (!links?.length) return []
+
+  const momentIds = links.map((r) => r.moment_id)
+  const { data, error } = await sb
+    .from('moments')
+    .select(`*, people:moment_people(person:people(id, name, avatar_color, photo_url))`)
+    .in('id', momentIds)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data ?? []).map((m) => ({
+    ...m,
+    people: (m.people ?? []).map((mp) => mp.person),
+    isShared: true,
+  }))
+}
+
 // ── Capsule ───────────────────────────────────────────────────────────────────
 
 export async function getCapsule(userId) {
