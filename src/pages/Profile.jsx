@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { saveCapsuleSlot, deleteCapsuleSlot, acceptFriendRequest, getFriendships } from '../lib/api'
+import { saveCapsuleSlot, deleteCapsuleSlot } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import AddMoment from './AddMoment'
@@ -188,68 +188,11 @@ export default function Profile() {
   const moments           = useAppStore((s) => s.moments)
   const people            = useAppStore((s) => s.people)
   const capsule           = useAppStore((s) => s.capsule)
-  const friends             = useAppStore((s) => s.friends)           ?? []
-  const incomingRequests    = useAppStore((s) => s.incomingRequests)  ?? []
-  const setFriends          = useAppStore((s) => s.setFriends)        ?? (() => {})
-  const setIncomingRequests = useAppStore((s) => s.setIncomingRequests) ?? (() => {})
   const addToCapsule      = useAppStore((s) => s.addToCapsule)
   const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
 
   const [pickSlot, setPickSlot]           = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
-  const [refreshing, setRefreshing]       = useState(false)
-
-  async function handleRefreshFriends() {
-    if (refreshing || !currentUser?.id) return
-    setRefreshing(true)
-    try {
-      const rows = await getFriendships(currentUser.id)
-
-      const accepted = []
-      const incoming = []
-      for (const f of rows) {
-        if (f.status === 'accepted') {
-          const friend = f.requester_id === currentUser.id ? f.receiver : f.requester
-          const friendData = friend ?? { id: f.requester_id === currentUser.id ? f.receiver_id : f.requester_id, name: 'Пользователь' }
-          accepted.push({ ...friendData, friendship_id: f.id })
-        } else if (f.status === 'pending' && f.receiver_id === currentUser.id) {
-          const requester = f.requester ?? { id: f.requester_id, name: 'Пользователь' }
-          incoming.push({ ...requester, friendship_id: f.id })
-        }
-      }
-      setFriends(accepted)
-      setIncomingRequests(incoming)
-    } catch (err) {
-      window.Telegram?.WebApp?.showAlert?.(`ERROR: ${err?.message}`)
-    } finally {
-      setRefreshing(false)
-    }
-  }
-
-  function handleInvite() {
-    const tgId    = currentUser?.telegram_id
-      ?? window.Telegram?.WebApp?.initDataUnsafe?.user?.id
-    const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
-    const appName = import.meta.env.VITE_APP_SHORT_NAME ?? 'app'
-    // t.me/BOT/APPNAME?startapp=... opens Mini App directly and passes start_param
-    const link    = `https://t.me/${botName}/${appName}?startapp=ref_${tgId}`
-    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Присоединяйся ко мне в memi 🌿')}`
-    if (window.Telegram?.WebApp?.openTelegramLink) {
-      window.Telegram.WebApp.openTelegramLink(shareUrl)
-    } else {
-      navigator.clipboard?.writeText(link).catch(() => {})
-    }
-  }
-
-  async function handleAccept(req) {
-    try {
-      await acceptFriendRequest(req.friendship_id)
-      setFriends([...friends, req])
-      setIncomingRequests(incomingRequests.filter((r) => r.friendship_id !== req.friendship_id))
-    } catch (err) {
-      console.error('[Profile] accept friend error:', err)
-    }
-  }
 
   async function handleAddToCapsule(slotIndex, moment) {
     addToCapsule(slotIndex, moment)  // optimistic update
@@ -334,98 +277,6 @@ export default function Profile() {
               <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>{s.label}</span>
             </div>
           ))}
-        </div>
-
-        {/* Friends */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)' }}>
-                Друзья
-                {friends.length > 0 && (
-                  <span className="font-sans font-normal" style={{ color: 'var(--mid)', marginLeft: 6 }}>
-                    {friends.length}
-                  </span>
-                )}
-              </p>
-              <button
-                onClick={handleRefreshFriends}
-                className="transition-opacity active:opacity-60"
-                style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1 }}
-              >
-                <span style={{ fontSize: 13, display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
-                  ↻
-                </span>
-              </button>
-            </div>
-            <button
-              onClick={handleInvite}
-              className="font-sans font-medium transition-opacity active:opacity-60"
-              style={{
-                fontSize: 12, color: 'var(--accent)',
-                background: 'none', border: 'none', padding: 0,
-              }}
-            >
-              + Пригласить
-            </button>
-          </div>
-
-          {/* Incoming friend requests */}
-          {incomingRequests.map((req) => (
-            <div
-              key={req.friendship_id}
-              className="flex items-center gap-3 mb-2 px-3 py-3 rounded-xl"
-              style={{ backgroundColor: 'var(--surface)' }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                style={{ width: 34, height: 34, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 14, overflow: 'hidden' }}
-              >
-                {req.photo_url
-                  ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : req.name?.[0]?.toUpperCase() ?? '?'}
-              </div>
-              <p className="font-sans flex-1" style={{ fontSize: 13, color: 'var(--text)' }}>{req.name}</p>
-              <button
-                onClick={() => handleAccept(req)}
-                className="font-sans font-medium transition-opacity active:opacity-70"
-                style={{
-                  fontSize: 12, color: '#fff', background: 'var(--accent)',
-                  border: 'none', borderRadius: 9999, padding: '5px 12px',
-                }}
-              >
-                Принять
-              </button>
-            </div>
-          ))}
-
-          {/* Accepted friends list */}
-          {friends.length === 0 && incomingRequests.length === 0 && (
-            <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)' }}>
-              Пока нет друзей — пригласи первого
-            </p>
-          )}
-          {friends.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {friends.map((f) => (
-                <div
-                  key={f.friendship_id}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full"
-                  style={{ backgroundColor: 'var(--surface)' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                    style={{ width: 22, height: 22, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 10, overflow: 'hidden' }}
-                  >
-                    {f.photo_url
-                      ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : f.name?.[0]?.toUpperCase() ?? '?'}
-                  </div>
-                  <span className="font-sans" style={{ fontSize: 12, color: 'var(--text)' }}>{f.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Capsule */}
