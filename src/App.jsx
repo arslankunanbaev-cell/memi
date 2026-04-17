@@ -39,25 +39,26 @@ export default function App() {
           window.Telegram.WebApp.expand()
         }
 
-        // ── Валидируем Telegram initData через Edge Function ──────────────────
-        const initData = window.Telegram?.WebApp?.initData ?? 'dev'
-        const authRes = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
-          {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ initData }),
+        // ── Валидируем Telegram initData через Edge Function (не блокирует init) ─
+        try {
+          const initData = window.Telegram?.WebApp?.initData || 'dev'
+          const authRes = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
+            {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body:    JSON.stringify({ initData }),
+            }
+          )
+          if (authRes.ok) {
+            const { access_token } = await authRes.json()
+            const { supabase } = await import('./lib/supabase')
+            await supabase.auth.setSession({ access_token, refresh_token: access_token })
           }
-        )
-        if (!authRes.ok) {
-          const err = await authRes.json().catch(() => ({}))
-          throw new Error(err.error ?? 'Auth failed')
+        } catch (authErr) {
+          // Валидация не прошла — продолжаем без сессии (данные всё равно загрузятся)
+          console.warn('[App] auth edge function skipped:', authErr?.message)
         }
-        const { access_token } = await authRes.json()
-
-        // Устанавливаем сессию — теперь auth.uid() работает во всех запросах
-        const { supabase } = await import('./lib/supabase')
-        await supabase.auth.setSession({ access_token, refresh_token: access_token })
 
         // Сохраняем / получаем пользователя из БД
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
