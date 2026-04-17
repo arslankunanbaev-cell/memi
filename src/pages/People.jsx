@@ -35,7 +35,7 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
 
       {/* Имя + кол-во моментов */}
       <div className="min-w-0 w-full text-center">
-        <p className="font-sans font-medium truncate" style={{ fontSize: 15, color: 'var(--text)' }}>{person.name}</p>
+        <p className="font-serif truncate" style={{ fontSize: 16, color: 'var(--text)' }}>{person.name}</p>
         <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
           {momentCount} {plural.момент(momentCount)}
         </p>
@@ -213,8 +213,8 @@ export default function People() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Топбар */}
       <div
-        className="flex items-center justify-between px-4"
-        style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))', paddingBottom: 12 }}
+        className="flex items-center justify-between px-4 pt-topbar"
+        style={{ paddingBottom: 12 }}
       >
         <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
         <button
