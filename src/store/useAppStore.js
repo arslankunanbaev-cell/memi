@@ -75,7 +75,7 @@ export const useAppStore = create((set) => ({
   friends: [],
   incomingRequests: [],
   setFriends: (friends) => set({ friends }),
-  setIncomingRequests: (reqs) => set({ incomingRequests }),
+  setIncomingRequests: (reqs) => set({ incomingRequests: reqs }),
 
   // UI
   isOnboarded: false,
