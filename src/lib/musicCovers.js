@@ -29,7 +29,7 @@ export function cleanName(str = '') {
     .replace(/\bfeat\.?\s\S+/gi, '')
     .replace(/\bft\.?\s\S+/gi, '')
     .replace(/\((official|lyric|music|video|audio|live|acoustic|remaster|remastered|version|remix)[^)]*\)/gi, '')
-    .replace(/[^\w\s\-']/g, ' ')
+    .replace(/[^\p{L}\p{N}\s\-']/gu, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
