@@ -266,7 +266,14 @@ export async function getFriendships(userId) {
   if (e1) throw e1
   if (e2) throw e2
 
-  const rows = [...(asSender ?? []), ...(asReceiver ?? [])]
+  // Deduplicate: if both A→B and B→A exist, keep only the first seen
+  const seen = new Set()
+  const rows = [...(asSender ?? []), ...(asReceiver ?? [])].filter((f) => {
+    const key = [f.requester_id, f.receiver_id].sort().join(':')
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
   if (!rows.length) return []
 
   const userIds = [...new Set(rows.flatMap((f) => [f.requester_id, f.receiver_id]))]
