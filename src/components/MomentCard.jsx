@@ -11,7 +11,7 @@ export default function MomentCard({ moment }) {
   return (
     <div
       className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
-      style={{ backgroundColor: 'var(--surface)' }}
+      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
       {/* Photo / gradient top */}
@@ -57,8 +57,8 @@ export default function MomentCard({ moment }) {
               backgroundColor: 'rgba(255,255,255,0.90)',
               color: 'var(--text)',
               borderRadius: 9999,
-              padding: '3px 10px',
-              fontSize: 12,
+              padding: '5px 14px',
+              fontSize: 14,
               fontWeight: 400,
               letterSpacing: '0.2px',
               maxWidth: '100%',
@@ -79,7 +79,7 @@ export default function MomentCard({ moment }) {
           <p
             className="font-sans"
             style={{
-              fontSize: 11,
+              fontSize: 13,
               color: 'var(--mid)',
               lineHeight: 1.55,
               display: '-webkit-box',
@@ -107,13 +107,13 @@ export default function MomentCard({ moment }) {
               <img
                 src={moment.song_cover}
                 alt="cover"
-                style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+                style={{ width: 28, height: 28, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
               />
             ) : (
               <div
                 style={{
-                  width: 22,
-                  height: 22,
+                  width: 28,
+                  height: 28,
                   borderRadius: 4,
                   backgroundColor: 'var(--surface)',
                   flexShrink: 0,
@@ -130,7 +130,7 @@ export default function MomentCard({ moment }) {
               <p
                 className="font-sans"
                 style={{
-                  fontSize: 11,
+                  fontSize: 13,
                   color: 'var(--text)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -142,7 +142,7 @@ export default function MomentCard({ moment }) {
               {moment.song_artist && (
                 <p
                   className="font-sans"
-                  style={{ fontSize: 10, color: 'var(--soft)' }}
+                  style={{ fontSize: 12, color: 'var(--soft)' }}
                 >
                   {moment.song_artist}
                 </p>
