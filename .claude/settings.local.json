@@ -27,7 +27,17 @@
       "Bash(curl -s \"https://itunes.apple.com/search?term=bohemian+rhapsody+queen&media=music&entity=song&limit=1\")",
       "Bash(curl -I \"https://itunes.apple.com/search?term=queen&media=music&entity=song&limit=1\")",
       "Bash(npx netlify *)",
-      "Bash(curl -s \"http://localhost:5173/src/lib/musicCovers.js\")"
+      "Bash(curl -s \"http://localhost:5173/src/lib/musicCovers.js\")",
+      "Bash(node --input-type=module)",
+      "Bash(git commit *)",
+      "Bash(grep -E \"\\\\.\\(jsx|js\\)$\")",
+      "Bash(grep -E \"\\\\.\\(sql|md\\)$\")",
+      "Bash(grep -n \"getMoments\\\\|moment_people\\\\|moment_participants\" D:\\\\\\\\Memi\\\\\\\\src\\\\\\\\lib\\\\\\\\api.js)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase functions deploy spotify-cover --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase secrets set SPOTIFY_CLIENT_ID=1504bca880f0499faff6efbdae78bee1 SPOTIFY_CLIENT_SECRET=e489da94b6cb4023be329f8749335506 --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase secrets list --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase functions deploy telegram-auth --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase --experimental projects api-keys --project-ref emzrhwfjovjlxncwbptl)"
     ]
   }
 }
