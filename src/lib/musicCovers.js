@@ -42,10 +42,11 @@ async function safeFetch(url, options = {}) {
   try {
     const res = await fetch(url, { signal: controller.signal, ...fetchOpts })
     clearTimeout(timer)
-    if (!res.ok) return null
+    if (!res.ok) { console.warn('[covers] fetch not ok', res.status, url); return null }
     return await res.json()
-  } catch {
+  } catch (e) {
     clearTimeout(timer)
+    console.warn('[covers] fetch error', e?.message, url)
     return null
   }
 }
@@ -148,6 +149,7 @@ export async function enrichWithCover(track, artist) {
       : null)
     ?? { url: null, source: 'fallback' }
 
+  console.log('[covers]', track, '-', artist, '→', result.source, result.url ? '✓' : '✗')
   coverCache.set(cacheKey, result)
   return result
 }
