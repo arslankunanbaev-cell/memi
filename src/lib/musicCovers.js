@@ -76,12 +76,15 @@ async function fetchSpotifyCover(track, artist) {
   const token = await getSpotifyToken()
   if (!token) return null
 
-  const q = `track:${encodeURIComponent(cleanName(track))} artist:${encodeURIComponent(cleanName(artist))}`
+  const params = new URLSearchParams({
+    q: `track:${cleanName(track)} artist:${cleanName(artist)}`,
+    type: 'track',
+    limit: '1',
+  })
   const json = await safeFetch(
-    `https://api.spotify.com/v1/search?q=${q}&type=track&limit=1`,
+    `https://api.spotify.com/v1/search?${params}`,
     { headers: { Authorization: `Bearer ${token}` }, timeout: 5000 }
   )
-  // images are sorted largest-first
   return json?.tracks?.items?.[0]?.album?.images?.[0]?.url ?? null
 }
 
