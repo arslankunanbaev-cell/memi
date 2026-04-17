@@ -36,14 +36,16 @@ export function cleanName(str = '') {
 
 /** Safe fetch with timeout; returns null instead of throwing. */
 async function safeFetch(url, options = {}) {
+  const { timeout = 5000, ...fetchOpts } = options
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
   try {
-    const res = await fetch(url, {
-      signal: AbortSignal.timeout(options.timeout ?? 5000),
-      ...options,
-    })
+    const res = await fetch(url, { signal: controller.signal, ...fetchOpts })
+    clearTimeout(timer)
     if (!res.ok) return null
     return await res.json()
   } catch {
+    clearTimeout(timer)
     return null
   }
 }
