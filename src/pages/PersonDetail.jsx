@@ -262,9 +262,9 @@ export default function PersonDetail() {
           className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
           style={{
             position: 'absolute',
-            bottom: -32,
+            bottom: -48,
             left: 16,
-            width: 64, height: 64,
+            width: 96, height: 96,
             borderRadius: '50%',
             border: '3px solid var(--base)',
             backgroundColor: person.photo_url ? 'transparent' : (person.avatar_color ?? 'var(--accent)'),
@@ -275,17 +275,17 @@ export default function PersonDetail() {
           {person.photo_url ? (
             <img src={person.photo_url} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            <span style={{ fontSize: 24, color: '#fff', fontWeight: 300 }}>{person.name[0].toUpperCase()}</span>
+            <span style={{ fontSize: 36, color: '#fff', fontWeight: 300 }}>{person.name[0].toUpperCase()}</span>
           )}
         </div>
       </div>
 
       {/* ── Body ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto pb-28" style={{ paddingTop: 44 }}>
+      <div className="flex-1 overflow-y-auto pb-28" style={{ paddingTop: 60 }}>
         <div className="px-4 flex flex-col gap-4">
           {/* Имя + моменты */}
           <div>
-            <h1 className="font-sans font-medium" style={{ fontSize: 18, color: 'var(--text)' }}>{person.name}</h1>
+            <h1 className="font-serif" style={{ fontSize: 26, color: 'var(--text)', fontWeight: 400 }}>{person.name}</h1>
             <p className="font-sans" style={{ fontSize: 10, color: 'var(--soft)', marginTop: 2 }}>
               {momentCount} {plural.момент(momentCount)} вместе
             </p>
