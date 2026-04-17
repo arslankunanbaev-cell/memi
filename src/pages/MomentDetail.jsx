@@ -76,7 +76,7 @@ export default function MomentDetail() {
 
       <div className="flex-1 overflow-y-auto pb-4">
         {/* Photo zone */}
-        <div style={{ position: 'relative', height: 310, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: 360, overflow: 'hidden' }}>
           {moment.photo_url ? (
             <img src={moment.photo_url} alt={moment.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
