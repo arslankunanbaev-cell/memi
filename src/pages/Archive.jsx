@@ -281,12 +281,12 @@ export default function Archive() {
         ].map((s) => (
           <div
             key={s.label}
-            className="flex flex-col items-center py-3 rounded-xl"
+            className="flex flex-col items-center py-4 rounded-xl"
             style={{ backgroundColor: 'var(--surface)' }}
           >
             <span
               className="font-serif"
-              style={{ fontSize: 26, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
+              style={{ fontSize: 31, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
             >
               {s.value}
             </span>
