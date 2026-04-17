@@ -89,9 +89,11 @@ export default function App() {
           for (const f of fetchedFriendships) {
             if (f.status === 'accepted') {
               const friend = f.requester_id === user.id ? f.receiver : f.requester
-              if (friend) accepted.push({ ...friend, friendship_id: f.id })
+              const friendData = friend ?? { id: f.requester_id === user.id ? f.receiver_id : f.requester_id, name: 'Пользователь' }
+              accepted.push({ ...friendData, friendship_id: f.id })
             } else if (f.status === 'pending' && f.receiver_id === user.id) {
-              if (f.requester) incoming.push({ ...f.requester, friendship_id: f.id })
+              const requester = f.requester ?? { id: f.requester_id, name: 'Пользователь' }
+              incoming.push({ ...requester, friendship_id: f.id })
             }
           }
           setFriends(accepted)

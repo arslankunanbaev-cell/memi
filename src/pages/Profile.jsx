@@ -205,20 +205,16 @@ export default function Profile() {
     try {
       const rows = await getFriendships(currentUser.id)
 
-      // DEBUG — убрать после диагностики
-      window.Telegram?.WebApp?.showAlert?.(
-        `rows=${rows.length} myId=${currentUser.id.slice(0, 8)}\n` +
-        rows.map((r) => `${r.status} req=${r.requester_id.slice(0,6)} rec=${r.receiver_id.slice(0,6)}`).join('\n')
-      )
-
       const accepted = []
       const incoming = []
       for (const f of rows) {
         if (f.status === 'accepted') {
           const friend = f.requester_id === currentUser.id ? f.receiver : f.requester
-          if (friend) accepted.push({ ...friend, friendship_id: f.id })
+          const friendData = friend ?? { id: f.requester_id === currentUser.id ? f.receiver_id : f.requester_id, name: 'Пользователь' }
+          accepted.push({ ...friendData, friendship_id: f.id })
         } else if (f.status === 'pending' && f.receiver_id === currentUser.id) {
-          if (f.requester) incoming.push({ ...f.requester, friendship_id: f.id })
+          const requester = f.requester ?? { id: f.requester_id, name: 'Пользователь' }
+          incoming.push({ ...requester, friendship_id: f.id })
         }
       }
       setFriends(accepted)
