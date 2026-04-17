@@ -6,15 +6,10 @@
  * All three APIs are fired in parallel; highest-priority winner is used.
  */
 
-const SPOTIFY_CLIENT_ID     = import.meta.env.VITE_SPOTIFY_CLIENT_ID
-const SPOTIFY_CLIENT_SECRET = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
 
 // ── In-memory cover cache (persists for app lifetime) ─────────────────────────
 const coverCache = new Map()
-
-// ── Spotify token cache ───────────────────────────────────────────────────────
-let _spotifyToken     = null
-let _tokenExpiresAt   = 0
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -51,42 +46,19 @@ async function safeFetch(url, options = {}) {
   }
 }
 
-// ── Spotify ───────────────────────────────────────────────────────────────────
-
-async function getSpotifyToken() {
-  if (_spotifyToken && Date.now() < _tokenExpiresAt) return _spotifyToken
-  if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) return null
-
-  const json = await safeFetch('https://accounts.spotify.com/api/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type':  'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`),
-    },
-    body: 'grant_type=client_credentials',
-    timeout: 6000,
-  })
-
-  if (!json?.access_token) return null
-  _spotifyToken    = json.access_token
-  _tokenExpiresAt  = Date.now() + (json.expires_in - 60) * 1000
-  return _spotifyToken
-}
+// ── Spotify (via Edge Function — секрет хранится на сервере) ─────────────────
 
 async function fetchSpotifyCover(track, artist) {
-  const token = await getSpotifyToken()
-  if (!token) return null
-
+  if (!SUPABASE_URL) return null
   const params = new URLSearchParams({
-    q: `track:${cleanName(track)} artist:${cleanName(artist)}`,
-    type: 'track',
-    limit: '1',
+    track:  cleanName(track),
+    artist: cleanName(artist),
   })
   const json = await safeFetch(
-    `https://api.spotify.com/v1/search?${params}`,
-    { headers: { Authorization: `Bearer ${token}` }, timeout: 5000 }
+    `${SUPABASE_URL}/functions/v1/spotify-cover?${params}`,
+    { timeout: 6000 }
   )
-  return json?.tracks?.items?.[0]?.album?.images?.[0]?.url ?? null
+  return json?.url ?? null
 }
 
 // ── iTunes ────────────────────────────────────────────────────────────────────
