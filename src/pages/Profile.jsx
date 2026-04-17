@@ -204,6 +204,13 @@ export default function Profile() {
     setRefreshing(true)
     try {
       const rows = await getFriendships(currentUser.id)
+
+      // DEBUG — убрать после диагностики
+      window.Telegram?.WebApp?.showAlert?.(
+        `rows=${rows.length} myId=${currentUser.id.slice(0, 8)}\n` +
+        rows.map((r) => `${r.status} req=${r.requester_id.slice(0,6)} rec=${r.receiver_id.slice(0,6)}`).join('\n')
+      )
+
       const accepted = []
       const incoming = []
       for (const f of rows) {
@@ -217,7 +224,7 @@ export default function Profile() {
       setFriends(accepted)
       setIncomingRequests(incoming)
     } catch (err) {
-      console.error('[Profile] refresh friends error:', err)
+      window.Telegram?.WebApp?.showAlert?.(`ERROR: ${err?.message}`)
     } finally {
       setRefreshing(false)
     }
