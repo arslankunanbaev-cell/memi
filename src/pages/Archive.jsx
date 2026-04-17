@@ -286,7 +286,7 @@ export default function Archive() {
           >
             <span
               className="font-serif"
-              style={{ fontSize: typeof s.value === 'number' ? 24 : 14, color: 'var(--accent)', fontWeight: 300, lineHeight: 1.1 }}
+              style={{ fontSize: 26, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
             >
               {s.value}
             </span>

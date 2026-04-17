@@ -327,7 +327,7 @@ export default function Profile() {
             >
               <span
                 className="font-serif"
-                style={{ fontSize: typeof s.value === 'number' ? 29 : 14, color: 'var(--accent)', fontWeight: 600, lineHeight: 1.1 }}
+                style={{ fontSize: 31, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
               >
                 {s.value}
               </span>
