@@ -129,7 +129,8 @@ async function drawPolaroid(canvas, moment) {
   const inset = 28
   roundRectClip(ctx, -frameW / 2 + inset, -frameH / 2 + inset, frameW - inset * 2, photoH - inset, 4)
   await drawPhoto(ctx, moment, -frameW / 2 + inset, -frameH / 2 + inset, frameW - inset * 2, photoH - inset)
-  ctx.restore()
+  ctx.restore() // pop roundRectClip's save
+  ctx.restore() // pop rotation/translation save
 
   // Mood emoji top-right of frame
   if (moment.mood) {
