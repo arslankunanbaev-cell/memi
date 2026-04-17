@@ -10,12 +10,12 @@ export default function MomentCard({ moment }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
-      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
+      className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer flex"
+      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)', minHeight: 120 }}
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
-      {/* Photo / gradient top */}
-      <div style={{ position: 'relative', height: 130, overflow: 'hidden' }}>
+      {/* Left: Photo */}
+      <div style={{ position: 'relative', width: 120, flexShrink: 0 }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
@@ -31,25 +31,29 @@ export default function MomentCard({ moment }) {
             }}
           />
         )}
-
-        {/* Gradient overlay */}
+        {/* subtle right-side fade to blend into card body */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(23,20,14,0.55) 0%, transparent 55%)',
+            background: 'linear-gradient(to right, transparent 60%, rgba(237,230,220,0.45) 100%)',
           }}
         />
+      </div>
 
+      {/* Right: Content */}
+      <div
+        style={{
+          flex: 1,
+          padding: '10px 12px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          minWidth: 0,
+        }}
+      >
         {/* Title pill */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 8,
-            left: 8,
-            maxWidth: 'calc(100% - 16px)',
-          }}
-        >
+        <div>
           <span
             className="font-serif"
             style={{
@@ -59,7 +63,7 @@ export default function MomentCard({ moment }) {
               borderRadius: 9999,
               padding: '5px 14px',
               fontSize: 14,
-              fontWeight: 400,
+              fontWeight: 600,
               letterSpacing: '0.2px',
               maxWidth: '100%',
               overflow: 'hidden',
@@ -70,39 +74,32 @@ export default function MomentCard({ moment }) {
             {moment.title}
           </span>
         </div>
-      </div>
 
-      {/* Body */}
-      <div style={{ padding: '10px 12px', borderRadius: '0 0 14px 14px' }}>
         {/* Description */}
         {moment.description && (
           <p
             className="font-sans"
             style={{
-              fontSize: 13,
+              fontSize: 12,
               color: 'var(--mid)',
-              lineHeight: 1.55,
+              lineHeight: 1.5,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              marginBottom: 8,
+              margin: 0,
             }}
           >
             {moment.description}
           </p>
         )}
 
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
         {/* Song row */}
         {moment.song_title && (
-          <div
-            className="flex items-center gap-2"
-            style={{
-              borderTop: '0.5px solid var(--base)',
-              paddingTop: 7,
-              marginBottom: 7,
-            }}
-          >
+          <div className="flex items-center gap-2">
             {moment.song_cover ? (
               <img
                 src={moment.song_cover}
@@ -114,13 +111,13 @@ export default function MomentCard({ moment }) {
                 style={{
                   width: 28,
                   height: 28,
-                  borderRadius: 4,
-                  backgroundColor: 'var(--surface)',
+                  borderRadius: 5,
+                  backgroundColor: 'var(--base)',
                   flexShrink: 0,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 12,
+                  fontSize: 13,
                 }}
               >
                 🎵
@@ -130,20 +127,18 @@ export default function MomentCard({ moment }) {
               <p
                 className="font-sans"
                 style={{
-                  fontSize: 13,
+                  fontSize: 12,
                   color: 'var(--text)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
+                  margin: 0,
                 }}
               >
                 {moment.song_title}
               </p>
               {moment.song_artist && (
-                <p
-                  className="font-sans"
-                  style={{ fontSize: 12, color: 'var(--soft)' }}
-                >
+                <p className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', margin: 0 }}>
                   {moment.song_artist}
                 </p>
               )}
@@ -153,7 +148,6 @@ export default function MomentCard({ moment }) {
 
         {/* Meta row */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* People avatars */}
           {hasPeople && (
             <div className="flex -space-x-1">
               {moment.people.slice(0, 3).map((p) => (
@@ -176,17 +170,15 @@ export default function MomentCard({ moment }) {
             </div>
           )}
 
-          {/* Time */}
-          <span className="font-sans" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>
             {formatTime(moment.created_at)}
           </span>
 
-          {/* Location pill */}
           {moment.location && (
             <span
               className="font-sans"
               style={{
-                fontSize: 10,
+                fontSize: 11,
                 color: 'var(--mid)',
                 backgroundColor: 'var(--base)',
                 borderRadius: 9999,
@@ -197,7 +189,6 @@ export default function MomentCard({ moment }) {
             </span>
           )}
 
-          {/* Mood emoji */}
           {moment.mood && (
             <span style={{ fontSize: 13 }}>{moment.mood}</span>
           )}
