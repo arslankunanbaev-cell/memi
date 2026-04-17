@@ -188,10 +188,10 @@ export default function Profile() {
   const moments           = useAppStore((s) => s.moments)
   const people            = useAppStore((s) => s.people)
   const capsule           = useAppStore((s) => s.capsule)
-  const friends           = useAppStore((s) => s.friends)
-  const incomingRequests  = useAppStore((s) => s.incomingRequests)
-  const setFriends        = useAppStore((s) => s.setFriends)
-  const setIncomingRequests = useAppStore((s) => s.setIncomingRequests)
+  const friends             = useAppStore((s) => s.friends)           ?? []
+  const incomingRequests    = useAppStore((s) => s.incomingRequests)  ?? []
+  const setFriends          = useAppStore((s) => s.setFriends)        ?? (() => {})
+  const setIncomingRequests = useAppStore((s) => s.setIncomingRequests) ?? (() => {})
   const addToCapsule      = useAppStore((s) => s.addToCapsule)
   const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
 
