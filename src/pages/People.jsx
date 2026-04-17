@@ -203,6 +203,7 @@ export default function People() {
 
   const [showAdd, setShowAdd]       = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [tab, setTab]               = useState('people')
 
   async function handleRefreshFriends() {
     if (refreshing || !currentUser?.id) return
@@ -268,141 +269,174 @@ export default function People() {
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Топбар */}
-      <div
-        className="flex items-center justify-between px-4 pt-topbar"
-        style={{ paddingBottom: 12 }}
-      >
-        <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18, color: 'var(--accent)' }}
-        >
-          +
-        </button>
+      <div className="px-4 pt-topbar" style={{ paddingBottom: 0 }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+          <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
+          {tab === 'people' && (
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center justify-center transition-opacity active:opacity-60"
+              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18, color: 'var(--accent)' }}
+            >
+              +
+            </button>
+          )}
+          {tab === 'friends' && (
+            <button
+              onClick={handleInvite}
+              className="font-sans font-medium transition-opacity active:opacity-60"
+              style={{ fontSize: 13, color: 'var(--accent)', background: 'none', border: 'none', padding: 0 }}
+            >
+              + Пригласить
+            </button>
+          )}
+        </div>
+
+        {/* Таб-переключатель */}
+        <div className="flex gap-2" style={{ marginBottom: 14 }}>
+          {[{ id: 'people', label: 'Люди' }, { id: 'friends', label: 'Друзья' }].map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="font-sans font-medium transition-opacity active:opacity-70"
+              style={{
+                fontSize: 15,
+                padding: '7px 20px',
+                borderRadius: 9999,
+                border: 'none',
+                cursor: 'pointer',
+                backgroundColor: tab === id ? 'var(--accent)' : 'var(--surface)',
+                color: tab === id ? '#fff' : 'var(--mid)',
+              }}
+            >
+              {label}
+              {id === 'friends' && friends.length > 0 && (
+                <span style={{ marginLeft: 6, fontSize: 13, opacity: 0.8 }}>{friends.length}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Контент */}
       <div className="flex-1 overflow-y-auto pb-28 px-4">
 
-        {/* ── Секция Люди ── */}
-        <p className="font-sans font-semibold mb-2" style={{ fontSize: 12, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Люди
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingBottom: 8 }}>
-          {people.map((p) => (
-            <PersonCard
-              key={p.id}
-              person={p}
-              momentCount={momentCountFor(p.id)}
-              lastPhotos={lastPhotosFor(p.id)}
-              onClick={() => navigate(`/people/${p.id}`)}
-            />
-          ))}
-
-          {/* Ячейка "Добавить" */}
-          <button
-            onClick={() => setShowAdd(true)}
-            className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
-            style={{
-              borderRadius: 14, minHeight: 110,
-              border: '1.5px dashed rgba(217,139,82,0.35)',
-              backgroundColor: 'transparent',
-              cursor: 'pointer',
-            }}
-          >
-            <div
-              className="flex items-center justify-center rounded-full"
-              style={{ width: 32, height: 32, backgroundColor: 'rgba(217,139,82,0.15)' }}
-            >
-              <span style={{ fontSize: 18, color: 'var(--accent)', lineHeight: 1 }}>+</span>
-            </div>
-            <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Добавить</span>
-          </button>
-        </div>
-
-        {/* ── Разделитель ── */}
-        <div style={{ height: 1, backgroundColor: 'var(--surface)', margin: '8px 0 16px' }} />
-
-        {/* ── Секция Друзья ── */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <p className="font-sans font-semibold" style={{ fontSize: 12, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Друзья
-              {friends.length > 0 && (
-                <span className="font-sans font-normal" style={{ color: 'var(--soft)', marginLeft: 6 }}>
-                  {friends.length}
-                </span>
-              )}
-            </p>
+        {/* ── Вкладка Люди ── */}
+        {tab === 'people' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 4, paddingBottom: 8 }}>
+            {people.map((p) => (
+              <PersonCard
+                key={p.id}
+                person={p}
+                momentCount={momentCountFor(p.id)}
+                lastPhotos={lastPhotosFor(p.id)}
+                onClick={() => navigate(`/people/${p.id}`)}
+              />
+            ))}
             <button
-              onClick={handleRefreshFriends}
-              className="transition-opacity active:opacity-60"
-              style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1 }}
+              onClick={() => setShowAdd(true)}
+              className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
+              style={{
+                borderRadius: 14, minHeight: 110,
+                border: '1.5px dashed rgba(217,139,82,0.35)',
+                backgroundColor: 'transparent',
+                cursor: 'pointer',
+              }}
             >
-              <span style={{ fontSize: 13, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
-                ↻
-              </span>
-            </button>
-          </div>
-          <button
-            onClick={handleInvite}
-            className="font-sans font-medium transition-opacity active:opacity-60"
-            style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', padding: 0 }}
-          >
-            + Пригласить
-          </button>
-        </div>
-
-        {/* Входящие заявки */}
-        {incomingRequests.map((req) => (
-          <div
-            key={req.friendship_id}
-            className="flex items-center gap-3 mb-2 px-3 py-3 rounded-xl"
-            style={{ backgroundColor: 'var(--surface)' }}
-          >
-            <div
-              className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-              style={{ width: 34, height: 34, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 14, overflow: 'hidden' }}
-            >
-              {req.photo_url
-                ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : req.name?.[0]?.toUpperCase() ?? '?'}
-            </div>
-            <p className="font-sans flex-1" style={{ fontSize: 13, color: 'var(--text)' }}>{req.name}</p>
-            <button
-              onClick={() => handleAccept(req)}
-              className="font-sans font-medium transition-opacity active:opacity-70"
-              style={{ fontSize: 12, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '5px 12px' }}
-            >
-              Принять
-            </button>
-          </div>
-        ))}
-
-        {/* Список друзей */}
-        {friends.length === 0 && incomingRequests.length === 0 && (
-          <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)' }}>
-            Пока нет друзей — пригласи первого
-          </p>
-        )}
-        {friends.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {friends.map((f) => (
               <div
-                key={f.friendship_id}
-                className="flex items-center gap-2 px-3 py-2 rounded-full"
+                className="flex items-center justify-center rounded-full"
+                style={{ width: 32, height: 32, backgroundColor: 'rgba(217,139,82,0.15)' }}
+              >
+                <span style={{ fontSize: 18, color: 'var(--accent)', lineHeight: 1 }}>+</span>
+              </div>
+              <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Добавить</span>
+            </button>
+          </div>
+        )}
+
+        {/* ── Вкладка Друзья ── */}
+        {tab === 'friends' && (
+          <div className="flex flex-col" style={{ paddingTop: 4, gap: 10 }}>
+            {/* Кнопка обновить */}
+            <div className="flex items-center justify-between">
+              <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>
+                {friends.length + incomingRequests.length === 0 ? 'Пока нет друзей' : `${friends.length + incomingRequests.length} ${friends.length + incomingRequests.length === 1 ? 'человек' : 'человека'}`}
+              </p>
+              <button
+                onClick={handleRefreshFriends}
+                className="transition-opacity active:opacity-60"
+                style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1 }}
+              >
+                <span style={{ fontSize: 16, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
+                  ↻
+                </span>
+              </button>
+            </div>
+
+            {/* Входящие заявки */}
+            {incomingRequests.length > 0 && (
+              <p className="font-sans font-medium" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: -2 }}>
+                Заявки
+              </p>
+            )}
+            {incomingRequests.map((req) => (
+              <div
+                key={req.friendship_id}
+                className="flex items-center gap-4 px-4 py-3 rounded-2xl"
                 style={{ backgroundColor: 'var(--surface)' }}
               >
                 <div
                   className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                  style={{ width: 22, height: 22, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 10, overflow: 'hidden' }}
+                  style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
+                >
+                  {req.photo_url
+                    ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : req.name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+                <p className="font-sans flex-1" style={{ fontSize: 15, color: 'var(--text)' }}>{req.name}</p>
+                <button
+                  onClick={() => handleAccept(req)}
+                  className="font-sans font-medium transition-opacity active:opacity-70"
+                  style={{ fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '7px 16px' }}
+                >
+                  Принять
+                </button>
+              </div>
+            ))}
+
+            {/* Список друзей */}
+            {friends.length > 0 && incomingRequests.length > 0 && (
+              <p className="font-sans font-medium" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: -2 }}>
+                Друзья
+              </p>
+            )}
+            {friends.length === 0 && incomingRequests.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 48 }}>
+                <p className="font-sans" style={{ fontSize: 15, color: 'var(--soft)' }}>Пока нет друзей</p>
+                <button
+                  onClick={handleInvite}
+                  className="font-sans font-medium transition-opacity active:opacity-70"
+                  style={{ fontSize: 14, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '10px 24px' }}
+                >
+                  Пригласить первого
+                </button>
+              </div>
+            )}
+            {friends.map((f) => (
+              <div
+                key={f.friendship_id}
+                className="flex items-center gap-4 px-4 py-3 rounded-2xl"
+                style={{ backgroundColor: 'var(--surface)' }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
+                  style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
                 >
                   {f.photo_url
                     ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : f.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <span className="font-sans" style={{ fontSize: 12, color: 'var(--text)' }}>{f.name}</span>
+                <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>{f.name}</span>
               </div>
             ))}
           </div>
