@@ -39,17 +39,29 @@ export default function App() {
           window.Telegram.WebApp.expand()
         }
 
-        console.log('[App] ══ INIT START ══')
-        console.log('[App] TG WebApp:', window.Telegram?.WebApp)
-        console.log('[App] TG user:', window.Telegram?.WebApp?.initDataUnsafe?.user)
+        // ── Валидируем Telegram initData через Edge Function ──────────────────
+        const initData = window.Telegram?.WebApp?.initData ?? 'dev'
+        const authRes = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
+          {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ initData }),
+          }
+        )
+        if (!authRes.ok) {
+          const err = await authRes.json().catch(() => ({}))
+          throw new Error(err.error ?? 'Auth failed')
+        }
+        const { access_token } = await authRes.json()
 
-        // Определяем пользователя (Telegram или dev-fallback)
-        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
-          ?? { id: 12345, first_name: 'Dev', last_name: 'User' }
-
-        console.log('[App] resolved tgUser:', tgUser)
+        // Устанавливаем сессию — теперь auth.uid() работает во всех запросах
+        const { supabase } = await import('./lib/supabase')
+        await supabase.auth.setSession({ access_token, refresh_token: access_token })
 
         // Сохраняем / получаем пользователя из БД
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
+          ?? { id: 12345, first_name: 'Dev', last_name: 'User' }
         const { user, isNew } = await saveUser(tgUser)
         console.log('[App] ✅ user:', user.id, '| isNew:', isNew)
 
