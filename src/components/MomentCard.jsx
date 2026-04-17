@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function formatTime(iso) {
@@ -6,6 +7,7 @@ function formatTime(iso) {
 
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
+  const [expanded, setExpanded] = useState(false)
   const allPeople = [
     ...(moment.people ?? []),
     ...(moment.taggedFriends ?? []).map((u) => ({ ...u, avatar_color: null })),
@@ -14,12 +16,12 @@ export default function MomentCard({ moment }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
+      className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
-      onClick={() => navigate(`/moment/${moment.id}`)}
+      onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
     >
       {/* Photo / gradient top */}
-      <div style={{ position: 'relative', height: 210, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: expanded ? 275 : 225, overflow: 'hidden', transition: 'height 0.3s ease' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
