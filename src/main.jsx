@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './styles/globals.css'
 import App from './App'
 
-if (import.meta.env.DEV || window.location.search.includes('debug')) {
+if (import.meta.env.DEV) {
   import('https://cdn.jsdelivr.net/npm/eruda').then(m => (m.default || m).init())
 }
 

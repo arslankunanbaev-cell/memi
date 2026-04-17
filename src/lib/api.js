@@ -5,7 +5,6 @@ import { assertSupabase } from './supabase'
 // Возвращает { user, isNew }
 // isNew = true если пользователь только что создан, false если уже был
 export async function saveUser(tgUser) {
-  console.log('[saveUser] called with:', JSON.stringify(tgUser))
   const sb = assertSupabase()
 
   // ── 1. Проверяем — существует ли уже ───────────────────────────────────────
@@ -16,12 +15,11 @@ export async function saveUser(tgUser) {
     .maybeSingle()   // не бросает ошибку если 0 строк (в отличие от .single())
 
   if (selectError) {
-    console.error('[saveUser] ❌ select error:', JSON.stringify(selectError, null, 2))
+    console.error('[saveUser] select error:', selectError.code, selectError.message)
     throw selectError
   }
 
   if (existing) {
-    console.log('[saveUser] ✅ existing user:', JSON.stringify(existing))
     // Обновляем имя и фото на случай если пользователь сменил их в Telegram
     const newName     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
     const newPhotoUrl = tgUser.photo_url ?? null
@@ -45,11 +43,10 @@ export async function saveUser(tgUser) {
     .single()
 
   if (insertError) {
-    console.error('[saveUser] ❌ insert error:', JSON.stringify(insertError, null, 2))
+    console.error('[saveUser] insert error:', insertError.code, insertError.message)
     throw insertError
   }
 
-  console.log('[saveUser] ✅ new user created:', JSON.stringify(newUser))
   return { user: newUser, isNew: true }
 }
 
@@ -72,36 +69,26 @@ export async function getMoments(userId) {
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
   const sb = assertSupabase()
 
-  console.log('[saveMoment] called with:', {
-    userId,
-    fields,
-    hasPhoto: !!photoFile,
-    peopleIds,
-  })
-
   if (!userId || userId === 'local') {
-    console.error('[saveMoment] ❌ userId is missing or "local" — currentUser not loaded yet')
+    console.error('[saveMoment] userId is missing or "local"')
   }
 
   let photo_url = null
   if (photoFile) {
     const ext = photoFile.name.split('.').pop() || 'jpg'
     const path = `${userId}/${Date.now()}.${ext}`
-    console.log('[saveMoment] uploading photo to:', path)
     const { error: uploadError } = await sb.storage
       .from('photos')
       .upload(path, photoFile, { contentType: photoFile.type, upsert: false })
     if (uploadError) {
-      console.error('[saveMoment] ❌ photo upload error:', JSON.stringify(uploadError, null, 2))
+      console.error('[saveMoment] photo upload error:', uploadError.code, uploadError.message)
       throw uploadError
     }
     const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
     photo_url = urlData.publicUrl
-    console.log('[saveMoment] photo uploaded, url:', photo_url)
   }
 
   const insertPayload = { user_id: userId, ...fields, photo_url }
-  console.log('[saveMoment] inserting moment:', JSON.stringify(insertPayload, null, 2))
 
   const { data: moment, error: momentError } = await sb
     .from('moments')
@@ -110,24 +97,15 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     .single()
 
   if (momentError) {
-    console.error('[saveMoment] ❌ insert error:', JSON.stringify(momentError, null, 2))
-    console.error('[saveMoment] ❌ insert error details:', {
-      message: momentError.message,
-      code: momentError.code,
-      details: momentError.details,
-      hint: momentError.hint,
-    })
+    console.error('[saveMoment] insert error:', momentError.code, momentError.message)
     throw momentError
   }
 
-  console.log('[saveMoment] ✅ moment saved:', moment.id)
-
   if (peopleIds?.length > 0) {
     const rows = peopleIds.map((person_id) => ({ moment_id: moment.id, person_id }))
-    console.log('[saveMoment] linking people:', rows)
     const { error: linkError } = await sb.from('moment_people').insert(rows)
     if (linkError) {
-      console.error('[saveMoment] ❌ people link error:', JSON.stringify(linkError, null, 2))
+      console.error('[saveMoment] people link error:', linkError.code, linkError.message)
       throw linkError
     }
   }
