@@ -199,8 +199,9 @@ export default function Profile() {
   const [addMomentSlot, setAddMomentSlot] = useState(null)
 
   function handleInvite() {
-    const tgId      = currentUser?.telegram_id
-    const botName   = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
+    const tgId    = currentUser?.telegram_id
+      ?? window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
     const link      = `https://t.me/${botName}?start=ref_${tgId}`
     if (window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}`)

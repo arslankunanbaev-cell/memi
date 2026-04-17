@@ -70,43 +70,53 @@ export default function App() {
           console.warn('[App] ⚠ friend request failed (non-fatal):', refErr?.message)
         }
 
-        // Загружаем people + moments + capsule + friendships + shared параллельно
-        const [fetchedPeople, fetchedMoments, fetchedCapsule, fetchedFriendships, fetchedShared] = await Promise.all([
+        // ── Критический блок — те же запросы что были до социальных фич ─────────
+        const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
           getPeople(user.id),
           getMoments(user.id),
           getCapsule(user.id),
-          getFriendships(user.id).catch(() => []),
-          getSharedMoments(user.id).catch(() => []),
         ])
         setPeople(fetchedPeople)
-
-        // Merge own + shared moments, deduplicating by id
-        const ownIds = new Set(fetchedMoments.map((m) => m.id))
-        const allMoments = [
-          ...fetchedMoments,
-          ...fetchedShared.filter((m) => !ownIds.has(m.id)),
-        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        setMoments(allMoments)
-
+        setMoments(fetchedMoments)
         setCapsule(fetchedCapsule)
-
-        // Split friendships into accepted friends + incoming pending requests
-        const accepted = []
-        const incoming = []
-        for (const f of fetchedFriendships) {
-          if (f.status === 'accepted') {
-            const friend = f.requester_id === user.id ? f.receiver : f.requester
-            accepted.push({ ...friend, friendship_id: f.id })
-          } else if (f.status === 'pending' && f.receiver_id === user.id) {
-            incoming.push({ ...f.requester, friendship_id: f.id })
-          }
-        }
-        setFriends(accepted)
-        setIncomingRequests(incoming)
-
         setInitResult(user, isNew)
 
-        console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', allMoments.length, 'friends:', accepted.length)
+        console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', fetchedMoments.length)
+
+        // ── Социальные фичи — отдельно, никогда не ломают основной init ────────
+        try {
+          const [fetchedFriendships, fetchedShared] = await Promise.all([
+            getFriendships(user.id),
+            getSharedMoments(user.id),
+          ])
+
+          // Добавляем шаренные моменты в ленту (без дублей)
+          if (fetchedShared.length > 0) {
+            const ownIds = new Set(fetchedMoments.map((m) => m.id))
+            const merged = [
+              ...fetchedMoments,
+              ...fetchedShared.filter((m) => !ownIds.has(m.id)),
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            setMoments(merged)
+          }
+
+          // Разбиваем дружбы на принятых и входящие
+          const accepted = []
+          const incoming = []
+          for (const f of fetchedFriendships) {
+            if (f.status === 'accepted') {
+              const friend = f.requester_id === user.id ? f.receiver : f.requester
+              if (friend) accepted.push({ ...friend, friendship_id: f.id })
+            } else if (f.status === 'pending' && f.receiver_id === user.id) {
+              if (f.requester) incoming.push({ ...f.requester, friendship_id: f.id })
+            }
+          }
+          setFriends(accepted)
+          setIncomingRequests(incoming)
+          console.log('[App] ✅ friends:', accepted.length, 'requests:', incoming.length)
+        } catch (socialErr) {
+          console.warn('[App] ⚠ social load failed (non-fatal):', socialErr?.message)
+        }
         console.log('[App] ══ INIT END — navigating to:', isNew ? '/onboarding' : '/home')
 
         // Навигация — вся логика здесь, Splash ничего не решает
