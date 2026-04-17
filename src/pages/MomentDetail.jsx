@@ -88,7 +88,7 @@ export default function MomentDetail() {
           <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
             <h1
               className="font-serif uppercase"
-              style={{ fontSize: 36, color: '#fff', fontWeight: 400, lineHeight: 1.1, letterSpacing: '1.5px' }}
+              style={{ fontSize: 40, color: '#fff', fontWeight: 600, lineHeight: 1.1, letterSpacing: '1.5px' }}
             >
               {moment.title}
             </h1>
@@ -98,13 +98,13 @@ export default function MomentDetail() {
         {/* Body */}
         <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* Date */}
-          <p className="font-sans" style={{ fontSize: 10, color: 'var(--soft)', letterSpacing: '0.3px' }}>
+          <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', letterSpacing: '0.3px' }}>
             {formatFull(moment.created_at)}
           </p>
 
           {/* Description */}
           {moment.description && (
-            <p className="font-sans" style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.6 }}>
+            <p className="font-sans" style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.6 }}>
               {moment.description}
             </p>
           )}
@@ -116,14 +116,14 @@ export default function MomentDetail() {
               style={{ backgroundColor: 'var(--surface)', borderRadius: 12, padding: '9px 11px' }}
             >
               {moment.song_cover ? (
-                <img src={moment.song_cover} alt={moment.song_title} style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                <img src={moment.song_cover} alt={moment.song_title} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 32, height: 32, borderRadius: 6, backgroundColor: 'var(--base)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>🎵</div>
+                <div style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: 'var(--base)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>🎵</div>
               )}
               <div className="min-w-0">
-                <p className="font-sans font-medium" style={{ fontSize: 11, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment.song_title}</p>
+                <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment.song_title}</p>
                 {moment.song_artist && (
-                  <p className="font-sans" style={{ fontSize: 9, color: 'var(--mid)' }}>{moment.song_artist}</p>
+                  <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>{moment.song_artist}</p>
                 )}
               </div>
             </div>
@@ -142,14 +142,14 @@ export default function MomentDetail() {
                       <div
                         key={p.id}
                         className="flex items-center justify-center rounded-full font-sans font-medium text-white"
-                        style={{ width: 16, height: 16, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 8, border: '1.5px solid var(--base)', flexShrink: 0 }}
+                        style={{ width: 24, height: 24, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 11, border: '1.5px solid var(--base)', flexShrink: 0 }}
                         title={p.name}
                       >
                         {p.name[0].toUpperCase()}
                       </div>
                     ))}
                   </div>
-                  <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)' }}>
+                  <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>
                     {moment.people.map((p) => p.name).join(', ')}
                   </span>
                 </div>
@@ -157,7 +157,7 @@ export default function MomentDetail() {
               {moment.location && (
                 <span
                   className="font-sans flex items-center gap-1"
-                  style={{ fontSize: 10, color: 'var(--mid)', backgroundColor: 'var(--surface)', borderRadius: 9999, padding: '3px 8px' }}
+                  style={{ fontSize: 12, color: 'var(--mid)', backgroundColor: 'var(--surface)', borderRadius: 9999, padding: '4px 10px' }}
                 >
                   📍 {moment.location}
                 </span>
