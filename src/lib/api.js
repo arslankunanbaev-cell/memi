@@ -258,14 +258,17 @@ export async function sendFriendRequest(requesterId, receiverId) {
 export async function getFriendships(userId) {
   const sb = assertSupabase()
 
-  const { data: rows, error } = await sb
-    .from('friendships')
-    .select('id, status, requester_id, receiver_id')
-    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
-  if (error) throw error
-  if (!rows?.length) return []
+  // Two separate queries instead of .or() to avoid PostgREST filter issues
+  const [{ data: asSender, error: e1 }, { data: asReceiver, error: e2 }] = await Promise.all([
+    sb.from('friendships').select('id, status, requester_id, receiver_id').eq('requester_id', userId),
+    sb.from('friendships').select('id, status, requester_id, receiver_id').eq('receiver_id', userId),
+  ])
+  if (e1) throw e1
+  if (e2) throw e2
 
-  // Fetch user details for all involved users in one query
+  const rows = [...(asSender ?? []), ...(asReceiver ?? [])]
+  if (!rows.length) return []
+
   const userIds = [...new Set(rows.flatMap((f) => [f.requester_id, f.receiver_id]))]
   const { data: users, error: usersErr } = await sb
     .from('users')
