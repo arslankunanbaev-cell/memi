@@ -229,8 +229,7 @@ export default function EditMoment() {
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+        className="flex items-center justify-between px-4 py-4 pt-topbar"
       >
         <button
           onClick={() => navigate(-1)}
@@ -257,7 +256,7 @@ export default function EditMoment() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-10 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-6">
         {/* Error */}
         {error && (
           <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>

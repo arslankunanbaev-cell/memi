@@ -67,4 +67,8 @@
   .pt-safe {
     padding-top: max(0px, env(safe-area-inset-top));
   }
+  /* Standard screen top padding: 24px min, respects notch */
+  .pt-topbar {
+    padding-top: max(1.5rem, env(safe-area-inset-top));
+  }
 }

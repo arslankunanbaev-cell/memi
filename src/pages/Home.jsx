@@ -59,7 +59,7 @@ export default function Home() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
         /* ── Empty state ── */
-        <div className="flex-1 flex flex-col items-center justify-center px-8 gap-5 pb-20">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-20">
           {/* Central FAB-like circle */}
           <div
             className="flex items-center justify-center"
@@ -108,12 +108,12 @@ export default function Home() {
         <>
           {/* Topbar */}
           <div
-            className="flex items-center justify-between px-5 pt-safe"
-            style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))', paddingBottom: 12 }}
+            className="flex items-center justify-between px-4 pt-topbar"
+            style={{ paddingBottom: 12 }}
           >
             <h1
               className="font-serif"
-              style={{ fontSize: 20, letterSpacing: '2px', color: 'var(--text)', fontWeight: 300 }}
+              style={{ fontSize: 28, color: 'var(--text)', fontWeight: 600 }}
             >
               memi
             </h1>
@@ -130,8 +130,8 @@ export default function Home() {
             {groups.map((group) => (
               <div key={group.label} className="mb-5">
                 <p
-                  className="font-sans uppercase tracking-widest mb-3"
-                  style={{ fontSize: 10, color: 'var(--soft)' }}
+                  className="font-sans uppercase tracking-widest mb-3 font-semibold"
+                  style={{ fontSize: 12, color: 'var(--soft)' }}
                 >
                   {group.label}
                 </p>

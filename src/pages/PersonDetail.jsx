@@ -225,7 +225,7 @@ export default function PersonDetail() {
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{
             position: 'absolute',
-            top: 'max(0.75rem, env(safe-area-inset-top))',
+            top: 'max(1.5rem, env(safe-area-inset-top))',
             left: 16,
             width: 36, height: 36,
             borderRadius: '50%',
@@ -245,7 +245,7 @@ export default function PersonDetail() {
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{
             position: 'absolute',
-            top: 'max(0.75rem, env(safe-area-inset-top))',
+            top: 'max(1.5rem, env(safe-area-inset-top))',
             right: 16,
             width: 36, height: 36,
             borderRadius: '50%',

@@ -53,8 +53,7 @@ export default function MomentDetail() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
       <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        className="flex items-center justify-between px-4 py-3 pt-topbar"
       >
         <button
           onClick={() => navigate(-1)}

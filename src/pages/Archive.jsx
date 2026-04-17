@@ -173,8 +173,7 @@ export default function Archive() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
       <div
-        className="flex items-end justify-between px-5 pb-3"
-        style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+        className="flex items-end justify-between px-4 pb-3 pt-topbar"
       >
         <div>
           <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Архив</h2>

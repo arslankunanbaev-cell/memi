@@ -225,13 +225,12 @@ export default function Profile() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
       <div
-        className="px-5 pb-3"
-        style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}
+        className="px-4 pb-3 pt-topbar"
       >
         <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 pb-28 flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-28 flex flex-col gap-4">
         {/* Avatar + name */}
         <div className="flex items-center gap-4">
           <div

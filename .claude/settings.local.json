@@ -9,7 +9,25 @@
       "Bash(npx kill-port:*)",
       "Bash(curl -s http://localhost:5173/)",
       "Bash(node -e ':*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(ls D:\\\\Memi\\\\.env*)",
+      "mcp__figma-console__figma_get_selection",
+      "mcp__figma-console__figma_capture_screenshot",
+      "Bash(npx supabase *)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_a0f00002112d8fc337e72a72af5ba7824a12f46a npx supabase functions deploy send-card --project-ref emzrhwfjovjlxncwbptl --use-api)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_a0f00002112d8fc337e72a72af5ba7824a12f46a npx supabase secrets set TELEGRAM_BOT_TOKEN=8636902900:AAHG17R1XST9CFz5OY8gmHjgIFhZHXweT1g --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(npx vercel *)",
+      "Bash(vercel --prod)",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s \"https://ws.audioscrobbler.com/2.0/?method=track.search&track=bohemian+rhapsody&api_key=84b15a459a9507103170f425e1a4a14e&format=json&limit=1\")",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); t=data['results']['trackmatches']['track'][0]; print\\(json.dumps\\({'name':t['name'],'artist':t['artist'],'image':t.get\\('image',[]\\)} , indent=2\\)\\)\")",
+      "Bash(curl -s \"https://itunes.apple.com/search?term=bohemian+rhapsody+queen&media=music&entity=song&limit=1\")",
+      "Bash(curl -I \"https://itunes.apple.com/search?term=queen&media=music&entity=song&limit=1\")",
+      "Bash(npx netlify *)",
+      "Bash(curl -s \"http://localhost:5173/src/lib/musicCovers.js\")"
     ]
   }
 }
