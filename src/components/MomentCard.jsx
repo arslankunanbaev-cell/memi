@@ -19,7 +19,7 @@ export default function MomentCard({ moment }) {
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
       {/* Photo / gradient top */}
-      <div style={{ position: 'relative', height: 190, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: 210, overflow: 'hidden' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
