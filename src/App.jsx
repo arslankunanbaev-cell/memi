@@ -53,31 +53,6 @@ export default function App() {
         const { user, isNew } = await saveUser(tgUser)
         console.log('[App] ✅ user:', user.id, '| isNew:', isNew)
 
-        // ── Обрабатываем start_param (реферальная ссылка) ─────────────────────
-        try {
-          const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
-          const tgAlert = (msg) => window.Telegram?.WebApp?.showAlert?.(msg)
-
-          // DEBUG — убрать после подтверждения
-          tgAlert(`DEBUG start_param="${startParam}" tgUser.id=${tgUser.id}`)
-
-          if (startParam.startsWith('ref_')) {
-            const refTelegramId = Number(startParam.slice(4))
-            if (refTelegramId && refTelegramId !== tgUser.id) {
-              const refUser = await getUserByTelegramId(refTelegramId)
-              tgAlert(`DEBUG refUser=${refUser ? refUser.id : 'NOT FOUND'} myId=${user.id}`)
-              if (refUser) {
-                const result = await sendFriendRequest(user.id, refUser.id)
-                tgAlert(`DEBUG insert result=${JSON.stringify(result)}`)
-              }
-            } else {
-              tgAlert(`DEBUG skip: refTelegramId=${refTelegramId} same=${refTelegramId === tgUser.id}`)
-            }
-          }
-        } catch (refErr) {
-          window.Telegram?.WebApp?.showAlert?.(`DEBUG ERROR: ${refErr?.message}`)
-        }
-
         // ── Критический блок — те же запросы что были до социальных фич ─────────
         const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
           getPeople(user.id),
@@ -87,7 +62,7 @@ export default function App() {
         setPeople(fetchedPeople)
         setMoments(fetchedMoments)
         setCapsule(fetchedCapsule)
-        setInitResult(user, isNew)
+        setInitResult(user, isNew)  // ← пользователь загружен, таймер больше не страшен
 
         console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', fetchedMoments.length)
 
@@ -122,6 +97,21 @@ export default function App() {
           setFriends(accepted)
           setIncomingRequests(incoming)
           console.log('[App] ✅ friends:', accepted.length, 'requests:', incoming.length)
+
+          // ── start_param: отправляем заявку другу после полной инициализации ──
+          const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+          if (startParam.startsWith('ref_')) {
+            const refTelegramId = Number(startParam.slice(4))
+            if (refTelegramId && refTelegramId !== tgUser.id) {
+              const refUser = await getUserByTelegramId(refTelegramId)
+              if (refUser) {
+                await sendFriendRequest(user.id, refUser.id)
+                console.log('[App] ✅ friend request sent to:', refUser.id)
+              } else {
+                console.warn('[App] ⚠ ref user not found:', refTelegramId)
+              }
+            }
+          }
         } catch (socialErr) {
           console.warn('[App] ⚠ social load failed (non-fatal):', socialErr?.message)
         }
