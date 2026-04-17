@@ -56,13 +56,18 @@ export async function getMoments(userId) {
   const sb = assertSupabase()
   const { data, error } = await sb
     .from('moments')
-    .select(`*, people:moment_people(person:people(id, name, avatar_color, photo_url))`)
+    .select(`
+      *,
+      people:moment_people(person:people(id, name, avatar_color, photo_url)),
+      participants:moment_participants(user:users(id, name, photo_url))
+    `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
   return data.map((m) => ({
     ...m,
     people: (m.people ?? []).map((mp) => mp.person),
+    taggedFriends: (m.participants ?? []).map((mp) => mp.user).filter(Boolean),
   }))
 }
 

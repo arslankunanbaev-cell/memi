@@ -6,7 +6,11 @@ function formatTime(iso) {
 
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
-  const hasPeople = moment.people?.length > 0
+  const allPeople = [
+    ...(moment.people ?? []),
+    ...(moment.taggedFriends ?? []).map((u) => ({ ...u, avatar_color: null })),
+  ]
+  const hasPeople = allPeople.length > 0
 
   return (
     <div
@@ -145,7 +149,7 @@ export default function MomentCard({ moment }) {
           {/* People avatars */}
           {hasPeople && (
             <div className="flex -space-x-1" style={{ flexShrink: 0 }}>
-              {moment.people.slice(0, 3).map((p) => (
+              {allPeople.slice(0, 3).map((p) => (
                 <div
                   key={p.id}
                   className="flex items-center justify-center rounded-full font-sans font-medium text-white"
