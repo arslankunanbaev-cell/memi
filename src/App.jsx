@@ -56,18 +56,26 @@ export default function App() {
         // ── Обрабатываем start_param (реферальная ссылка) ─────────────────────
         try {
           const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+          const tgAlert = (msg) => window.Telegram?.WebApp?.showAlert?.(msg)
+
+          // DEBUG — убрать после подтверждения
+          tgAlert(`DEBUG start_param="${startParam}" tgUser.id=${tgUser.id}`)
+
           if (startParam.startsWith('ref_')) {
             const refTelegramId = Number(startParam.slice(4))
             if (refTelegramId && refTelegramId !== tgUser.id) {
               const refUser = await getUserByTelegramId(refTelegramId)
+              tgAlert(`DEBUG refUser=${refUser ? refUser.id : 'NOT FOUND'} myId=${user.id}`)
               if (refUser) {
-                await sendFriendRequest(user.id, refUser.id)
-                console.log('[App] ✅ friend request sent to:', refUser.id)
+                const result = await sendFriendRequest(user.id, refUser.id)
+                tgAlert(`DEBUG insert result=${JSON.stringify(result)}`)
               }
+            } else {
+              tgAlert(`DEBUG skip: refTelegramId=${refTelegramId} same=${refTelegramId === tgUser.id}`)
             }
           }
         } catch (refErr) {
-          console.warn('[App] ⚠ friend request failed (non-fatal):', refErr?.message)
+          window.Telegram?.WebApp?.showAlert?.(`DEBUG ERROR: ${refErr?.message}`)
         }
 
         // ── Критический блок — те же запросы что были до социальных фич ─────────
