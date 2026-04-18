@@ -146,6 +146,9 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
+  // Visibility
+  const [visibility, setVisibility] = useState('private')
+
   // Tagged friends (platform users, not local people)
   const [taggedFriends, setTaggedFriends] = useState([])
 
@@ -195,6 +198,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         description: body.trim() || null,
         mood: mood || null,
         location: location.trim() || null,
+        visibility,
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
@@ -571,6 +575,29 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             </div>
           </div>
         )}
+        {/* Visibility */}
+        <div>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+            Видимость
+          </p>
+          <div className="flex gap-2">
+            {[{ value: 'private', label: 'Только я' }, { value: 'public', label: 'Открыто' }].map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setVisibility(value)}
+                className="font-sans font-medium transition-opacity active:opacity-70"
+                style={{
+                  padding: '8px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
+                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--surface)',
+                  color: visibility === value ? '#fff' : 'var(--mid)',
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
       </div>
 
       {/* Song search bottom sheet */}

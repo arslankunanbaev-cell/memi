@@ -319,6 +319,38 @@ export async function getSharedMoments(userId) {
   }))
 }
 
+// ── Public profiles ───────────────────────────────────────────────────────────
+
+export async function getUserProfile(userId) {
+  const sb = assertSupabase()
+  try {
+    const [{ data: user }, { data: moments, count }] = await Promise.all([
+      sb.from('users').select('id, name, photo_url, created_at').eq('id', userId).maybeSingle(),
+      sb.from('moments').select('id, title, photo_url, created_at, visibility', { count: 'exact' })
+        .eq('user_id', userId).eq('visibility', 'public').order('created_at', { ascending: false }),
+    ])
+    return { user: user ?? null, moments: moments ?? [], total: count ?? 0 }
+  } catch {
+    return { user: null, moments: [], total: 0 }
+  }
+}
+
+export async function getPublicMoments(userId) {
+  const sb = assertSupabase()
+  try {
+    const { data, error } = await sb
+      .from('moments')
+      .select('id, title, photo_url, created_at, visibility')
+      .eq('user_id', userId)
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+    if (error) return []
+    return data ?? []
+  } catch {
+    return []
+  }
+}
+
 // ── Capsule ───────────────────────────────────────────────────────────────────
 
 export async function getCapsule(userId) {

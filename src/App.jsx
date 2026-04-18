@@ -14,6 +14,7 @@ import MomentSaved from './pages/MomentSaved'
 import StoryPreview from './pages/StoryPreview'
 import StoryPreviewScreen from './pages/StoryPreviewScreen'
 import EditMoment from './pages/EditMoment'
+import PublicProfile from './pages/PublicProfile'
 
 export default function App() {
   const navigate   = useNavigate()
@@ -165,6 +166,7 @@ export default function App() {
       <Route path="/story/:id"         element={<StoryPreview />} />
       <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
       <Route path="/edit-moment/:id"   element={<EditMoment />} />
+      <Route path="/profile/:userId"   element={<PublicProfile />} />
       <Route path="*"                  element={<Navigate to="/" replace />} />
     </Routes>
   )

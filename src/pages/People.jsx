@@ -423,10 +423,11 @@ export default function People() {
               </div>
             )}
             {friends.map((f) => (
-              <div
+              <button
                 key={f.friendship_id}
-                className="flex items-center gap-4 px-4 py-3 rounded-2xl"
-                style={{ backgroundColor: 'var(--surface)' }}
+                onClick={() => navigate(`/profile/${f.id}`)}
+                className="flex items-center gap-4 px-4 py-3 rounded-2xl w-full transition-opacity active:opacity-70"
+                style={{ backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
               >
                 <div
                   className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
@@ -436,8 +437,9 @@ export default function People() {
                     ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : f.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>{f.name}</span>
-              </div>
+                <span className="font-sans flex-1 text-left" style={{ fontSize: 15, color: 'var(--text)' }}>{f.name}</span>
+                <span style={{ fontSize: 18, color: 'var(--soft)' }}>›</span>
+              </button>
             ))}
           </div>
         )}
