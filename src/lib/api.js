@@ -378,11 +378,19 @@ export async function getCapsule(userId) {
 
 export async function saveCapsuleSlot(userId, slotIndex, momentId) {
   const sb = assertSupabase()
-  await sb.from('capsule').delete().eq('user_id', userId).eq('slot_index', slotIndex)
+  const session = await sb.auth.getSession()
+  console.log('[Capsule] auth session:', session.data.session?.user?.id ?? 'NO SESSION')
+  console.log('[Capsule] saving slot', slotIndex, 'userId:', userId, 'momentId:', momentId)
+  const { error: delErr } = await sb.from('capsule').delete().eq('user_id', userId).eq('slot_index', slotIndex)
+  if (delErr) console.warn('[Capsule] delete error (non-fatal):', delErr)
   const { error } = await sb
     .from('capsule')
     .insert({ user_id: userId, slot_index: slotIndex, moment_id: momentId })
-  if (error) throw error
+  if (error) {
+    console.error('[Capsule] INSERT ERROR:', JSON.stringify(error))
+    throw error
+  }
+  console.log('[Capsule] saved ok')
 }
 
 export async function deleteCapsuleSlot(userId, slotIndex) {
