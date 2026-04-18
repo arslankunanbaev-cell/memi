@@ -1,8 +1,81 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { getUserProfile, sendFriendRequest, removeFriend } from '../lib/api'
+import { getUserProfile, sendFriendRequest, removeFriend, getSharedMomentsWithFriend, linkPersonToUser } from '../lib/api'
 import { MONTHS_GENITIVE } from '../lib/ruPlural'
+import BottomSheet from '../components/BottomSheet'
+
+function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, onClose }) {
+  const [saving, setSaving] = useState(false)
+
+  async function handleLink(person) {
+    if (saving) return
+    setSaving(true)
+    try { await onLink(person.id, targetUser.id) } finally { setSaving(false); onClose() }
+  }
+
+  async function handleUnlink() {
+    if (saving) return
+    setSaving(true)
+    try { await onUnlink(linkedPerson.id) } finally { setSaving(false); onClose() }
+  }
+
+  return (
+    <BottomSheet onClose={onClose}>
+      <div className="px-5 flex flex-col gap-4 pb-2">
+        <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
+          Связать с человеком
+        </p>
+
+        {linkedPerson && (
+          <div className="flex flex-col gap-2">
+            <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)', textAlign: 'center' }}>
+              Сейчас связан с <b style={{ color: 'var(--text)' }}>{linkedPerson.name}</b>
+            </p>
+            <button
+              onClick={handleUnlink}
+              disabled={saving}
+              className="w-full font-sans font-medium transition-opacity active:opacity-70"
+              style={{ backgroundColor: 'var(--surface)', color: 'var(--mid)', borderRadius: 9999, padding: '11px 0', fontSize: 14, border: 'none' }}
+            >
+              {saving ? '...' : 'Отвязать'}
+            </button>
+            <p className="font-sans text-center" style={{ fontSize: 12, color: 'var(--soft)' }}>или выбери другого</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2" style={{ maxHeight: 300, overflowY: 'auto' }}>
+          {people.filter((p) => p.id !== linkedPerson?.id).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => handleLink(p)}
+              disabled={saving}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl w-full transition-opacity active:opacity-70"
+              style={{ backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
+            >
+              <div
+                className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
+                style={{ width: 40, height: 40, backgroundColor: p.avatar_color ?? 'var(--accent)', color: '#fff', fontSize: 16, overflow: 'hidden' }}
+              >
+                {p.photo_url
+                  ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : p.name?.[0]?.toUpperCase()}
+              </div>
+              <span className="font-sans flex-1 text-left" style={{ fontSize: 15, color: 'var(--text)' }}>{p.name}</span>
+            </button>
+          ))}
+          {people.filter((p) => p.id !== linkedPerson?.id).length === 0 && (
+            <p className="font-sans text-center py-4" style={{ fontSize: 13, color: 'var(--mid)' }}>Нет людей для связи</p>
+          )}
+        </div>
+
+        <button onClick={onClose} className="font-sans transition-opacity active:opacity-60" style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none', paddingBottom: 4 }}>
+          Отмена
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
 
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
@@ -13,18 +86,23 @@ function sinceLabel(createdAt) {
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
-  const currentUser = useAppStore((s) => s.currentUser)
-  const friends     = useAppStore((s) => s.friends)
-  const setFriends  = useAppStore((s) => s.setFriends)
+  const currentUser  = useAppStore((s) => s.currentUser)
+  const friends      = useAppStore((s) => s.friends)
+  const setFriends   = useAppStore((s) => s.setFriends)
+  const people       = useAppStore((s) => s.people)       ?? []
+  const updatePerson = useAppStore((s) => s.updatePerson)
 
   const [profileUser, setProfileUser] = useState(null)
   const [moments, setMoments] = useState([])
+  const [sharedMoments, setSharedMoments] = useState([])
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
+  const [showLinkSheet, setShowLinkSheet] = useState(false)
 
-  const friendEntry   = friends.find((f) => f.id === userId)
+  const friendEntry     = friends.find((f) => f.id === userId)
   const isAlreadyFriend = Boolean(friendEntry)
+  const linkedPerson    = people.find((p) => p.linked_user_id === userId) ?? null
 
   useEffect(() => {
     // If viewing own profile, redirect to /profile
@@ -43,6 +121,15 @@ export default function PublicProfile() {
         setMoments([])
       } finally {
         setLoading(false)
+      }
+      // Load shared moments non-blocking (only if current user is known)
+      if (currentUser?.id) {
+        try {
+          const shared = await getSharedMomentsWithFriend(currentUser.id, userId)
+          setSharedMoments(shared)
+        } catch {
+          // non-critical, ignore
+        }
       }
     }
 
@@ -80,6 +167,27 @@ export default function PublicProfile() {
     } catch (err) {
       console.error('[PublicProfile] remove friend error:', err)
       setRemoving(false)
+    }
+  }
+
+  async function handleLinkPerson(personId, linkedUserId) {
+    try {
+      const updated = await linkPersonToUser(personId, linkedUserId)
+      updatePerson(personId, { linked_user_id: updated.linked_user_id })
+      const shared = await getSharedMomentsWithFriend(currentUser.id, userId)
+      setSharedMoments(shared)
+    } catch (err) {
+      console.error('[PublicProfile] link person error:', err)
+    }
+  }
+
+  async function handleUnlinkPerson(personId) {
+    try {
+      const updated = await linkPersonToUser(personId, null)
+      updatePerson(personId, { linked_user_id: updated.linked_user_id })
+      setSharedMoments([])
+    } catch (err) {
+      console.error('[PublicProfile] unlink person error:', err)
     }
   }
 
@@ -187,6 +295,22 @@ export default function PublicProfile() {
           )}
         </div>
 
+        {/* Связь с человеком */}
+        {people.length > 0 && (
+          <button
+            onClick={() => setShowLinkSheet(true)}
+            className="flex items-center gap-2 transition-opacity active:opacity-60"
+            style={{ background: 'none', border: 'none', padding: 0, alignSelf: 'flex-start' }}
+          >
+            <span style={{ fontSize: 16, color: linkedPerson ? 'var(--accent)' : 'var(--soft)' }}>
+              {linkedPerson ? '🔗' : '○'}
+            </span>
+            <span className="font-sans" style={{ fontSize: 13, color: linkedPerson ? 'var(--accent)' : 'var(--soft)' }}>
+              {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
+            </span>
+          </button>
+        )}
+
         {/* Stats */}
         <div
           className="flex flex-col items-center py-4 rounded-xl"
@@ -197,6 +321,41 @@ export default function PublicProfile() {
           </span>
           <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>открытых моментов</span>
         </div>
+
+        {/* Общие моменты */}
+        {sharedMoments.length > 0 && (
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: 13, color: 'var(--text)' }}>
+              Ваши общие моменты
+            </p>
+            <div className="flex flex-col gap-2">
+              {sharedMoments.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-xl"
+                  style={{ backgroundColor: 'var(--surface)', padding: '12px 14px' }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
+                    background: m.photo_url ? 'none' : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+                  }}>
+                    {m.photo_url && (
+                      <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {m.title || 'Без названия'}
+                    </p>
+                    <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
+                      {sinceLabel(m.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Moments list */}
         <div>
@@ -238,6 +397,17 @@ export default function PublicProfile() {
           )}
         </div>
       </div>
+
+      {showLinkSheet && profileUser && (
+        <LinkPersonSheet
+          targetUser={profileUser}
+          people={people}
+          linkedPerson={linkedPerson}
+          onLink={handleLinkPerson}
+          onUnlink={handleUnlinkPerson}
+          onClose={() => setShowLinkSheet(false)}
+        />
+      )}
     </div>
   )
 }

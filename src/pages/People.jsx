@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { createPerson, getFriendships, acceptFriendRequest } from '../lib/api'
+import { createPerson, getFriendships, acceptFriendRequest, linkPersonToUser } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
@@ -10,7 +10,7 @@ import { plural } from '../lib/ruPlural'
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
 // ── Карточка человека ─────────────────────────────────────────────────────────
-function PersonCard({ person, momentCount, lastPhotos, onClick }) {
+function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick }) {
   return (
     <button
       onClick={onClick}
@@ -53,6 +53,22 @@ function PersonCard({ person, momentCount, lastPhotos, onClick }) {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Бейдж "в memi" если привязан к пользователю */}
+      {person.linked_user_id && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onLinkedClick?.() }}
+          className="font-sans"
+          style={{
+            fontSize: 10, color: 'var(--deep)',
+            backgroundColor: 'rgba(160,94,44,0.12)',
+            borderRadius: 20, padding: '2px 8px',
+            marginTop: -4,
+          }}
+        >
+          в memi
+        </span>
       )}
     </button>
   )
@@ -189,6 +205,59 @@ function AddPersonSheet({ onClose, onCreated }) {
   )
 }
 
+// ── Шит привязки человека к другу ────────────────────────────────────────────
+function LinkPersonSheet({ friend, people, onLink, onClose }) {
+  const [saving, setSaving] = useState(false)
+
+  async function handleLink(person) {
+    if (saving) return
+    setSaving(true)
+    try {
+      await onLink(person.id, friend.id)
+    } finally {
+      setSaving(false)
+      onClose()
+    }
+  }
+
+  return (
+    <BottomSheet onClose={onClose}>
+      <div className="px-5 flex flex-col gap-4 pb-2">
+        <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
+          Связать с человеком?
+        </p>
+        <p className="font-sans text-center" style={{ fontSize: 13, color: 'var(--mid)' }}>
+          Выбери кого из твоих воспоминаний связать с <b>{friend.name}</b>
+        </p>
+        <div className="flex flex-col gap-2" style={{ maxHeight: 280, overflowY: 'auto' }}>
+          {people.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => handleLink(p)}
+              disabled={saving}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl w-full transition-opacity active:opacity-70"
+              style={{ backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
+            >
+              <div
+                className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
+                style={{ width: 40, height: 40, backgroundColor: p.avatar_color ?? 'var(--accent)', color: '#fff', fontSize: 16, overflow: 'hidden' }}
+              >
+                {p.photo_url
+                  ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : p.name?.[0]?.toUpperCase()}
+              </div>
+              <span className="font-sans flex-1 text-left" style={{ fontSize: 15, color: 'var(--text)' }}>{p.name}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose} className="font-sans transition-opacity active:opacity-60" style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none', paddingBottom: 4 }}>
+          Пропустить
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
 // ── Главный экран ─────────────────────────────────────────────────────────────
 export default function People() {
   const navigate  = useNavigate()
@@ -201,9 +270,30 @@ export default function People() {
   const setFriends          = useAppStore((s) => s.setFriends)        ?? (() => {})
   const setIncomingRequests = useAppStore((s) => s.setIncomingRequests) ?? (() => {})
 
+  const updatePerson = useAppStore((s) => s.updatePerson)
+
   const [showAdd, setShowAdd]       = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [tab, setTab]               = useState('people')
+  const [linkTarget, setLinkTarget] = useState(null) // friend to link after accepting
+
+  const TABS = ['people', 'friends']
+  const touchStart = useRef(null)
+
+  function handleTouchStart(e) {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }
+
+  function handleTouchEnd(e) {
+    if (!touchStart.current) return
+    const dx = e.changedTouches[0].clientX - touchStart.current.x
+    const dy = e.changedTouches[0].clientY - touchStart.current.y
+    touchStart.current = null
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    const idx = TABS.indexOf(tab)
+    if (dx < 0 && idx < TABS.length - 1) { tgHaptic('light'); setTab(TABS[idx + 1]) }
+    if (dx > 0 && idx > 0)               { tgHaptic('light'); setTab(TABS[idx - 1]) }
+  }
 
   async function handleRefreshFriends() {
     if (refreshing || !currentUser?.id) return
@@ -250,8 +340,18 @@ export default function People() {
       await acceptFriendRequest(req.friendship_id)
       setFriends([...friends, req])
       setIncomingRequests(incomingRequests.filter((r) => r.friendship_id !== req.friendship_id))
+      if (people.length > 0) setLinkTarget(req)
     } catch (err) {
       console.error('[People] accept friend error:', err)
+    }
+  }
+
+  async function handleLinkPerson(personId, linkedUserId) {
+    try {
+      const updated = await linkPersonToUser(personId, linkedUserId)
+      updatePerson(personId, { linked_user_id: updated.linked_user_id })
+    } catch (err) {
+      console.error('[People] link person error:', err)
     }
   }
 
@@ -319,7 +419,11 @@ export default function People() {
       </div>
 
       {/* Контент */}
-      <div className="flex-1 overflow-y-auto pb-28 px-4">
+      <div
+        className="flex-1 overflow-y-auto pb-28 px-4"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
 
         {/* ── Вкладка Люди ── */}
         {tab === 'people' && (
@@ -331,6 +435,7 @@ export default function People() {
                 momentCount={momentCountFor(p.id)}
                 lastPhotos={lastPhotosFor(p.id)}
                 onClick={() => navigate(`/people/${p.id}`)}
+                onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
               />
             ))}
             <button
@@ -451,6 +556,15 @@ export default function People() {
         <AddPersonSheet
           onClose={() => setShowAdd(false)}
           onCreated={addPerson}
+        />
+      )}
+
+      {linkTarget && (
+        <LinkPersonSheet
+          friend={linkTarget}
+          people={people.filter((p) => !p.linked_user_id)}
+          onLink={handleLinkPerson}
+          onClose={() => setLinkTarget(null)}
         />
       )}
     </div>

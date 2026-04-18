@@ -402,3 +402,46 @@ export async function deleteCapsuleSlot(userId, slotIndex) {
     .eq('slot_index', slotIndex)
   if (error) throw error
 }
+
+// ── People ↔ Users linking ────────────────────────────────────────────────────
+
+export async function linkPersonToUser(personId, linkedUserId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('people')
+    .update({ linked_user_id: linkedUserId })
+    .eq('id', personId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
+  const sb = assertSupabase()
+  const { data: linkedPeople, error: peopleErr } = await sb
+    .from('people')
+    .select('id')
+    .eq('user_id', currentUserId)
+    .eq('linked_user_id', friendUserId)
+  if (peopleErr) throw peopleErr
+  if (!linkedPeople?.length) return []
+
+  const personIds = linkedPeople.map((p) => p.id)
+  const { data: links, error: linksErr } = await sb
+    .from('moment_people')
+    .select('moment_id')
+    .in('person_id', personIds)
+  if (linksErr) throw linksErr
+  if (!links?.length) return []
+
+  const momentIds = [...new Set(links.map((l) => l.moment_id))]
+  const { data: moments, error: momErr } = await sb
+    .from('moments')
+    .select('id, title, photo_url, created_at')
+    .in('id', momentIds)
+    .eq('user_id', currentUserId)
+    .order('created_at', { ascending: false })
+  if (momErr) throw momErr
+  return moments ?? []
+}
