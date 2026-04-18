@@ -168,31 +168,8 @@ export default function MomentCard({ moment }) {
           )}
 
           {/* Divider if music exists */}
-          {moment.song_title && (hasPeople || moment.location || moment.mood) && (
+          {moment.song_title && (moment.location || moment.mood) && (
             <div style={{ width: 0.5, alignSelf: 'stretch', backgroundColor: 'var(--base)', flexShrink: 0 }} />
-          )}
-
-          {/* People avatars */}
-          {hasPeople && (
-            <div className="flex -space-x-1" style={{ flexShrink: 0 }}>
-              {allPeople.slice(0, 3).map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-center rounded-full font-sans font-medium text-white"
-                  style={{
-                    width: 18,
-                    height: 18,
-                    backgroundColor: p.avatar_color ?? 'var(--accent)',
-                    fontSize: 9,
-                    border: '1.5px solid var(--surface)',
-                    flexShrink: 0,
-                  }}
-                  title={p.name}
-                >
-                  {p.name[0].toUpperCase()}
-                </div>
-              ))}
-            </div>
           )}
 
           {/* Time */}
@@ -226,6 +203,29 @@ export default function MomentCard({ moment }) {
             <span style={{ fontSize: 13, flexShrink: 0 }}>{moment.mood}</span>
           )}
         </div>
+
+        {/* People chips */}
+        {hasPeople && (
+          <div className="flex flex-wrap gap-1.5" style={{ marginTop: 8 }}>
+            {allPeople.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center gap-1.5"
+                style={{ backgroundColor: 'var(--base)', borderRadius: 9999, padding: '3px 9px 3px 3px' }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full font-sans font-medium text-white flex-shrink-0"
+                  style={{ width: 20, height: 20, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 9, overflow: 'hidden' }}
+                >
+                  {p.photo_url
+                    ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : p.name[0].toUpperCase()}
+                </div>
+                <span className="font-sans" style={{ fontSize: 12, color: 'var(--text)' }}>{p.name}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
