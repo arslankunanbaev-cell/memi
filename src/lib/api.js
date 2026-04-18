@@ -286,6 +286,12 @@ export async function acceptFriendRequest(friendshipId) {
   return data
 }
 
+export async function removeFriend(friendshipId) {
+  const sb = assertSupabase()
+  const { error } = await sb.from('friendships').delete().eq('id', friendshipId)
+  if (error) throw error
+}
+
 // ── Shared moments (via moment_participants) ───────────────────────────────────
 
 export async function addMomentParticipants(momentId, userIds) {

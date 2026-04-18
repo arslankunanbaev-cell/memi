@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { getUserProfile, sendFriendRequest } from '../lib/api'
+import { getUserProfile, sendFriendRequest, removeFriend } from '../lib/api'
 import { MONTHS_GENITIVE } from '../lib/ruPlural'
 
 function sinceLabel(createdAt) {
@@ -14,14 +14,17 @@ export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
   const currentUser = useAppStore((s) => s.currentUser)
-  const friends = useAppStore((s) => s.friends)
+  const friends     = useAppStore((s) => s.friends)
+  const setFriends  = useAppStore((s) => s.setFriends)
 
   const [profileUser, setProfileUser] = useState(null)
   const [moments, setMoments] = useState([])
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
+  const [removing, setRemoving] = useState(false)
 
-  const isAlreadyFriend = friends.some((f) => f.id === userId)
+  const friendEntry   = friends.find((f) => f.id === userId)
+  const isAlreadyFriend = Boolean(friendEntry)
 
   useEffect(() => {
     // If viewing own profile, redirect to /profile
@@ -53,6 +56,30 @@ export default function PublicProfile() {
       setFriendSent(true)
     } catch {
       // silently fail
+    }
+  }
+
+  async function handleRemoveFriend() {
+    if (!friendEntry?.friendship_id || removing) return
+    const confirmed = await new Promise((resolve) => {
+      if (window.Telegram?.WebApp?.showConfirm) {
+        window.Telegram.WebApp.showConfirm(
+          `Удалить ${profileUser?.name ?? 'пользователя'} из друзей?`,
+          resolve,
+        )
+      } else {
+        resolve(window.confirm(`Удалить ${profileUser?.name ?? 'пользователя'} из друзей?`))
+      }
+    })
+    if (!confirmed) return
+    setRemoving(true)
+    try {
+      await removeFriend(friendEntry.friendship_id)
+      setFriends(friends.filter((f) => f.id !== userId))
+      navigate(-1)
+    } catch (err) {
+      console.error('[PublicProfile] remove friend error:', err)
+      setRemoving(false)
     }
   }
 
@@ -121,7 +148,25 @@ export default function PublicProfile() {
               <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>с memi с {since}</p>
             )}
           </div>
-          {!isAlreadyFriend && (
+          {isAlreadyFriend ? (
+            <button
+              onClick={handleRemoveFriend}
+              disabled={removing}
+              className="font-sans transition-opacity active:opacity-60"
+              style={{
+                fontSize: 12,
+                fontWeight: 500,
+                color: 'var(--mid)',
+                backgroundColor: 'var(--surface)',
+                border: 'none',
+                borderRadius: 20,
+                padding: '6px 14px',
+                flexShrink: 0,
+              }}
+            >
+              {removing ? '...' : 'Удалить из друзей'}
+            </button>
+          ) : (
             <button
               onClick={handleAddFriend}
               disabled={friendSent}

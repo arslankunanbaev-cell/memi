@@ -37,7 +37,9 @@
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase secrets set SPOTIFY_CLIENT_ID=1504bca880f0499faff6efbdae78bee1 SPOTIFY_CLIENT_SECRET=e489da94b6cb4023be329f8749335506 --project-ref emzrhwfjovjlxncwbptl)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase secrets list --project-ref emzrhwfjovjlxncwbptl)",
       "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase functions deploy telegram-auth --project-ref emzrhwfjovjlxncwbptl)",
-      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase --experimental projects api-keys --project-ref emzrhwfjovjlxncwbptl)"
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_d1549a9c58e14bb6499b1242d5f7cf0c60d14158 npx supabase --experimental projects api-keys --project-ref emzrhwfjovjlxncwbptl)",
+      "Bash(npx vite *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('scripts',{}\\), indent=2\\)\\)\")"
     ]
   }
 }
