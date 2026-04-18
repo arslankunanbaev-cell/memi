@@ -49,7 +49,11 @@ export default function MomentDetail() {
     navigate('/home', { replace: true })
   }
 
-  const hasPeople = moment.people?.length > 0
+  const allPeople = [
+    ...(moment.people ?? []),
+    ...(moment.taggedFriends ?? []).map((u) => ({ ...u, avatar_color: null })),
+  ]
+  const hasPeople = allPeople.length > 0
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
@@ -141,25 +145,23 @@ export default function MomentDetail() {
               className="flex items-center flex-wrap gap-3 pt-3"
               style={{ borderTop: '0.5px solid var(--surface)' }}
             >
-              {hasPeople && (
-                <div className="flex items-center gap-1">
-                  <div className="flex -space-x-1">
-                    {moment.people.slice(0, 3).map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-center rounded-full font-sans font-medium text-white"
-                        style={{ width: 24, height: 24, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 11, border: '1.5px solid var(--base)', flexShrink: 0 }}
-                        title={p.name}
-                      >
-                        {p.name[0].toUpperCase()}
-                      </div>
-                    ))}
+              {hasPeople && allPeople.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-1.5"
+                  style={{ backgroundColor: 'var(--surface)', borderRadius: 9999, padding: '3px 9px 3px 3px' }}
+                >
+                  <div
+                    className="flex items-center justify-center rounded-full font-sans font-medium text-white flex-shrink-0"
+                    style={{ width: 22, height: 22, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 10, overflow: 'hidden' }}
+                  >
+                    {p.photo_url
+                      ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : p.name[0].toUpperCase()}
                   </div>
-                  <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>
-                    {moment.people.map((p) => p.name).join(', ')}
-                  </span>
+                  <span className="font-sans" style={{ fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
                 </div>
-              )}
+              ))}
               {moment.location && (
                 <span
                   className="font-sans flex items-center gap-1"
