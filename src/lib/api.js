@@ -378,9 +378,10 @@ export async function getCapsule(userId) {
 
 export async function saveCapsuleSlot(userId, slotIndex, momentId) {
   const sb = assertSupabase()
+  await sb.from('capsule').delete().eq('user_id', userId).eq('slot_index', slotIndex)
   const { error } = await sb
     .from('capsule')
-    .upsert({ user_id: userId, slot_index: slotIndex, moment_id: momentId }, { onConflict: 'user_id,slot_index' })
+    .insert({ user_id: userId, slot_index: slotIndex, moment_id: momentId })
   if (error) throw error
 }
 

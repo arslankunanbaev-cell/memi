@@ -101,7 +101,7 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
               <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Заменить</span>
             </button>
             <button
-              onClick={() => setShowHoldMenu(false)}
+              onClick={() => { onFilled(); setShowHoldMenu(false) }}
               className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
               style={{ background: 'none', border: 'none' }}
             >
