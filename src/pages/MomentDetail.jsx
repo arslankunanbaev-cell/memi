@@ -176,8 +176,8 @@ export default function MomentDetail() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div
+      {/* Actions — only for own moments */}
+      {isOwn && <div
         className="flex items-center gap-3 px-4"
         style={{ paddingBottom: 'max(1.25rem, env(safe-area-inset-bottom))', paddingTop: 8 }}
       >
@@ -188,14 +188,12 @@ export default function MomentDetail() {
         >
           Скачать карточку
         </button>
-        {isOwn && (
-          <button
-            className="flex items-center justify-center transition-opacity active:opacity-60"
-            style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18 }}
-          >
-            💊
-          </button>
-        )}
+        <button
+          className="flex items-center justify-center transition-opacity active:opacity-60"
+          style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18 }}
+        >
+          💊
+        </button>
         <button
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
@@ -205,7 +203,7 @@ export default function MomentDetail() {
             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
           </svg>
         </button>
-      </div>
+      </div>}
 
       {/* Three-dot menu — only for own moments */}
       {isOwn && showMenu && (
