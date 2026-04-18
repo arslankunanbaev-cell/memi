@@ -54,6 +54,7 @@ function PolaroidCard({ moment }) {
           boxShadow: '0 2px 12px rgba(23,20,14,0.10)',
           position: 'relative',
           flexShrink: 0,
+          marginBottom: 8,
         }}
       >
         {/* Photo or gradient */}

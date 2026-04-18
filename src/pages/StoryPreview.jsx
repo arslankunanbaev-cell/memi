@@ -139,7 +139,8 @@ async function drawPolaroid(canvas, moment) {
   }
 
   // Content below polaroid
-  let y = frameY + frameH + 60
+  // +110 accounts for rotated frame visual overhang + text ascender height (~62px for 88px font)
+  let y = frameY + frameH + 110
 
   // Title
   ctx.fillStyle = '#17140E'
