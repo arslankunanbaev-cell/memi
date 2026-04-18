@@ -26,6 +26,8 @@ export default function MomentDetail() {
   const [showMenu, setShowMenu] = useState(false)
   const [showCapsuleSheet, setShowCapsuleSheet] = useState(false)
 
+  const isOwn = !moment?.isShared && moment?.user_id === currentUser?.id
+
   if (!moment) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4" style={{ backgroundColor: 'var(--base)' }}>
@@ -65,13 +67,17 @@ export default function MomentDetail() {
           </svg>
         </button>
         <span className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>Момент</span>
-        <button
-          onClick={() => setShowMenu(true)}
-          className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
-        >
-          <span style={{ fontSize: 18, letterSpacing: '-1px', color: 'var(--text)' }}>•••</span>
-        </button>
+        {isOwn ? (
+          <button
+            onClick={() => setShowMenu(true)}
+            className="flex items-center justify-center transition-opacity active:opacity-60"
+            style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
+          >
+            <span style={{ fontSize: 18, letterSpacing: '-1px', color: 'var(--text)' }}>•••</span>
+          </button>
+        ) : (
+          <div style={{ width: 36 }} />
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto pb-4">
@@ -182,12 +188,14 @@ export default function MomentDetail() {
         >
           Скачать карточку
         </button>
-        <button
-          className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18 }}
-        >
-          💊
-        </button>
+        {isOwn && (
+          <button
+            className="flex items-center justify-center transition-opacity active:opacity-60"
+            style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18 }}
+          >
+            💊
+          </button>
+        )}
         <button
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none' }}
@@ -199,8 +207,8 @@ export default function MomentDetail() {
         </button>
       </div>
 
-      {/* Three-dot menu */}
-      {showMenu && (
+      {/* Three-dot menu — only for own moments */}
+      {isOwn && showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)}>
           <div>
             <button
@@ -231,8 +239,8 @@ export default function MomentDetail() {
         </BottomSheet>
       )}
 
-      {/* Capsule slot picker */}
-      {showCapsuleSheet && (
+      {/* Capsule slot picker — only for own moments */}
+      {isOwn && showCapsuleSheet && (
         <BottomSheet onClose={() => setShowCapsuleSheet(false)} title="Добавить в капсулу">
           <div className="pb-4">
             {[0, 1, 2, 3].map((slotIndex) => {

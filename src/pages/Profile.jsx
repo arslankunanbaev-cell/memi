@@ -119,6 +119,8 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
 
 function PickMomentSheet({ onClose, onPick, onCreateNew }) {
   const moments = useAppStore((s) => s.moments)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const ownMoments = moments.filter((m) => !m.isShared && m.user_id === currentUser?.id)
   return (
     <BottomSheet onClose={onClose} title="В капсулу">
       <div className="overflow-y-auto" style={{ maxHeight: '65dvh' }}>
@@ -145,19 +147,19 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
         </button>
 
         {/* ── Разделитель ── */}
-        {moments.length > 0 && (
+        {ownMoments.length > 0 && (
           <p className="font-sans px-5 py-2" style={{ fontSize: 10, color: 'var(--soft)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Или выбери существующий
           </p>
         )}
 
         {/* ── Список существующих моментов ── */}
-        {moments.length === 0 && (
+        {ownMoments.length === 0 && (
           <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>
             Пока нет моментов — создай первый ↑
           </p>
         )}
-        {moments.map((m) => (
+        {ownMoments.map((m) => (
           <button
             key={m.id}
             onClick={() => { onPick(m); onClose() }}
@@ -215,11 +217,13 @@ export default function Profile() {
   // Показываем реальное имя из Telegram (сохраняется в users.name через saveUser)
   const name  = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
+  const ownMoments = useMemo(() => moments.filter((m) => !m.isShared && m.user_id === currentUser?.id), [moments, currentUser])
+
   const stats = useMemo(() => ({
-    total: moments.length,
-    months: uniqueMonths(moments),
+    total: ownMoments.length,
+    months: uniqueMonths(ownMoments),
     people: people.length,
-  }), [moments, people])
+  }), [ownMoments, people])
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>

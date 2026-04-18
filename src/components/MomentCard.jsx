@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -8,6 +9,14 @@ function formatTime(iso) {
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const friends = useAppStore((s) => s.friends)
+
+  const isShared = moment.isShared || (moment.user_id && moment.user_id !== currentUser?.id)
+  const author = isShared
+    ? (friends.find((f) => f.id === moment.user_id) ?? { name: 'Пользователь', photo_url: null })
+    : null
+
   const allPeople = [
     ...(moment.people ?? []),
     ...(moment.taggedFriends ?? []).map((u) => ({ ...u, avatar_color: null })),
@@ -20,6 +29,21 @@ export default function MomentCard({ moment }) {
       style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
       onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
     >
+      {/* Author strip — shown only for friends' moments */}
+      {isShared && author && (
+        <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '0.5px solid var(--base)' }}>
+          <div
+            className="flex items-center justify-center rounded-full font-sans font-medium flex-shrink-0"
+            style={{ width: 20, height: 20, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 9, overflow: 'hidden' }}
+          >
+            {author.photo_url
+              ? <img src={author.photo_url} alt={author.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : author.name[0]?.toUpperCase()}
+          </div>
+          <span className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>{author.name}</span>
+        </div>
+      )}
+
       {/* Photo / gradient top */}
       <div style={{ position: 'relative', height: expanded ? 275 : 225, overflow: 'hidden', transition: 'height 0.3s ease' }}>
         {moment.photo_url ? (
