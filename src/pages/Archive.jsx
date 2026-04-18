@@ -136,8 +136,11 @@ function FilterSheet({ onClose, onApply, people, current }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function Archive() {
-  const moments = useAppStore((s) => s.moments)
-  const people  = useAppStore((s) => s.people)
+  const allMoments  = useAppStore((s) => s.moments)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const people      = useAppStore((s) => s.people)
+
+  const moments = allMoments.filter((m) => m.user_id === currentUser?.id)
 
   const [showFilter, setShowFilter] = useState(false)
   const [filterPeople, setFilterPeople] = useState([])
