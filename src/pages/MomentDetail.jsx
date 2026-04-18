@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { deleteMoment, saveCapsuleSlot } from '../lib/api'
+import { deleteMoment, saveCapsuleSlot, deleteCapsuleSlot } from '../lib/api'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
 
@@ -21,7 +21,10 @@ export default function MomentDetail() {
   const currentUser = useAppStore((s) => s.currentUser)
   const capsule = useAppStore((s) => s.capsule)
   const addToCapsule = useAppStore((s) => s.addToCapsule)
+  const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
   const moment = moments.find((m) => m.id === id)
+
+  const capsuleSlotIndex = capsule.findIndex((s) => s?.id === id)
 
   const [showMenu, setShowMenu] = useState(false)
   const [showCapsuleSheet, setShowCapsuleSheet] = useState(false)
@@ -38,6 +41,15 @@ export default function MomentDetail() {
         </button>
       </div>
     )
+  }
+
+  async function handleRemoveFromCapsule() {
+    removeFromCapsule(capsuleSlotIndex)
+    try {
+      await deleteCapsuleSlot(currentUser.id, capsuleSlotIndex)
+    } catch (err) {
+      console.error('[Capsule] delete error:', err)
+    }
   }
 
   async function handleDelete() {
@@ -70,7 +82,7 @@ export default function MomentDetail() {
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
         </button>
-        <span className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>Момент</span>
+        <span className="font-sans font-medium" style={{ fontSize: 16, color: 'var(--text)' }}>Момент</span>
         {isOwn ? (
           <button
             onClick={() => setShowMenu(true)}
@@ -108,13 +120,13 @@ export default function MomentDetail() {
         {/* Body */}
         <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {/* Date */}
-          <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', letterSpacing: '0.3px' }}>
+          <p className="font-sans" style={{ fontSize: 13, color: 'var(--soft)', letterSpacing: '0.3px' }}>
             {formatFull(moment.created_at)}
           </p>
 
           {/* Description */}
           {moment.description && (
-            <p className="font-sans" style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.6 }}>
+            <p className="font-sans" style={{ fontSize: 16, color: 'var(--text)', lineHeight: 1.65 }}>
               {moment.description}
             </p>
           )}
@@ -131,9 +143,9 @@ export default function MomentDetail() {
                 <div style={{ width: 48, height: 48, borderRadius: 8, backgroundColor: 'var(--base)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 22 }}>🎵</div>
               )}
               <div className="min-w-0">
-                <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment.song_title}</p>
+                <p className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{moment.song_title}</p>
                 {moment.song_artist && (
-                  <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>{moment.song_artist}</p>
+                  <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>{moment.song_artist}</p>
                 )}
               </div>
             </div>
@@ -159,13 +171,13 @@ export default function MomentDetail() {
                       ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : p.name[0].toUpperCase()}
                   </div>
-                  <span className="font-sans" style={{ fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
+                  <span className="font-sans" style={{ fontSize: 14, color: 'var(--text)' }}>{p.name}</span>
                 </div>
               ))}
               {moment.location && (
                 <span
                   className="font-sans flex items-center gap-1"
-                  style={{ fontSize: 12, color: 'var(--mid)', backgroundColor: 'var(--surface)', borderRadius: 9999, padding: '4px 10px' }}
+                  style={{ fontSize: 13, color: 'var(--mid)', backgroundColor: 'var(--surface)', borderRadius: 9999, padding: '4px 10px' }}
                 >
                   📍 {moment.location}
                 </span>
@@ -186,13 +198,17 @@ export default function MomentDetail() {
         <button
           onClick={() => navigate(`/story/${moment.id}`)}
           className="flex-1 font-sans font-medium transition-opacity active:opacity-70"
-          style={{ backgroundColor: 'var(--accent)', color: '#fff', borderRadius: 9999, padding: '13px 0', fontSize: 14, border: 'none' }}
+          style={{ backgroundColor: 'var(--accent)', color: '#fff', borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none' }}
         >
           Скачать карточку
         </button>
         <button
+          onClick={() => capsuleSlotIndex !== -1 ? handleRemoveFromCapsule() : setShowCapsuleSheet(true)}
           className="flex items-center justify-center transition-opacity active:opacity-60"
-          style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18 }}
+          style={{
+            width: 44, height: 44, borderRadius: '50%', border: 'none', fontSize: 18,
+            backgroundColor: capsuleSlotIndex !== -1 ? 'var(--accent)' : 'var(--surface)',
+          }}
         >
           💊
         </button>
@@ -219,14 +235,25 @@ export default function MomentDetail() {
               <span style={{ fontSize: 18 }}>✏️</span>
               <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Редактировать</span>
             </button>
-            <button
-              onClick={() => { setShowMenu(false); setShowCapsuleSheet(true) }}
-              className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-              style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
-            >
-              <span style={{ fontSize: 18 }}>💊</span>
-              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Добавить в капсулу</span>
-            </button>
+            {capsuleSlotIndex !== -1 ? (
+              <button
+                onClick={() => { setShowMenu(false); handleRemoveFromCapsule() }}
+                className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+                style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+              >
+                <span style={{ fontSize: 18 }}>💊</span>
+                <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Убрать из капсулы</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => { setShowMenu(false); setShowCapsuleSheet(true) }}
+                className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+                style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+              >
+                <span style={{ fontSize: 18 }}>💊</span>
+                <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Добавить в капсулу</span>
+              </button>
+            )}
             <button
               onClick={() => { setShowMenu(false); handleDelete() }}
               className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
@@ -279,15 +306,15 @@ export default function MomentDetail() {
                     {!isOccupied && <span style={{ fontSize: 16, color: 'var(--accent)' }}>+</span>}
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)' }}>
+                    <p className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>
                       Слот {slotIndex + 1}
                     </p>
-                    <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
+                    <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>
                       {isOccupied ? slotMoment.title : 'Пусто'}
                     </p>
                   </div>
                   {isOccupied && (
-                    <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>Заменить</span>
+                    <span className="font-sans" style={{ fontSize: 12, color: 'var(--soft)' }}>Заменить</span>
                   )}
                 </button>
               )

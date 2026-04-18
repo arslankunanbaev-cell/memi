@@ -25,7 +25,7 @@ export default function MomentCard({ moment }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden cursor-pointer"
+      className="rounded-2xl overflow-hidden cursor-pointer transition-transform duration-150 ease-out active:scale-[0.97]"
       style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
       onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
     >
@@ -40,7 +40,7 @@ export default function MomentCard({ moment }) {
               ? <img src={author.photo_url} alt={author.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : author.name[0]?.toUpperCase()}
           </div>
-          <span className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>{author.name}</span>
+          <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>{author.name}</span>
         </div>
       )}
 
@@ -67,7 +67,7 @@ export default function MomentCard({ moment }) {
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(23,20,14,0.55) 0%, transparent 55%)',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.10) 45%, transparent 70%)',
           }}
         />
 
@@ -81,7 +81,7 @@ export default function MomentCard({ moment }) {
               color: 'var(--text)',
               borderRadius: 9999,
               padding: '5px 14px',
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: 600,
               letterSpacing: '0.2px',
               maxWidth: '100%',
@@ -102,9 +102,9 @@ export default function MomentCard({ moment }) {
           <p
             className="font-sans"
             style={{
-              fontSize: 13,
+              fontSize: 14,
               color: 'var(--mid)',
-              lineHeight: 1.55,
+              lineHeight: 1.6,
               display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
@@ -148,7 +148,7 @@ export default function MomentCard({ moment }) {
                 <p
                   className="font-sans"
                   style={{
-                    fontSize: 12,
+                    fontSize: 13,
                     color: 'var(--text)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -159,7 +159,7 @@ export default function MomentCard({ moment }) {
                   {moment.song_title}
                 </p>
                 {moment.song_artist && (
-                  <p className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', margin: 0 }}>
+                  <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', margin: 0 }}>
                     {moment.song_artist}
                   </p>
                 )}
@@ -173,7 +173,7 @@ export default function MomentCard({ moment }) {
           )}
 
           {/* Time */}
-          <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)', flexShrink: 0 }}>
+          <span className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', flexShrink: 0 }}>
             {formatTime(moment.created_at)}
           </span>
 
@@ -182,7 +182,7 @@ export default function MomentCard({ moment }) {
             <span
               className="font-sans"
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: 'var(--mid)',
                 backgroundColor: 'var(--base)',
                 borderRadius: 9999,
@@ -221,7 +221,7 @@ export default function MomentCard({ moment }) {
                     ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : p.name[0].toUpperCase()}
                 </div>
-                <span className="font-sans" style={{ fontSize: 12, color: 'var(--text)' }}>{p.name}</span>
+                <span className="font-sans" style={{ fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
               </div>
             ))}
           </div>

@@ -43,6 +43,12 @@
   50%       { opacity: 0.4; }
 }
 
+/* Stagger entrance for cards */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @layer utilities {
   .bg-base    { background-color: var(--base); }
   .bg-surface { background-color: var(--surface); }

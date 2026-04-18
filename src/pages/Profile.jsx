@@ -51,7 +51,7 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
         }}
       >
         <span style={{ fontSize: 22, color: 'var(--accent)' }}>+</span>
-        <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)' }}>добавить</span>
+        <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>добавить</span>
       </button>
     )
   }
@@ -83,7 +83,7 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
         </span>
         <span
           className="font-serif"
-          style={{ position: 'absolute', bottom: 8, left: 8, right: 8, fontSize: 11, color: '#fff', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          style={{ position: 'absolute', bottom: 8, left: 8, right: 8, fontSize: 12, color: '#fff', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
         >
           {slot.title}
         </span>
@@ -140,8 +140,8 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
             </svg>
           </div>
           <div className="flex-1 text-left">
-            <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)' }}>Создать момент</p>
-            <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>Новый — сразу в капсулу</p>
+            <p className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>Создать момент</p>
+            <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>Новый — сразу в капсулу</p>
           </div>
           <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
         </button>
@@ -172,7 +172,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
             }}>
               {m.photo_url && <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
-            <span className="font-sans flex-1 text-left" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <span className="font-sans flex-1 text-left" style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {m.title}
             </span>
             <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
@@ -253,9 +253,9 @@ export default function Profile() {
             )}
           </div>
           <div>
-            <p className="font-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
+            <p className="font-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
             {since && (
-              <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>с memi с {since}</p>
+              <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>с memi с {since}</p>
             )}
           </div>
         </div>
@@ -278,14 +278,14 @@ export default function Profile() {
               >
                 {s.value}
               </span>
-              <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>{s.label}</span>
+              <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>{s.label}</span>
             </div>
           ))}
         </div>
 
         {/* Capsule */}
         <div>
-          <p className="font-sans font-medium mb-3" style={{ fontSize: 13, color: 'var(--text)' }}>
+          <p className="font-sans font-medium mb-3" style={{ fontSize: 14, color: 'var(--text)' }}>
             Капсула · <span className="font-sans" style={{ color: 'var(--mid)', fontWeight: 400 }}>моменты на всю жизнь</span>
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { getUserProfile, sendFriendRequest, removeFriend, getSharedMomentsWithFriend, linkPersonToUser } from '../lib/api'
-import { MONTHS_GENITIVE } from '../lib/ruPlural'
+import { getUserProfile, sendFriendRequest, removeFriend, getSharedMomentsWithFriend, linkPersonToUser, getUserMomentsStats } from '../lib/api'
+import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import BottomSheet from '../components/BottomSheet'
 
 function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, onClose }) {
@@ -83,6 +83,14 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[d.getMonth()]} ${d.getFullYear()}`
 }
 
+function daysAgoLabel(createdAt) {
+  if (!createdAt) return null
+  const diffDays = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
+  if (diffDays === 0) return 'сегодня'
+  if (diffDays === 1) return 'вчера'
+  return `${diffDays} ${pluralRu(diffDays, 'день', 'дня', 'дней')} назад`
+}
+
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -95,6 +103,7 @@ export default function PublicProfile() {
   const [profileUser, setProfileUser] = useState(null)
   const [moments, setMoments] = useState([])
   const [sharedMoments, setSharedMoments] = useState([])
+  const [momentStats, setMomentStats] = useState({ total: null, lastCreatedAt: null })
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -122,15 +131,21 @@ export default function PublicProfile() {
       } finally {
         setLoading(false)
       }
-      // Load shared moments non-blocking (only if current user is known)
+      // Non-blocking parallel fetches
+      const extras = []
+      extras.push(
+        getUserMomentsStats(userId)
+          .then((stats) => setMomentStats(stats))
+          .catch(() => {})
+      )
       if (currentUser?.id) {
-        try {
-          const shared = await getSharedMomentsWithFriend(currentUser.id, userId)
-          setSharedMoments(shared)
-        } catch {
-          // non-critical, ignore
-        }
+        extras.push(
+          getSharedMomentsWithFriend(currentUser.id, userId)
+            .then((shared) => setSharedMoments(shared))
+            .catch(() => {})
+        )
       }
+      await Promise.allSettled(extras)
     }
 
     if (userId) load()
@@ -211,7 +226,7 @@ export default function PublicProfile() {
               <path d="M19 12H5M12 5l-7 7 7 7" />
             </svg>
           </button>
-          <h2 className="font-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
+          <h2 className="font-serif" style={{ fontSize: 26, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
         </div>
         <div className="flex-1 flex items-center justify-center px-4">
           <p className="font-sans text-center" style={{ fontSize: 13, color: 'var(--mid)' }}>Пользователь не найден</p>
@@ -229,7 +244,7 @@ export default function PublicProfile() {
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
         </button>
-        <h2 className="font-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
+        <h2 className="font-serif" style={{ fontSize: 26, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-4">
@@ -251,18 +266,30 @@ export default function PublicProfile() {
             )}
           </div>
           <div className="flex-1">
-            <p className="font-serif" style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
+            <p className="font-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
             {since && (
-              <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>с memi с {since}</p>
+              <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>с memi с {since}</p>
+            )}
+            {momentStats.total !== null && (
+              <div className="flex flex-col mt-1 gap-0.5">
+                <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>
+                  {momentStats.total} {pluralRu(momentStats.total, 'момент', 'момента', 'моментов')} всего
+                </p>
+                {momentStats.lastCreatedAt && (
+                  <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)' }}>
+                    Последний: {daysAgoLabel(momentStats.lastCreatedAt)}
+                  </p>
+                )}
+              </div>
             )}
           </div>
           {isAlreadyFriend ? (
             <button
               onClick={handleRemoveFriend}
               disabled={removing}
-              className="font-sans transition-opacity active:opacity-60"
+              className="font-sans transition-all duration-150 ease-out active:scale-[0.96] active:opacity-70"
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 500,
                 color: 'var(--mid)',
                 backgroundColor: 'var(--surface)',
@@ -278,9 +305,9 @@ export default function PublicProfile() {
             <button
               onClick={handleAddFriend}
               disabled={friendSent}
-              className="font-sans transition-opacity active:opacity-60"
+              className="font-sans transition-all duration-150 ease-out active:scale-[0.96] active:opacity-80"
               style={{
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 500,
                 color: friendSent ? 'var(--mid)' : '#fff',
                 backgroundColor: friendSent ? 'var(--surface)' : 'var(--accent)',
@@ -298,14 +325,14 @@ export default function PublicProfile() {
         {/* Связь с человеком */}
         {people.length > 0 && (
           <button
-            onClick={() => setShowLinkSheet(true)}
+            onClick={() => linkedPerson ? navigate(`/people/${linkedPerson.id}`) : setShowLinkSheet(true)}
             className="flex items-center gap-2 transition-opacity active:opacity-60"
             style={{ background: 'none', border: 'none', padding: 0, alignSelf: 'flex-start' }}
           >
             <span style={{ fontSize: 16, color: linkedPerson ? 'var(--accent)' : 'var(--soft)' }}>
               {linkedPerson ? '🔗' : '○'}
             </span>
-            <span className="font-sans" style={{ fontSize: 13, color: linkedPerson ? 'var(--accent)' : 'var(--soft)' }}>
+            <span className="font-sans" style={{ fontSize: 14, color: linkedPerson ? 'var(--accent)' : 'var(--soft)' }}>
               {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
             </span>
           </button>
@@ -319,53 +346,83 @@ export default function PublicProfile() {
           <span className="font-serif" style={{ fontSize: 31, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}>
             {moments.length}
           </span>
-          <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 2 }}>открытых моментов</span>
+          <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>открытых моментов</span>
         </div>
 
         {/* Общие моменты */}
         {sharedMoments.length > 0 && (
           <div>
-            <p className="font-sans font-medium mb-3" style={{ fontSize: 13, color: 'var(--text)' }}>
-              Ваши общие моменты
+            {/* First shared moment highlight */}
+            <p className="font-sans font-medium mb-2" style={{ fontSize: 12, color: 'var(--soft)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              ✨ Ваше общее воспоминание
             </p>
-            <div className="flex flex-col gap-2">
-              {sharedMoments.map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center gap-3 rounded-xl"
-                  style={{ backgroundColor: 'var(--surface)', padding: '12px 14px' }}
-                >
-                  <div style={{
-                    width: 40, height: 40, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-                    background: m.photo_url ? 'none' : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
-                  }}>
-                    {m.photo_url && (
-                      <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {m.title || 'Без названия'}
-                    </p>
-                    <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
-                      {sinceLabel(m.created_at)}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div
+              className="flex items-center gap-3 rounded-xl mb-4"
+              style={{ backgroundColor: 'var(--surface)', padding: '14px 14px' }}
+            >
+              <div style={{
+                width: 48, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+                background: sharedMoments[0].photo_url ? 'none' : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+              }}>
+                {sharedMoments[0].photo_url && (
+                  <img src={sharedMoments[0].photo_url} alt={sharedMoments[0].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {sharedMoments[0].title || 'Без названия'}
+                </p>
+                <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>
+                  {sinceLabel(sharedMoments[0].created_at)}
+                </p>
+              </div>
             </div>
+
+            {sharedMoments.length > 1 && (
+              <>
+                <p className="font-sans font-medium mb-2" style={{ fontSize: 14, color: 'var(--text)' }}>
+                  🤝 Ваши воспоминания вместе
+                </p>
+                <div className="flex gap-3 overflow-x-auto pb-2" style={{ marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+                  {sharedMoments.slice(1).map((m) => (
+                    <div
+                      key={m.id}
+                      className="flex-shrink-0 rounded-xl overflow-hidden"
+                      style={{ width: 140, backgroundColor: 'var(--surface)' }}
+                    >
+                      <div style={{
+                        width: '100%', height: 90, overflow: 'hidden',
+                        background: m.photo_url ? 'none' : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+                      }}>
+                        {m.photo_url && (
+                          <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )}
+                      </div>
+                      <div style={{ padding: '8px 10px' }}>
+                        <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {m.title || 'Без названия'}
+                        </p>
+                        <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
+                          {sinceLabel(m.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Moments list */}
         <div>
-          <p className="font-sans font-medium mb-3" style={{ fontSize: 13, color: 'var(--text)' }}>
+          <p className="font-sans font-medium mb-3" style={{ fontSize: 14, color: 'var(--text)' }}>
             Моменты пользователя
           </p>
 
           {moments.length === 0 ? (
-            <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>
-              Нет открытых воспоминаний
+            <p className="font-sans text-center py-8" style={{ fontSize: 14, color: 'var(--mid)' }}>
+              Пока он не открыл воспоминания для всех
             </p>
           ) : (
             <div className="flex flex-col gap-2">
@@ -384,10 +441,10 @@ export default function PublicProfile() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-sans font-medium" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p className="font-sans font-medium" style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {m.title || 'Без названия'}
                     </p>
-                    <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
+                    <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>
                       {sinceLabel(m.created_at)}
                     </p>
                   </div>
