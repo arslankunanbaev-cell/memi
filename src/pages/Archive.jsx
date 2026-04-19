@@ -301,7 +301,7 @@ export default function Archive() {
       {/* Grid */}
       <div className="flex-1 overflow-y-auto pb-24">
         {monthMoments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16">
+          <div className="flex flex-col items-center justify-center gap-3 py-16 animate-fade-in">
             <span style={{ fontSize: 36 }}>📭</span>
             <p className="font-sans text-center" style={{ fontSize: 13, color: 'var(--mid)' }}>
               {filterPeople.length > 0 ? 'Нет моментов с выбранными людьми' : 'Нет моментов за этот месяц'}
@@ -309,7 +309,11 @@ export default function Archive() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
-            {monthMoments.map((m) => <GridCell key={m.id} moment={m} />)}
+            {monthMoments.map((m, i) => (
+              <div key={m.id} style={{ animation: 'fadeSlideUp 0.25s ease both', animationDelay: `${i * 40}ms` }}>
+                <GridCell moment={m} />
+              </div>
+            ))}
           </div>
         )}
       </div>

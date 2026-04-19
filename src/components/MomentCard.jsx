@@ -25,7 +25,7 @@ export default function MomentCard({ moment }) {
 
   return (
     <div
-      className="rounded-2xl overflow-hidden cursor-pointer transition-transform duration-150 ease-out active:scale-[0.97]"
+      className="rounded-2xl overflow-hidden cursor-pointer transition-transform duration-150 ease-out active:scale-[0.97] card-hover"
       style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
       onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
     >

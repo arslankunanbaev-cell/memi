@@ -68,7 +68,7 @@ export default function MomentDetail() {
   const hasPeople = allPeople.length > 0
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
+    <div className="flex flex-col h-full animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
       <div
         className="flex items-center justify-between px-4 py-3 pt-topbar"

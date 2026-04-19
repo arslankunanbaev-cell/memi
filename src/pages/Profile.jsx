@@ -226,7 +226,7 @@ export default function Profile() {
   }), [ownMoments, people])
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
+    <div className="flex flex-col h-full animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
       <div
         className="px-4 pb-3 pt-topbar"

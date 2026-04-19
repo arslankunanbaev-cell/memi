@@ -67,7 +67,7 @@ export default function Home() {
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
         /* ── Empty state ── */
-        <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-20">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-20 animate-fade-in">
           {/* Central FAB-like circle */}
           <div
             className="flex items-center justify-center"
