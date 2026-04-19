@@ -45,13 +45,23 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
         onClick={onEmpty}
         className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
         style={{
-          aspectRatio: '2/3', borderRadius: 14,
-          border: '1.5px dashed rgba(217,139,82,0.35)',
-          backgroundColor: 'var(--surface)',
+          aspectRatio: '2/3', borderRadius: 18,
+          border: '1.5px dashed var(--accent-light)',
+          background: `repeating-linear-gradient(45deg, var(--card-alt), var(--card-alt) 4px, var(--base) 4px, var(--base) 12px)`,
         }}
       >
-        <span style={{ fontSize: 22, color: 'var(--accent)' }}>+</span>
-        <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>добавить</span>
+        <div
+          style={{
+            width: 32, height: 32, borderRadius: '50%',
+            backgroundColor: 'var(--accent-light)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>Добавить</span>
       </button>
     )
   }
@@ -67,7 +77,7 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
         }}
         onTouchEnd={() => clearTimeout(holding)}
         className="active:opacity-80 transition-opacity cursor-pointer"
-        style={{ position: 'relative', aspectRatio: '2/3', borderRadius: 14, overflow: 'hidden' }}
+        style={{ position: 'relative', aspectRatio: '2/3', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(80,50,30,0.12)' }}
       >
         {slot.photo_url ? (
           <img src={slot.photo_url} alt={slot.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -235,52 +245,61 @@ export default function Profile() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-28 flex flex-col gap-4">
-        {/* Avatar + name */}
-        <div className="flex items-center gap-4">
-          <div
-            className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-            style={{ width: 52, height: 52, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 20, fontWeight: 300, overflow: 'hidden', flexShrink: 0 }}
-          >
-            {currentUser?.photo_url ? (
-              <img
-                src={currentUser.photo_url}
-                alt={name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(e) => { e.currentTarget.style.display = 'none' }}
-              />
-            ) : (
-              name[0]?.toUpperCase() ?? 'M'
-            )}
-          </div>
-          <div>
-            <p className="font-serif" style={{ fontSize: 24, fontWeight: 600, color: 'var(--text)' }}>{name}</p>
-            {since && (
-              <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>с memi с {since}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: plural.момент(stats.total),   value: stats.total },
-            { label: plural.месяц(stats.months),   value: stats.months },
-            { label: plural.человек(stats.people), value: stats.people },
-          ].map((s) => (
+        {/* Hero card: avatar + name + stats */}
+        <div
+          style={{
+            backgroundColor: 'var(--card)',
+            borderRadius: 20,
+            padding: '18px 16px',
+            boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
+          }}
+        >
+          <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
             <div
-              key={s.label}
-              className="flex flex-col items-center py-4 rounded-xl"
-              style={{ backgroundColor: 'var(--surface)' }}
+              className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
+              style={{ width: 56, height: 56, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 22, fontWeight: 300, overflow: 'hidden', border: '2.5px solid rgba(255,255,255,0.7)' }}
             >
-              <span
-                className="font-serif"
-                style={{ fontSize: 31, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
-              >
-                {s.value}
-              </span>
-              <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>{s.label}</span>
+              {currentUser?.photo_url ? (
+                <img
+                  src={currentUser.photo_url}
+                  alt={name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                />
+              ) : (
+                name[0]?.toUpperCase() ?? 'M'
+              )}
             </div>
-          ))}
+            <div>
+              <p className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>{name}</p>
+              {since && (
+                <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)', marginTop: 3 }}>с memi с {since}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Stats inside hero card */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: plural.момент(stats.total),   value: stats.total },
+              { label: plural.месяц(stats.months),   value: stats.months },
+              { label: plural.человек(stats.people), value: stats.people },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="flex flex-col items-center py-3 rounded-xl"
+                style={{ backgroundColor: 'var(--base)' }}
+              >
+                <span
+                  className="font-serif"
+                  style={{ fontSize: 28, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
+                >
+                  {s.value}
+                </span>
+                <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 3 }}>{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Capsule */}

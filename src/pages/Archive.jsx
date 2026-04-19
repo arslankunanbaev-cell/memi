@@ -42,7 +42,7 @@ function GridCell({ moment }) {
   return (
     <div
       onClick={() => navigate(`/moment/${moment.id}`)}
-      style={{ position: 'relative', aspectRatio: '1', borderRadius: 0, overflow: 'hidden', cursor: 'pointer' }}
+      style={{ position: 'relative', aspectRatio: '1', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}
       className="active:opacity-80 transition-opacity"
     >
       {moment.photo_url ? (
@@ -285,7 +285,7 @@ export default function Archive() {
           <div
             key={s.label}
             className="flex flex-col items-center py-4 rounded-xl"
-            style={{ backgroundColor: 'var(--surface)' }}
+            style={{ backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
           >
             <span
               className="font-serif"
@@ -308,7 +308,7 @@ export default function Archive() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, padding: '0 4px' }}>
             {monthMoments.map((m, i) => (
               <div key={m.id} style={{ animation: 'fadeSlideUp 0.25s ease both', animationDelay: `${i * 40}ms` }}>
                 <GridCell moment={m} />

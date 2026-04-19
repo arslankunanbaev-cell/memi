@@ -6,6 +6,40 @@ function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
+function MusicBlock({ title, artist }) {
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        background: 'var(--card-alt)', borderRadius: 12,
+        padding: '10px 12px', marginTop: 10,
+      }}
+    >
+      <div
+        style={{
+          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+          background: 'var(--accent-light)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
+          <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
+        </svg>
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <p className="font-sans" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {title}
+        </p>
+        {artist && (
+          <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 1 }}>{artist}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
@@ -26,7 +60,10 @@ export default function MomentCard({ moment }) {
   return (
     <div
       className="rounded-2xl overflow-hidden cursor-pointer transition-transform duration-150 ease-out active:scale-[0.97] card-hover"
-      style={{ backgroundColor: 'var(--surface)', boxShadow: '0 2px 14px rgba(23,20,14,0.10)' }}
+      style={{
+        backgroundColor: 'var(--card)',
+        boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
+      }}
       onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
     >
       {/* Author strip — shown only for friends' moments */}
@@ -44,8 +81,8 @@ export default function MomentCard({ moment }) {
         </div>
       )}
 
-      {/* Photo / gradient top */}
-      <div style={{ position: 'relative', height: expanded ? 275 : 225, overflow: 'hidden', transition: 'height 0.3s ease' }}>
+      {/* Photo */}
+      <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
@@ -53,40 +90,33 @@ export default function MomentCard({ moment }) {
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(135deg, #E8D5C0, #C8A880)',
-            }}
-          />
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #E8D5C0, #C8A880)' }} />
         )}
 
-        {/* Top gradient */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, transparent 40%)',
-            pointerEvents: 'none',
-          }}
-        />
         {/* Bottom gradient */}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 50%)',
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.55) 100%)',
             pointerEvents: 'none',
           }}
         />
 
-        {/* TOP-LEFT: location */}
+        {/* TOP-LEFT: location — frosted glass chip */}
         {moment.location && (
-          <div style={{ position: 'absolute', top: 9, left: 10 }}>
+          <div style={{ position: 'absolute', top: 10, left: 10 }}>
             <span
               className="font-sans"
-              style={{ fontSize: 12, color: 'rgba(255,255,255,0.90)', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                background: 'rgba(255,255,255,0.88)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: 20, padding: '4px 10px',
+                fontSize: 12, fontWeight: 500, color: 'var(--text)',
+                boxShadow: '0 1px 6px rgba(0,0,0,0.12)',
+                whiteSpace: 'nowrap',
+              }}
             >
               📍 {moment.location}
             </span>
@@ -94,18 +124,21 @@ export default function MomentCard({ moment }) {
         )}
 
         {/* BOTTOM-RIGHT: time + mood */}
-        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {moment.mood && <span style={{ fontSize: 16 }}>{moment.mood}</span>}
           <span
             className="font-sans"
-            style={{ fontSize: 12, color: 'rgba(255,255,255,0.90)', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}
+            style={{
+              background: 'rgba(0,0,0,0.45)', borderRadius: 8,
+              padding: '3px 8px', fontSize: 12, fontWeight: 600, color: '#fff',
+            }}
           >
             {formatTime(moment.created_at)}
           </span>
-          {moment.mood && <span style={{ fontSize: 14 }}>{moment.mood}</span>}
         </div>
 
-        {/* Title pill */}
-        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 80px)' }}>
+        {/* BOTTOM-LEFT: title pill */}
+        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 90px)' }}>
           <span
             className="font-serif"
             style={{
@@ -114,13 +147,9 @@ export default function MomentCard({ moment }) {
               color: 'var(--text)',
               borderRadius: 9999,
               padding: '5px 14px',
-              fontSize: 15,
-              fontWeight: 600,
-              letterSpacing: '0.2px',
+              fontSize: 15, fontWeight: 600, letterSpacing: '0.2px',
               maxWidth: '100%',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}
           >
             {moment.title}
@@ -129,72 +158,60 @@ export default function MomentCard({ moment }) {
       </div>
 
       {/* Body */}
-      <div style={{ padding: '10px 12px' }}>
-        {/* Description */}
-        {moment.description && (
-          <p
-            className="font-sans"
-            style={{
-              fontSize: 14,
-              color: 'var(--mid)',
-              lineHeight: 1.6,
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              marginBottom: 8,
-              opacity: 0.85,
-            }}
-          >
-            {moment.description}
-          </p>
-        )}
+      {(moment.description || moment.song_title || hasPeople) && (
+        <div style={{ padding: '12px 14px 14px' }}>
+          {/* Description */}
+          {moment.description && (
+            <p
+              className="font-sans"
+              style={{
+                fontSize: 15, color: 'var(--text)', lineHeight: 1.55,
+                display: '-webkit-box',
+                WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                marginBottom: (moment.song_title || hasPeople) ? 0 : 0,
+              }}
+            >
+              {moment.description}
+            </p>
+          )}
 
-        {/* Music — single line */}
-        {moment.song_title && (
-          <p
-            className="font-sans"
-            style={{
-              fontSize: 13,
-              color: 'var(--mid)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              margin: '0 0 6px',
-            }}
-          >
-            🎵 {moment.song_title}{moment.song_artist ? ` — ${moment.song_artist}` : ''}
-          </p>
-        )}
+          {/* Music block */}
+          {moment.song_title && (
+            <MusicBlock title={moment.song_title} artist={moment.song_artist} />
+          )}
 
-        {/* People chips */}
-        {hasPeople && (
-          <div className="flex flex-wrap gap-1" style={{ marginTop: moment.description || moment.song_title ? 6 : 0 }}>
-            {allPeople.map((p) => {
-              const linked = p.linked_user_id ? friends.find((f) => f.id === p.linked_user_id) : null
-              const photo = linked?.photo_url ?? p.photo_url
-              const displayName = linked?.name ?? p.name
-              return (
-                <div
-                  key={p.id}
-                  className="flex items-center gap-1.5"
-                  style={{ backgroundColor: 'var(--base)', borderRadius: 9999, padding: '3px 9px 3px 3px' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full font-serif text-white flex-shrink-0"
-                    style={{ width: 20, height: 20, backgroundColor: p.avatar_color ?? 'var(--accent)', fontSize: 9, fontWeight: 300, overflow: 'hidden' }}
-                  >
-                    {photo
-                      ? <img src={photo} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : displayName[0]?.toUpperCase()}
+          {/* People chips */}
+          {hasPeople && (
+            <div className="flex flex-wrap gap-2" style={{ marginTop: 10 }}>
+              {allPeople.map((p) => {
+                const linked = p.linked_user_id ? friends.find((f) => f.id === p.linked_user_id) : null
+                const photo = linked?.photo_url ?? p.photo_url
+                const displayName = linked?.name ?? p.name
+                return (
+                  <div key={p.id} className="flex items-center gap-1.5">
+                    <div
+                      className="flex items-center justify-center rounded-full flex-shrink-0"
+                      style={{
+                        width: 22, height: 22,
+                        backgroundColor: p.avatar_color ?? 'var(--accent)',
+                        border: '1.5px solid rgba(255,255,255,0.6)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {photo
+                        ? <img src={photo} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span className="font-sans" style={{ fontSize: 9, fontWeight: 600, color: '#fff' }}>{displayName[0]?.toUpperCase()}</span>
+                      }
+                    </div>
+                    <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)', fontWeight: 500 }}>{displayName}</span>
                   </div>
-                  <span className="font-sans" style={{ fontSize: 13, color: 'var(--text)' }}>{displayName}</span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -7,13 +7,17 @@
 
 @layer base {
   :root {
-    --base: #F7F4F0;
+    --base: #F5EDE0;
     --surface: #EDE6DC;
-    --accent: #D98B52;
+    --card: #FBF7F0;
+    --card-alt: #F0E8D8;
+    --accent: #C97A3A;
+    --accent-light: #EDD8B8;
+    --accent-pale: #F5ECD8;
     --deep: #A05E2C;
-    --text: #17140E;
-    --mid: #6B5A4A;
-    --soft: #B8A898;
+    --text: #1C1410;
+    --mid: #7A6A5A;
+    --soft: #B0A090;
   }
 
   * {
@@ -70,6 +74,7 @@
 @layer utilities {
   .bg-base    { background-color: var(--base); }
   .bg-surface { background-color: var(--surface); }
+  .bg-card    { background-color: var(--card); }
   .bg-accent  { background-color: var(--accent); }
   .bg-deep    { background-color: var(--deep); }
 
@@ -106,6 +111,6 @@
     transition: box-shadow 0.15s ease, transform 0.15s ease;
   }
   .card-hover:hover {
-    box-shadow: 0 6px 28px rgba(23,20,14,0.18) !important;
+    box-shadow: 0 4px 20px rgba(80,50,30,0.15) !important;
   }
 }
