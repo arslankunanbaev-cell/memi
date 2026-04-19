@@ -417,6 +417,19 @@ export async function linkPersonToUser(personId, linkedUserId) {
   return data
 }
 
+export async function getUserMomentsStats(userId) {
+  const sb = assertSupabase()
+  try {
+    const [{ count }, { data: latest }] = await Promise.all([
+      sb.from('moments').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+      sb.from('moments').select('created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ])
+    return { total: count ?? 0, lastCreatedAt: latest?.created_at ?? null }
+  } catch {
+    return { total: null, lastCreatedAt: null }
+  }
+}
+
 export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
   const sb = assertSupabase()
   const { data: linkedPeople, error: peopleErr } = await sb
