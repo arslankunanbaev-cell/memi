@@ -62,17 +62,50 @@ export default function MomentCard({ moment }) {
           />
         )}
 
-        {/* Gradient overlay */}
+        {/* Top gradient */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.10) 45%, transparent 70%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, transparent 40%)',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Bottom gradient */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 50%)',
+            pointerEvents: 'none',
           }}
         />
 
+        {/* TOP-LEFT: location */}
+        {moment.location && (
+          <div style={{ position: 'absolute', top: 9, left: 10 }}>
+            <span
+              className="font-sans"
+              style={{ fontSize: 12, color: 'rgba(255,255,255,0.90)', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}
+            >
+              📍 {moment.location}
+            </span>
+          </div>
+        )}
+
+        {/* BOTTOM-RIGHT: time + mood */}
+        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span
+            className="font-sans"
+            style={{ fontSize: 12, color: 'rgba(255,255,255,0.90)', textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}
+          >
+            {formatTime(moment.created_at)}
+          </span>
+          {moment.mood && <span style={{ fontSize: 14 }}>{moment.mood}</span>}
+        </div>
+
         {/* Title pill */}
-        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 16px)' }}>
+        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 80px)' }}>
           <span
             className="font-serif"
             style={{
@@ -110,98 +143,33 @@ export default function MomentCard({ moment }) {
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               marginBottom: 8,
+              opacity: 0.85,
             }}
           >
             {moment.description}
           </p>
         )}
 
-        {/* Bottom rows: music (if any) + meta */}
-        <div className="flex flex-col gap-1.5" style={{ minWidth: 0 }}>
-          {/* Song row */}
-          {moment.song_title && (
-            <div className="flex items-center gap-1.5" style={{ minWidth: 0 }}>
-              {moment.song_cover ? (
-                <img
-                  src={moment.song_cover}
-                  alt="cover"
-                  style={{ width: 28, height: 28, borderRadius: 5, objectFit: 'cover', flexShrink: 0 }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 5,
-                    backgroundColor: 'var(--base)',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 13,
-                  }}
-                >
-                  🎵
-                </div>
-              )}
-              <div style={{ minWidth: 0 }}>
-                <p
-                  className="font-sans"
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--text)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    margin: 0,
-                  }}
-                >
-                  {moment.song_title}
-                </p>
-                {moment.song_artist && (
-                  <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', margin: 0 }}>
-                    {moment.song_artist}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Time · location · mood row */}
-          <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
-            <span className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', flexShrink: 0 }}>
-              {formatTime(moment.created_at)}
-            </span>
-
-            {moment.location && (
-              <span
-                className="font-sans"
-                style={{
-                  fontSize: 12,
-                  color: 'var(--mid)',
-                  backgroundColor: 'var(--base)',
-                  borderRadius: 9999,
-                  padding: '2px 7px',
-                  flexShrink: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: 90,
-                }}
-              >
-                📍 {moment.location}
-              </span>
-            )}
-
-            {moment.mood && (
-              <span style={{ fontSize: 13, flexShrink: 0 }}>{moment.mood}</span>
-            )}
-          </div>
-        </div>
+        {/* Music — single line */}
+        {moment.song_title && (
+          <p
+            className="font-sans"
+            style={{
+              fontSize: 13,
+              color: 'var(--mid)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              margin: '0 0 6px',
+            }}
+          >
+            🎵 {moment.song_title}{moment.song_artist ? ` — ${moment.song_artist}` : ''}
+          </p>
+        )}
 
         {/* People chips */}
         {hasPeople && (
-          <div className="flex flex-wrap gap-1.5" style={{ marginTop: 8 }}>
+          <div className="flex flex-wrap gap-1" style={{ marginTop: moment.description || moment.song_title ? 6 : 0 }}>
             {allPeople.map((p) => {
               const linked = p.linked_user_id ? friends.find((f) => f.id === p.linked_user_id) : null
               const photo = linked?.photo_url ?? p.photo_url
