@@ -41,8 +41,8 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
         </p>
       </div>
 
-      {/* Три последних фото */}
-      {lastPhotos.length > 0 && (
+      {/* Три последних фото ИЛИ бейдж "в memi" — не оба */}
+      {lastPhotos.length > 0 ? (
         <div className="flex gap-1 justify-center">
           {lastPhotos.map((url, i) => (
             <div
@@ -53,10 +53,7 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
             </div>
           ))}
         </div>
-      )}
-
-      {/* Бейдж "в memi" если привязан к пользователю */}
-      {person.linked_user_id && (
+      ) : person.linked_user_id ? (
         <span
           onClick={(e) => { e.stopPropagation(); onLinkedClick?.() }}
           className="font-sans"
@@ -69,7 +66,7 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
         >
           в memi
         </span>
-      )}
+      ) : null}
     </button>
   )
 }

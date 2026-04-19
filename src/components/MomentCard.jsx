@@ -116,11 +116,11 @@ export default function MomentCard({ moment }) {
           </p>
         )}
 
-        {/* Bottom horizontal row: music + meta */}
-        <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
-          {/* Song */}
+        {/* Bottom rows: music (if any) + meta */}
+        <div className="flex flex-col gap-1.5" style={{ minWidth: 0 }}>
+          {/* Song row */}
           {moment.song_title && (
-            <div className="flex items-center gap-1.5" style={{ minWidth: 0, flex: 1 }}>
+            <div className="flex items-center gap-1.5" style={{ minWidth: 0 }}>
               {moment.song_cover ? (
                 <img
                   src={moment.song_cover}
@@ -167,41 +167,36 @@ export default function MomentCard({ moment }) {
             </div>
           )}
 
-          {/* Divider if music exists */}
-          {moment.song_title && (moment.location || moment.mood) && (
-            <div style={{ width: 0.5, alignSelf: 'stretch', backgroundColor: 'var(--base)', flexShrink: 0 }} />
-          )}
-
-          {/* Time */}
-          <span className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', flexShrink: 0 }}>
-            {formatTime(moment.created_at)}
-          </span>
-
-          {/* Location pill */}
-          {moment.location && (
-            <span
-              className="font-sans"
-              style={{
-                fontSize: 12,
-                color: 'var(--mid)',
-                backgroundColor: 'var(--base)',
-                borderRadius: 9999,
-                padding: '2px 7px',
-                flexShrink: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                maxWidth: 90,
-              }}
-            >
-              📍 {moment.location}
+          {/* Time · location · mood row */}
+          <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
+            <span className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', flexShrink: 0 }}>
+              {formatTime(moment.created_at)}
             </span>
-          )}
 
-          {/* Mood emoji */}
-          {moment.mood && (
-            <span style={{ fontSize: 13, flexShrink: 0 }}>{moment.mood}</span>
-          )}
+            {moment.location && (
+              <span
+                className="font-sans"
+                style={{
+                  fontSize: 12,
+                  color: 'var(--mid)',
+                  backgroundColor: 'var(--base)',
+                  borderRadius: 9999,
+                  padding: '2px 7px',
+                  flexShrink: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: 90,
+                }}
+              >
+                📍 {moment.location}
+              </span>
+            )}
+
+            {moment.mood && (
+              <span style={{ fontSize: 13, flexShrink: 0 }}>{moment.mood}</span>
+            )}
+          </div>
         </div>
 
         {/* People chips */}
