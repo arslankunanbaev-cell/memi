@@ -10,14 +10,19 @@ import { plural } from '../lib/ruPlural'
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
 // ── Карточка человека ─────────────────────────────────────────────────────────
-function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick, isFriend, isInMemi, onAction, actionLabel }) {
+function PersonCard({ person, momentCount, lastPhotos, photoTotal, onClick, onLinkedClick, isFriend, isInMemi, onAction, actionLabel }) {
+  const total = photoTotal ?? lastPhotos.length
+  const showMore = total > 5
+  const displayPhotos = showMore ? lastPhotos.slice(0, 4) : lastPhotos
+  const moreCount = showMore ? total - 4 : 0
+
   return (
     <div
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
-      className="flex flex-col items-center gap-3 active:opacity-70 transition-opacity w-full cursor-pointer select-none"
+      className="flex flex-col items-center gap-3 active:scale-95 transition-transform duration-150 w-full cursor-pointer select-none"
       style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: '16px 12px 14px' }}
     >
       {/* Аватар */}
@@ -44,19 +49,30 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick, i
         </p>
       </div>
 
-      {/* Три последних фото ИЛИ бейдж */}
-      {lastPhotos.length > 0 ? (
+      {/* До 5 последних фото */}
+      {lastPhotos.length > 0 && (
         <div className="flex gap-1 justify-center">
-          {lastPhotos.map((url, i) => (
+          {displayPhotos.map((url, i) => (
             <div
               key={i}
-              style={{ width: 22, height: 22, borderRadius: 4, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--base)' }}
+              style={{ width: 28, height: 28, borderRadius: 5, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--base)' }}
             >
-              {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />}
             </div>
           ))}
+          {showMore && (
+            <div
+              className="flex items-center justify-center flex-shrink-0"
+              style={{ width: 28, height: 28, borderRadius: 5, backgroundColor: 'var(--base)' }}
+            >
+              <span className="font-sans" style={{ fontSize: 9, color: 'var(--mid)', fontWeight: 600 }}>+{moreCount}</span>
+            </div>
+          )}
         </div>
-      ) : (isFriend || isInMemi) ? (
+      )}
+
+      {/* Бейдж: «друг» всегда для друзей; «в memi» только без фото */}
+      {(isFriend || (isInMemi && lastPhotos.length === 0)) && (
         <span
           onClick={isInMemi && !isFriend ? (e) => { e.stopPropagation(); onLinkedClick?.() } : undefined}
           className="font-sans"
@@ -64,12 +80,12 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick, i
             fontSize: 10, color: 'var(--deep)',
             backgroundColor: 'rgba(160,94,44,0.12)',
             borderRadius: 20, padding: '2px 8px',
-            marginTop: -4,
+            marginTop: lastPhotos.length > 0 ? -8 : -4,
           }}
         >
           {isFriend ? 'друг' : 'в memi'}
         </span>
-      ) : null}
+      )}
 
       {/* Кнопка действия */}
       {actionLabel && (
@@ -397,10 +413,8 @@ export default function People() {
   }
 
   function lastPhotosFor(personId) {
-    return moments
-      .filter((m) => (m.people ?? []).some((p) => p.id === personId) && m.photo_url)
-      .slice(0, 3)
-      .map((m) => m.photo_url)
+    const withPhotos = moments.filter((m) => (m.people ?? []).some((p) => p.id === personId) && m.photo_url)
+    return { urls: withPhotos.slice(0, 5).map((m) => m.photo_url), total: withPhotos.length }
   }
 
   return (
@@ -470,49 +484,61 @@ export default function People() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 4, paddingBottom: 8 }}>
 
           {friendsList.length > 0 && <SectionHeader label="Друзья" />}
-          {friendsList.map((p) => (
-            <PersonCard
-              key={p._fromFriend ? `friend-${p.id}` : p.id}
-              person={p}
-              momentCount={p._fromFriend ? 0 : momentCountFor(p.id)}
-              lastPhotos={p._fromFriend ? [] : lastPhotosFor(p.id)}
-              isFriend={true}
-              isInMemi={true}
-              onClick={getCardClick(p)}
-              onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
-              {...getActionProps(p)}
-            />
-          ))}
+          {friendsList.map((p) => {
+            const lp = p._fromFriend ? { urls: [], total: 0 } : lastPhotosFor(p.id)
+            return (
+              <PersonCard
+                key={p._fromFriend ? `friend-${p.id}` : p.id}
+                person={p}
+                momentCount={p._fromFriend ? 0 : momentCountFor(p.id)}
+                lastPhotos={lp.urls}
+                photoTotal={lp.total}
+                isFriend={true}
+                isInMemi={true}
+                onClick={getCardClick(p)}
+                onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+                {...getActionProps(p)}
+              />
+            )
+          })}
 
           {inMemiList.length > 0 && <SectionHeader label="В memi" />}
-          {inMemiList.map((p) => (
-            <PersonCard
-              key={p.id}
-              person={p}
-              momentCount={momentCountFor(p.id)}
-              lastPhotos={lastPhotosFor(p.id)}
-              isFriend={false}
-              isInMemi={true}
-              onClick={getCardClick(p)}
-              onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
-              {...getActionProps(p)}
-            />
-          ))}
+          {inMemiList.map((p) => {
+            const lp = lastPhotosFor(p.id)
+            return (
+              <PersonCard
+                key={p.id}
+                person={p}
+                momentCount={momentCountFor(p.id)}
+                lastPhotos={lp.urls}
+                photoTotal={lp.total}
+                isFriend={false}
+                isInMemi={true}
+                onClick={getCardClick(p)}
+                onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+                {...getActionProps(p)}
+              />
+            )
+          })}
 
           {othersList.length > 0 && <SectionHeader label="Остальные" />}
-          {othersList.map((p) => (
-            <PersonCard
-              key={p.id}
-              person={p}
-              momentCount={momentCountFor(p.id)}
-              lastPhotos={lastPhotosFor(p.id)}
-              isFriend={false}
-              isInMemi={false}
-              onClick={getCardClick(p)}
-              onLinkedClick={undefined}
-              {...getActionProps(p)}
-            />
-          ))}
+          {othersList.map((p) => {
+            const lp = lastPhotosFor(p.id)
+            return (
+              <PersonCard
+                key={p.id}
+                person={p}
+                momentCount={momentCountFor(p.id)}
+                lastPhotos={lp.urls}
+                photoTotal={lp.total}
+                isFriend={false}
+                isInMemi={false}
+                onClick={getCardClick(p)}
+                onLinkedClick={undefined}
+                {...getActionProps(p)}
+              />
+            )
+          })}
 
           {/* Кнопка добавить */}
           <button
