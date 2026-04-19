@@ -287,7 +287,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Photo */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Фото
           </p>
           <button
@@ -316,7 +316,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Mood emoji picker */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Настроение
           </p>
           <div className="flex flex-wrap gap-2">
@@ -339,7 +339,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Title */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Заголовок
           </p>
           <input
@@ -358,7 +358,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Description */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Описание
           </p>
           <textarea
@@ -374,7 +374,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Location */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Место
           </p>
           <input
@@ -392,7 +392,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Date */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Дата
           </p>
           <div style={{ position: 'relative' }}>
@@ -422,7 +422,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Song */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Трек
           </p>
           {song ? (
@@ -465,7 +465,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* People — всегда видна, можно добавить нового прямо здесь */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             С кем
           </p>
           <div className="flex flex-wrap gap-2">
@@ -533,7 +533,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         {/* Friends in memi — tag platform users */}
         {friends.length > 0 && (
           <div>
-            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
+            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
               Друзья в memi
             </p>
             <div className="flex flex-wrap gap-2">
@@ -577,7 +577,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         )}
         {/* Visibility */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
             Видимость
           </p>
           <div className="flex gap-2">
