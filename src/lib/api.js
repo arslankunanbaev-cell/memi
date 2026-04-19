@@ -1,26 +1,50 @@
 import { assertSupabase } from './supabase'
 
+// Signed URL lifetime: 10 years in seconds.
+// Long enough that stored URLs remain valid without manual refresh.
+const SIGNED_URL_TTL = 315_360_000
+
+// ── Helper: upload a photo and return { photo_url, photo_path } ───────────────
+// photo_url = signed URL (long-lived, safe to store in DB and share cross-user)
+// photo_path = storage object path (for future re-signing if needed)
+async function uploadPhoto(sb, userId, file, subfolder = '') {
+  const ext = file.name.split('.').pop() || 'jpg'
+  const folder = subfolder ? `${userId}/${subfolder}` : userId
+  const path = `${folder}/${Date.now()}.${ext}`
+
+  const { error: uploadError } = await sb.storage
+    .from('photos')
+    .upload(path, file, { contentType: file.type, upsert: false })
+  if (uploadError) throw uploadError
+
+  const { data: signedData, error: signErr } = await sb.storage
+    .from('photos')
+    .createSignedUrl(path, SIGNED_URL_TTL)
+
+  if (signErr || !signedData?.signedUrl) {
+    // Fallback to public URL if signing fails (e.g. bucket still public)
+    const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
+    return { photo_url: urlData.publicUrl, photo_path: path }
+  }
+
+  return { photo_url: signedData.signedUrl, photo_path: path }
+}
+
 // ── Users ─────────────────────────────────────────────────────────────────────
 
-// Возвращает { user, isNew }
-// isNew = true если пользователь только что создан, false если уже был
+// Returns { user, isNew }
 export async function saveUser(tgUser) {
   const sb = assertSupabase()
 
-  // ── 1. Проверяем — существует ли уже ───────────────────────────────────────
   const { data: existing, error: selectError } = await sb
     .from('users')
     .select('*')
     .eq('telegram_id', tgUser.id)
-    .maybeSingle()   // не бросает ошибку если 0 строк (в отличие от .single())
+    .maybeSingle()
 
-  if (selectError) {
-    console.error('[saveUser] select error:', selectError.code, selectError.message)
-    throw selectError
-  }
+  if (selectError) throw selectError
 
   if (existing) {
-    // Обновляем имя и фото на случай если пользователь сменил их в Telegram
     const newName     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
     const newPhotoUrl = tgUser.photo_url ?? null
     const needsUpdate = existing.name !== newName || existing.photo_url !== newPhotoUrl
@@ -34,7 +58,6 @@ export async function saveUser(tgUser) {
     return { user: existing, isNew: false }
   }
 
-  // ── 2. Создаём нового ──────────────────────────────────────────────────────
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
   const { data: newUser, error: insertError } = await sb
     .from('users')
@@ -42,12 +65,27 @@ export async function saveUser(tgUser) {
     .select()
     .single()
 
-  if (insertError) {
-    console.error('[saveUser] insert error:', insertError.code, insertError.message)
-    throw insertError
-  }
-
+  if (insertError) throw insertError
   return { user: newUser, isNew: true }
+}
+
+// Cross-user lookup by public_code via SECURITY DEFINER RPC (never exposes telegram_id).
+export async function getUserByPublicCode(publicCode) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .rpc('find_user_by_public_code', { p_code: publicCode })
+  if (error) throw error
+  return data?.[0] ?? null
+}
+
+// Backward compat: resolve old ref_<telegram_id> deep links safely.
+// Returns { id, public_code } only — telegram_id is never sent to the client.
+export async function findUserByTelegramIdSafe(telegramId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .rpc('find_user_by_telegram_id_safe', { p_telegram_id: telegramId })
+  if (error) throw error
+  return data?.[0] ?? null
 }
 
 // ── Moments ───────────────────────────────────────────────────────────────────
@@ -77,45 +115,26 @@ export async function getMoments(userId) {
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
   const sb = assertSupabase()
 
-  if (!userId || userId === 'local') {
-    console.error('[saveMoment] userId is missing or "local"')
-  }
-
   let photo_url = null
+  let photo_path = null
   if (photoFile) {
-    const ext = photoFile.name.split('.').pop() || 'jpg'
-    const path = `${userId}/${Date.now()}.${ext}`
-    const { error: uploadError } = await sb.storage
-      .from('photos')
-      .upload(path, photoFile, { contentType: photoFile.type, upsert: false })
-    if (uploadError) {
-      console.error('[saveMoment] photo upload error:', uploadError.code, uploadError.message)
-      throw uploadError
-    }
-    const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-    photo_url = urlData.publicUrl
+    const result = await uploadPhoto(sb, userId, photoFile)
+    photo_url  = result.photo_url
+    photo_path = result.photo_path
   }
-
-  const insertPayload = { user_id: userId, ...fields, photo_url }
 
   const { data: moment, error: momentError } = await sb
     .from('moments')
-    .insert(insertPayload)
+    .insert({ user_id: userId, ...fields, photo_url, photo_path })
     .select()
     .single()
 
-  if (momentError) {
-    console.error('[saveMoment] insert error:', momentError.code, momentError.message)
-    throw momentError
-  }
+  if (momentError) throw momentError
 
   if (peopleIds?.length > 0) {
     const rows = peopleIds.map((person_id) => ({ moment_id: moment.id, person_id }))
     const { error: linkError } = await sb.from('moment_people').insert(rows)
-    if (linkError) {
-      console.error('[saveMoment] people link error:', linkError.code, linkError.message)
-      throw linkError
-    }
+    if (linkError) throw linkError
   }
 
   return moment
@@ -131,7 +150,6 @@ export async function updateMoment(id, payload) {
 
 export async function deleteMoment(id) {
   const sb = assertSupabase()
-  // moment_people deletes via CASCADE
   const { error } = await sb.from('moments').delete().eq('id', id)
   if (error) throw error
 }
@@ -149,29 +167,27 @@ export async function getPeople(userId) {
 export async function createPerson({ userId, name, avatarColor, photoFile }) {
   const sb = assertSupabase()
   let photo_url = null
+  let photo_path = null
   if (photoFile) {
-    const ext = photoFile.name.split('.').pop() || 'jpg'
-    const path = `${userId}/people/${Date.now()}.${ext}`
-    const { error: uploadError } = await sb.storage
-      .from('photos').upload(path, photoFile, { contentType: photoFile.type })
-    if (uploadError) throw uploadError
-    const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-    photo_url = urlData.publicUrl
+    const result = await uploadPhoto(sb, userId, photoFile, 'people')
+    photo_url  = result.photo_url
+    photo_path = result.photo_path
   }
   const { data, error } = await sb
     .from('people')
-    .insert({ user_id: userId, name, avatar_color: avatarColor, photo_url })
+    .insert({ user_id: userId, name, avatar_color: avatarColor, photo_url, photo_path })
     .select().single()
   if (error) throw error
   return data
 }
 
-export async function updatePerson(personId, { name, photoUrl, metYear }) {
+export async function updatePerson(personId, { name, photoUrl, photoPath, metYear }) {
   const sb = assertSupabase()
   const payload = {}
-  if (name !== undefined) payload.name = name
-  if (photoUrl !== undefined) payload.photo_url = photoUrl
-  if (metYear !== undefined) payload.met_year = metYear || null
+  if (name      !== undefined) payload.name      = name
+  if (photoUrl  !== undefined) payload.photo_url  = photoUrl
+  if (photoPath !== undefined) payload.photo_path = photoPath
+  if (metYear   !== undefined) payload.met_year   = metYear || null
   const { data, error } = await sb
     .from('people').update(payload).eq('id', personId).select().single()
   if (error) throw error
@@ -194,7 +210,6 @@ export async function getPersonById(personId) {
 
 export async function getMomentsByPerson(userId, personId) {
   const sb = assertSupabase()
-  // Получаем id моментов где есть этот человек
   const { data: links, error: linkError } = await sb
     .from('moment_people')
     .select('moment_id')
@@ -215,17 +230,6 @@ export async function getMomentsByPerson(userId, personId) {
 
 // ── Friends ───────────────────────────────────────────────────────────────────
 
-export async function getUserByTelegramId(telegramId) {
-  const sb = assertSupabase()
-  const { data, error } = await sb
-    .from('users')
-    .select('id, name, photo_url, telegram_id')
-    .eq('telegram_id', telegramId)
-    .maybeSingle()
-  if (error) throw error
-  return data // null if not found
-}
-
 export async function sendFriendRequest(requesterId, receiverId) {
   if (!requesterId || !receiverId || requesterId === receiverId) return null
   const sb = assertSupabase()
@@ -244,7 +248,6 @@ export async function sendFriendRequest(requesterId, receiverId) {
 export async function getFriendships(userId) {
   const sb = assertSupabase()
 
-  // Two separate queries instead of .or() to avoid PostgREST filter issues
   const [{ data: asSender, error: e1 }, { data: asReceiver, error: e2 }] = await Promise.all([
     sb.from('friendships').select('id, status, requester_id, receiver_id').eq('requester_id', userId),
     sb.from('friendships').select('id, status, requester_id, receiver_id').eq('receiver_id', userId),
@@ -252,7 +255,6 @@ export async function getFriendships(userId) {
   if (e1) throw e1
   if (e2) throw e2
 
-  // Deduplicate: if both A→B and B→A exist, keep only the first seen
   const seen = new Set()
   const rows = [...(asSender ?? []), ...(asReceiver ?? [])].filter((f) => {
     const key = [f.requester_id, f.receiver_id].sort().join(':')
@@ -263,10 +265,10 @@ export async function getFriendships(userId) {
   if (!rows.length) return []
 
   const userIds = [...new Set(rows.flatMap((f) => [f.requester_id, f.receiver_id]))]
+
+  // Use SECURITY DEFINER RPC — never exposes telegram_id to other clients.
   const { data: users, error: usersErr } = await sb
-    .from('users')
-    .select('id, name, photo_url, telegram_id')
-    .in('id', userIds)
+    .rpc('get_users_public', { p_user_ids: userIds })
   if (usersErr) throw usersErr
 
   const byId = Object.fromEntries((users ?? []).map((u) => [u.id, u]))
@@ -333,12 +335,18 @@ export async function getSharedMoments(userId) {
 export async function getUserProfile(userId) {
   const sb = assertSupabase()
   try {
-    const [{ data: user }, { data: moments, count }] = await Promise.all([
-      sb.from('users').select('id, name, photo_url, created_at').eq('id', userId).maybeSingle(),
-      sb.from('moments').select('id, title, photo_url, created_at, visibility', { count: 'exact' })
-        .eq('user_id', userId).eq('visibility', 'public').order('created_at', { ascending: false }),
+    const [userResult, momentsResult] = await Promise.all([
+      sb.rpc('get_user_public', { p_user_id: userId }),
+      sb.from('moments')
+        .select('id, title, photo_url, created_at, visibility', { count: 'exact' })
+        .eq('user_id', userId)
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false }),
     ])
-    return { user: user ?? null, moments: moments ?? [], total: count ?? 0 }
+    const user    = userResult.data?.[0] ?? null
+    const moments = momentsResult.data  ?? []
+    const total   = momentsResult.count ?? 0
+    return { user, moments, total }
   } catch {
     return { user: null, moments: [], total: 0 }
   }
@@ -381,19 +389,12 @@ export async function getCapsule(userId) {
 
 export async function saveCapsuleSlot(userId, slotIndex, momentId) {
   const sb = assertSupabase()
-  const session = await sb.auth.getSession()
-  console.log('[Capsule] auth session:', session.data.session?.user?.id ?? 'NO SESSION')
-  console.log('[Capsule] saving slot', slotIndex, 'userId:', userId, 'momentId:', momentId)
   const { error: delErr } = await sb.from('capsule').delete().eq('user_id', userId).eq('slot_index', slotIndex)
-  if (delErr) console.warn('[Capsule] delete error (non-fatal):', delErr)
+  if (delErr) console.warn('[Capsule] delete error (non-fatal):', delErr?.message)
   const { error } = await sb
     .from('capsule')
     .insert({ user_id: userId, slot_index: slotIndex, moment_id: momentId })
-  if (error) {
-    console.error('[Capsule] INSERT ERROR:', JSON.stringify(error))
-    throw error
-  }
-  console.log('[Capsule] saved ok')
+  if (error) throw error
 }
 
 export async function deleteCapsuleSlot(userId, slotIndex) {

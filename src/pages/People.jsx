@@ -375,11 +375,11 @@ export default function People() {
   }
 
   function handleInvite() {
-    const tgId    = currentUser?.telegram_id
-      ?? window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    const publicCode = currentUser?.public_code
+    if (!publicCode) return
     const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
     const appName = import.meta.env.VITE_APP_SHORT_NAME ?? 'app'
-    const link    = `https://t.me/${botName}/${appName}?startapp=ref_${tgId}`
+    const link    = `https://t.me/${botName}/${appName}?startapp=ref_${publicCode}`
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Присоединяйся ко мне в memi 🌿')}`
     if (window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(shareUrl)

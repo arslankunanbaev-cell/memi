@@ -47,7 +47,8 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
     setSaving(true)
     setError(null)
     try {
-      let photo_url = person.photo_url ?? null
+      let photo_url  = person.photo_url ?? null
+      let photo_path = person.photo_path ?? null
       if (photoFile) {
         const sb = assertSupabase()
         const ext = photoFile.name.split('.').pop() || 'jpg'
@@ -55,10 +56,17 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
         const { error: uploadError } = await sb.storage
           .from('photos').upload(path, photoFile, { contentType: photoFile.type })
         if (uploadError) throw uploadError
-        const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-        photo_url = urlData.publicUrl
+        const { data: signedData, error: signErr } = await sb.storage
+          .from('photos').createSignedUrl(path, 315_360_000)
+        if (signErr || !signedData?.signedUrl) {
+          const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
+          photo_url = urlData.publicUrl
+        } else {
+          photo_url  = signedData.signedUrl
+          photo_path = path
+        }
       }
-      const updated = await updatePerson(person.id, { name: name.trim(), photoUrl: photo_url, metYear: metYear ? Number(metYear) : null })
+      const updated = await updatePerson(person.id, { name: name.trim(), photoUrl: photo_url, photoPath: photo_path, metYear: metYear ? Number(metYear) : null })
       onSaved(updated)
       onClose()
     } catch (err) {

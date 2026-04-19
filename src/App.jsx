@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { saveUser, getPeople, getMoments, getCapsule, getUserByTelegramId, sendFriendRequest, getFriendships, getSharedMoments } from './lib/api'
+import { saveUser, getPeople, getMoments, getCapsule, getUserByPublicCode, findUserByTelegramIdSafe, sendFriendRequest, getFriendships, getSharedMoments } from './lib/api'
 import { useAppStore } from './store/useAppStore'
 import Splash from './pages/Splash'
 import Onboarding from './pages/Onboarding'
@@ -40,32 +40,55 @@ export default function App() {
           window.Telegram.WebApp.expand()
         }
 
-        // ── Валидируем Telegram initData через Edge Function (не блокирует init) ─
-        try {
-          const initData = window.Telegram?.WebApp?.initData || 'dev'
-          const authRes = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
-            {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body:    JSON.stringify({ initData }),
-            }
-          )
-          if (authRes.ok) {
-            const { access_token } = await authRes.json()
-            const { supabase } = await import('./lib/supabase')
-            await supabase.auth.setSession({ access_token, refresh_token: access_token })
+        // ── Валидируем Telegram initData через Edge Function ──────────────────
+        // Fail-closed: в production без валидной auth сессии дальше не идём.
+        const rawInitData = window.Telegram?.WebApp?.initData
+        const initData = rawInitData || (import.meta.env.DEV ? 'dev' : null)
+
+        if (!initData) {
+          // production без initData — невалидный контекст
+          clearTimeout(fallbackTimer)
+          setInitResult({ id: null, name: 'Гость' }, false)
+          navigate('/home', { replace: true })
+          return
+        }
+
+        const authRes = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
+          {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ initData }),
           }
-        } catch (authErr) {
-          // Валидация не прошла — продолжаем без сессии (данные всё равно загрузятся)
-          console.warn('[App] auth edge function skipped:', authErr?.message)
+        )
+
+        if (!authRes.ok) {
+          if (!import.meta.env.DEV) {
+            // Auth failed in production — cannot proceed without confirmed session
+            clearTimeout(fallbackTimer)
+            setInitResult({ id: null, name: 'Гость' }, false)
+            navigate('/home', { replace: true })
+            return
+          }
+          console.warn('[App] auth failed in dev, continuing anyway')
+        } else {
+          const { access_token } = await authRes.json()
+          const { supabase } = await import('./lib/supabase')
+          await supabase.auth.setSession({ access_token, refresh_token: access_token })
         }
 
         // Сохраняем / получаем пользователя из БД
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
-          ?? { id: 12345, first_name: 'Dev', last_name: 'User' }
+          ?? (import.meta.env.DEV ? { id: 12345, first_name: 'Dev', last_name: 'User' } : null)
+
+        if (!tgUser) {
+          clearTimeout(fallbackTimer)
+          setInitResult({ id: null, name: 'Гость' }, false)
+          navigate('/home', { replace: true })
+          return
+        }
+
         const { user, isNew } = await saveUser(tgUser)
-        console.log('[App] ✅ user:', user.id, '| isNew:', isNew)
 
         // ── Критический блок — те же запросы что были до социальных фич ─────────
         const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
@@ -77,8 +100,6 @@ export default function App() {
         setMoments(fetchedMoments)
         setCapsule(fetchedCapsule)
         setInitResult(user, isNew)  // ← пользователь загружен, таймер больше не страшен
-
-        console.log('[App] ✅ people:', fetchedPeople.length, 'moments:', fetchedMoments.length)
 
         // ── Социальные фичи — отдельно, никогда не ломают основной init ────────
         try {
@@ -112,34 +133,36 @@ export default function App() {
           }
           setFriends(accepted)
           setIncomingRequests(incoming)
-          console.log('[App] ✅ friends:', accepted.length, 'requests:', incoming.length)
 
-          // ── start_param: отправляем заявку другу после полной инициализации ──
+          // ── start_param: send friend request after full init ───────────────
           const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
           if (startParam.startsWith('ref_')) {
-            const refTelegramId = Number(startParam.slice(4))
-            if (refTelegramId && refTelegramId !== tgUser.id) {
-              const refUser = await getUserByTelegramId(refTelegramId)
-              if (refUser) {
-                await sendFriendRequest(user.id, refUser.id)
-                console.log('[App] ✅ friend request sent to:', refUser.id)
-              } else {
-                console.warn('[App] ⚠ ref user not found:', refTelegramId)
+            const refParam = startParam.slice(4)
+            let refUser = null
+            if (/^[0-9a-f]{64}$/i.test(refParam)) {
+              // New format: public_code (SHA-256 hex, 64 chars)
+              refUser = await getUserByPublicCode(refParam)
+            } else {
+              // Old format: numeric telegram_id — backward compat via safe RPC
+              const refTgId = Number(refParam)
+              if (refTgId && refTgId !== tgUser.id) {
+                refUser = await findUserByTelegramIdSafe(refTgId)
               }
+            }
+            if (refUser?.id && refUser.id !== user.id) {
+              await sendFriendRequest(user.id, refUser.id).catch(() => {})
             }
           }
         } catch (socialErr) {
           console.warn('[App] ⚠ social load failed (non-fatal):', socialErr?.message)
         }
-        console.log('[App] ══ INIT END — navigating to:', isNew ? '/onboarding' : '/home')
 
         // Навигация — вся логика здесь, Splash ничего не решает
         clearTimeout(fallbackTimer)
         navigate(isNew ? '/onboarding' : '/home', { replace: true })
 
       } catch (err) {
-        console.error('[App] ❌ Init error:', err?.message)
-        console.error('[App] ❌ details:', JSON.stringify(err))
+        console.error('[App] init error:', err?.message)
         // При любой ошибке — всё равно идём на /home, не зависаем
         clearTimeout(fallbackTimer)
         setInitResult({ id: null, name: 'Пользователь' }, false)

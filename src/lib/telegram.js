@@ -8,18 +8,13 @@ export const tg = typeof window !== 'undefined' ? (window.Telegram?.WebApp ?? nu
 
 export function tgReady() {
   const wa = getWebApp()
-  console.log('[tgReady] WebApp object:', wa)
   wa?.ready()
   wa?.expand()
 }
 
 export function getTgUser() {
   const wa = getWebApp()
-  const user = wa?.initDataUnsafe?.user ?? null
-  console.log('[getTgUser] WebApp:', wa ? '✅ present' : '❌ null')
-  console.log('[getTgUser] initDataUnsafe:', wa?.initDataUnsafe)
-  console.log('[getTgUser] user:', user)
-  return user
+  return wa?.initDataUnsafe?.user ?? null
 }
 
 export function tgClose() {

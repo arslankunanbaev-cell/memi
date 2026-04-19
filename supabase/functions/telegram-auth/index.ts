@@ -96,9 +96,9 @@ serve(async (req: Request) => {
     // ── Определяем пользователя Telegram ──────────────────────────────────────
     let tgUser: { id: number; first_name: string; last_name?: string; photo_url?: string }
 
-    const isDev = !BOT_TOKEN || initData === 'dev'
+    // Dev mode only when BOT_TOKEN is absent — never bypassed in production.
+    const isDev = !BOT_TOKEN
     if (isDev) {
-      // Dev-режим: только если BOT_TOKEN не задан (в продакшне недостижимо)
       tgUser = { id: 12345, first_name: 'Dev', last_name: 'User' }
     } else {
       const params = await validateInitData(initData ?? '')
@@ -107,6 +107,16 @@ serve(async (req: Request) => {
           status: 401, headers: { 'Content-Type': 'application/json', ...CORS },
         })
       }
+
+      // Replay protection: reject payloads older than 5 minutes.
+      const authDate = Number(params.get('auth_date') ?? '0')
+      const nowSec = Math.floor(Date.now() / 1000)
+      if (!authDate || nowSec - authDate > 300) {
+        return new Response(JSON.stringify({ error: 'Telegram auth data expired' }), {
+          status: 401, headers: { 'Content-Type': 'application/json', ...CORS },
+        })
+      }
+
       tgUser = JSON.parse(params.get('user') ?? '{}')
     }
 
@@ -124,6 +134,12 @@ serve(async (req: Request) => {
     const email  = `tg_${tgUser.id}@memi.internal`
     const name   = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
 
+    // Stable public code: SHA-256 hex of telegram_id (matches security_hardening.sql backfill).
+    const enc2 = new TextEncoder()
+    const hashBytes = await crypto.subtle.digest('SHA-256', enc2.encode(String(tgUser.id)))
+    const publicCode = Array.from(new Uint8Array(hashBytes))
+      .map(b => b.toString(16).padStart(2, '0')).join('')
+
     // ── Создаём auth.users (идемпотентно — если уже есть, игнорируем ошибку) ──
     await admin.auth.admin.createUser({
       id: authId,
@@ -136,15 +152,16 @@ serve(async (req: Request) => {
     // ── Синхронизируем public.users ────────────────────────────────────────────
     const { data: existingUser } = await admin
       .from('users')
-      .select('id, auth_id, name, photo_url')
+      .select('id, auth_id, name, photo_url, public_code')
       .eq('telegram_id', tgUser.id)
       .maybeSingle()
 
     if (existingUser) {
       const updates: Record<string, unknown> = {}
-      if (!existingUser.auth_id)                updates.auth_id   = authId
-      if (existingUser.name      !== name)       updates.name      = name
+      if (!existingUser.auth_id)                        updates.auth_id     = authId
+      if (existingUser.name      !== name)              updates.name        = name
       if (existingUser.photo_url !== (tgUser.photo_url ?? null)) updates.photo_url = tgUser.photo_url ?? null
+      if (!existingUser.public_code)                    updates.public_code = publicCode
       if (Object.keys(updates).length > 0) {
         await admin.from('users').update(updates).eq('id', existingUser.id)
       }
@@ -154,6 +171,7 @@ serve(async (req: Request) => {
         telegram_id: tgUser.id,
         name,
         photo_url:   tgUser.photo_url ?? null,
+        public_code: publicCode,
       })
     }
 

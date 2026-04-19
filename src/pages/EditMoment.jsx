@@ -181,7 +181,8 @@ export default function EditMoment() {
     setSaving(true)
     setError(null)
     try {
-      let photo_url = moment.photo_url
+      let photo_url  = moment.photo_url
+      let photo_path = moment.photo_path ?? null
       if (newPhotoFile) {
         const sb = assertSupabase()
         const ext = newPhotoFile.name.split('.').pop() || 'jpg'
@@ -190,8 +191,15 @@ export default function EditMoment() {
           .from('photos')
           .upload(path, newPhotoFile, { contentType: newPhotoFile.type, upsert: false })
         if (uploadError) throw uploadError
-        const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-        photo_url = urlData.publicUrl
+        const { data: signedData, error: signErr } = await sb.storage
+          .from('photos').createSignedUrl(path, 315_360_000)
+        if (signErr || !signedData?.signedUrl) {
+          const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
+          photo_url = urlData.publicUrl
+        } else {
+          photo_url  = signedData.signedUrl
+          photo_path = path
+        }
       }
 
       const updated = await updateMomentApi(moment.id, {
@@ -204,6 +212,7 @@ export default function EditMoment() {
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
         photo_url,
+        photo_path,
       })
 
       // Update people links: delete all, insert new
