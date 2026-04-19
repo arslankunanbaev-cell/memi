@@ -58,17 +58,20 @@ export async function getMoments(userId) {
     .from('moments')
     .select(`
       *,
-      people:moment_people(person:people(id, name, avatar_color, photo_url)),
+      people:moment_people(person:people(id, name, avatar_color, photo_url, linked_user_id)),
       participants:moment_participants(user:users(id, name, photo_url))
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data.map((m) => ({
-    ...m,
-    people: (m.people ?? []).map((mp) => mp.person),
-    taggedFriends: (m.participants ?? []).map((mp) => mp.user).filter(Boolean),
-  }))
+  return data.map((m) => {
+    const people = (m.people ?? []).map((mp) => mp.person)
+    const linkedUserIds = new Set(people.map((p) => p.linked_user_id).filter(Boolean))
+    const taggedFriends = (m.participants ?? [])
+      .map((mp) => mp.user)
+      .filter((u) => u && !linkedUserIds.has(u.id))
+    return { ...m, people, taggedFriends }
+  })
 }
 
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
