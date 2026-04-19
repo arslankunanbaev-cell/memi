@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import { createPerson, getFriendships, acceptFriendRequest, linkPersonToUser } from '../lib/api'
@@ -10,12 +10,15 @@ import { plural } from '../lib/ruPlural'
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
 // ── Карточка человека ─────────────────────────────────────────────────────────
-function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick }) {
+function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick, isFriend, isInMemi, onAction, actionLabel }) {
   return (
-    <button
+    <div
       onClick={onClick}
-      className="flex flex-col items-center gap-3 active:opacity-70 transition-opacity w-full"
-      style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: '16px 12px 14px', border: 'none', cursor: 'pointer' }}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+      className="flex flex-col items-center gap-3 active:opacity-70 transition-opacity w-full cursor-pointer select-none"
+      style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: '16px 12px 14px' }}
     >
       {/* Аватар */}
       <div
@@ -41,7 +44,7 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
         </p>
       </div>
 
-      {/* Три последних фото ИЛИ бейдж "в memi" — не оба */}
+      {/* Три последних фото ИЛИ бейдж */}
       {lastPhotos.length > 0 ? (
         <div className="flex gap-1 justify-center">
           {lastPhotos.map((url, i) => (
@@ -53,9 +56,9 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
             </div>
           ))}
         </div>
-      ) : person.linked_user_id ? (
+      ) : (isFriend || isInMemi) ? (
         <span
-          onClick={(e) => { e.stopPropagation(); onLinkedClick?.() }}
+          onClick={isInMemi && !isFriend ? (e) => { e.stopPropagation(); onLinkedClick?.() } : undefined}
           className="font-sans"
           style={{
             fontSize: 10, color: 'var(--deep)',
@@ -64,10 +67,26 @@ function PersonCard({ person, momentCount, lastPhotos, onClick, onLinkedClick })
             marginTop: -4,
           }}
         >
-          в memi
+          {isFriend ? 'друг' : 'в memi'}
         </span>
       ) : null}
-    </button>
+
+      {/* Кнопка действия */}
+      {actionLabel && (
+        <span
+          role="button"
+          onClick={(e) => { e.stopPropagation(); onAction?.() }}
+          className="font-sans font-medium transition-opacity active:opacity-70 w-full text-center block"
+          style={{
+            fontSize: 11, color: 'var(--accent)',
+            backgroundColor: 'rgba(217,139,82,0.12)',
+            borderRadius: 9999, padding: '5px 8px', marginTop: -6,
+          }}
+        >
+          {actionLabel}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -122,20 +141,16 @@ function AddPersonSheet({ onClose, onCreated }) {
   return (
     <BottomSheet onClose={onClose}>
       <div className="px-5 flex flex-col gap-5 pb-2">
-        {/* Title */}
         <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
           Добавить человека
         </p>
 
-        {/* Avatar circle */}
         <div className="flex justify-center">
           <button
             onClick={() => fileRef.current?.click()}
             className="flex flex-col items-center justify-center gap-1 transition-opacity active:opacity-70"
             style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
+              width: 80, height: 80, borderRadius: '50%',
               border: photoPreview ? 'none' : '1.5px dashed var(--accent)',
               backgroundColor: 'transparent',
               overflow: photoPreview ? 'hidden' : 'visible',
@@ -153,7 +168,6 @@ function AddPersonSheet({ onClose, onCreated }) {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
 
-        {/* Name input */}
         <div className="flex flex-col gap-2">
           <label className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>Как зовут?</label>
           <input
@@ -163,11 +177,8 @@ function AddPersonSheet({ onClose, onCreated }) {
             autoFocus
             className="w-full font-sans outline-none"
             style={{
-              backgroundColor: 'var(--surface)',
-              borderRadius: 10,
-              padding: '11px 14px',
-              fontSize: 15,
-              color: 'var(--text)',
+              backgroundColor: 'var(--surface)', borderRadius: 10,
+              padding: '11px 14px', fontSize: 15, color: 'var(--text)',
               border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
             }}
           />
@@ -185,10 +196,7 @@ function AddPersonSheet({ onClose, onCreated }) {
           style={{
             backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
             color: name.trim() && !saving ? '#fff' : 'var(--soft)',
-            borderRadius: 9999,
-            padding: '13px 0',
-            fontSize: 15,
-            border: 'none',
+            borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
           }}
         >
           {saving ? 'Сохранение...' : 'Добавить'}
@@ -255,6 +263,23 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
   )
 }
 
+// ── Заголовок секции ──────────────────────────────────────────────────────────
+function SectionHeader({ label }) {
+  return (
+    <p
+      className="font-sans font-semibold"
+      style={{
+        gridColumn: '1 / -1',
+        fontSize: 11, color: 'var(--mid)',
+        textTransform: 'uppercase', letterSpacing: '0.06em',
+        marginBottom: -2, marginTop: 6,
+      }}
+    >
+      {label}
+    </p>
+  )
+}
+
 // ── Главный экран ─────────────────────────────────────────────────────────────
 export default function People() {
   const navigate  = useNavigate()
@@ -262,34 +287,49 @@ export default function People() {
   const moments   = useAppStore((s) => s.moments)
   const addPerson = useAppStore((s) => s.addPerson)
   const currentUser         = useAppStore((s) => s.currentUser)
-  const friends             = useAppStore((s) => s.friends)           ?? []
-  const incomingRequests    = useAppStore((s) => s.incomingRequests)  ?? []
-  const setFriends          = useAppStore((s) => s.setFriends)        ?? (() => {})
+  const friends             = useAppStore((s) => s.friends)            ?? []
+  const incomingRequests    = useAppStore((s) => s.incomingRequests)   ?? []
+  const setFriends          = useAppStore((s) => s.setFriends)         ?? (() => {})
   const setIncomingRequests = useAppStore((s) => s.setIncomingRequests) ?? (() => {})
-
-  const updatePerson = useAppStore((s) => s.updatePerson)
+  const updatePerson        = useAppStore((s) => s.updatePerson)
 
   const [showAdd, setShowAdd]       = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [tab, setTab]               = useState('people')
-  const [linkTarget, setLinkTarget] = useState(null) // friend to link after accepting
+  const [linkTarget, setLinkTarget] = useState(null)
 
-  const TABS = ['people', 'friends']
-  const touchStart = useRef(null)
+  // Объединённый список: локальные люди + друзья без привязки
+  const mergedPeople = useMemo(() => {
+    try {
+      const mapped = people.map((p) => {
+        const matchedFriend = friends.find((f) => f.id === p.linked_user_id)
+        return { ...p, isFriend: !!matchedFriend, isInMemi: !!p.linked_user_id }
+      })
+      const unmatchedFriends = friends
+        .filter((f) => !people.some((p) => p.linked_user_id === f.id))
+        .map((f) => ({
+          id: f.id, name: f.name, photo_url: f.photo_url ?? null,
+          avatar_color: AVATAR_COLORS[0], linked_user_id: f.id,
+          isFriend: true, isInMemi: true, _fromFriend: true,
+        }))
+      return [...mapped, ...unmatchedFriends]
+    } catch {
+      return people.map((p) => ({ ...p, isFriend: false, isInMemi: false }))
+    }
+  }, [people, friends])
 
-  function handleTouchStart(e) {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  const friendsList = mergedPeople.filter((p) => p.isFriend)
+  const inMemiList  = mergedPeople.filter((p) => p.isInMemi && !p.isFriend)
+  const othersList  = mergedPeople.filter((p) => !p.isInMemi && !p.isFriend)
+
+  function getCardClick(p) {
+    if (p.isFriend) return () => navigate(`/profile/${p.linked_user_id ?? p.id}`)
+    return () => navigate(`/people/${p.id}`)
   }
 
-  function handleTouchEnd(e) {
-    if (!touchStart.current) return
-    const dx = e.changedTouches[0].clientX - touchStart.current.x
-    const dy = e.changedTouches[0].clientY - touchStart.current.y
-    touchStart.current = null
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return
-    const idx = TABS.indexOf(tab)
-    if (dx < 0 && idx < TABS.length - 1) { tgHaptic('light'); setTab(TABS[idx + 1]) }
-    if (dx > 0 && idx > 0)               { tgHaptic('light'); setTab(TABS[idx - 1]) }
+  function getActionProps(p) {
+    if (!p.isInMemi) return { actionLabel: 'Пригласить', onAction: handleInvite }
+    if (!p.isFriend) return { actionLabel: 'Добавить', onAction: () => navigate(`/profile/${p.linked_user_id}`) }
+    return {}
   }
 
   async function handleRefreshFriends() {
@@ -369,193 +409,144 @@ export default function People() {
       <div className="px-4 pt-topbar" style={{ paddingBottom: 0 }}>
         <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
           <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
-          {tab === 'people' && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefreshFriends}
+              className="flex items-center justify-center transition-opacity active:opacity-60"
+              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: 16, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
+                ↻
+              </span>
+            </button>
             <button
               onClick={() => setShowAdd(true)}
               className="flex items-center justify-center transition-opacity active:opacity-60"
-              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18, color: 'var(--accent)' }}
+              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18, color: 'var(--accent)', cursor: 'pointer' }}
             >
               +
             </button>
-          )}
-          {tab === 'friends' && (
-            <button
-              onClick={handleInvite}
-              className="font-sans font-medium transition-opacity active:opacity-60"
-              style={{ fontSize: 13, color: 'var(--accent)', background: 'none', border: 'none', padding: 0 }}
-            >
-              + Пригласить
-            </button>
-          )}
-        </div>
-
-        {/* Таб-переключатель */}
-        <div className="flex gap-2" style={{ marginBottom: 14 }}>
-          {[{ id: 'people', label: 'Люди' }, { id: 'friends', label: 'Друзья' }].map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className="font-sans font-medium transition-opacity active:opacity-70"
-              style={{
-                fontSize: 15,
-                padding: '7px 20px',
-                borderRadius: 9999,
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: tab === id ? 'var(--accent)' : 'var(--surface)',
-                color: tab === id ? '#fff' : 'var(--mid)',
-              }}
-            >
-              {label}
-              {id === 'friends' && friends.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 13, opacity: 0.8 }}>{friends.length}</span>
-              )}
-            </button>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* Контент — слайдер */}
-      <div
-        className="flex-1 overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          style={{
-            display: 'flex',
-            width: '200%',
-            height: '100%',
-            transform: tab === 'people' ? 'translateX(0%)' : 'translateX(-50%)',
-            transition: 'transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)',
-          }}
-        >
+      {/* Контент */}
+      <div className="flex-1 overflow-y-auto pb-28 px-4">
 
-          {/* ── Вкладка Люди ── */}
-          <div className="overflow-y-auto pb-28 px-4" style={{ width: '50%' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 4, paddingBottom: 8 }}>
-              {people.map((p) => (
-                <PersonCard
-                  key={p.id}
-                  person={p}
-                  momentCount={momentCountFor(p.id)}
-                  lastPhotos={lastPhotosFor(p.id)}
-                  onClick={() => navigate(`/people/${p.id}`)}
-                  onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
-                />
-              ))}
-              <button
-                onClick={() => setShowAdd(true)}
-                className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
-                style={{
-                  borderRadius: 14, minHeight: 110,
-                  border: '1.5px dashed rgba(217,139,82,0.35)',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer',
-                }}
+        {/* Входящие заявки */}
+        {incomingRequests.length > 0 && (
+          <div className="flex flex-col gap-2" style={{ paddingTop: 4, paddingBottom: 12 }}>
+            <p className="font-sans font-semibold" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Заявки
+            </p>
+            {incomingRequests.map((req) => (
+              <div
+                key={req.friendship_id}
+                className="flex items-center gap-4 px-4 py-3 rounded-2xl"
+                style={{ backgroundColor: 'var(--surface)' }}
               >
                 <div
-                  className="flex items-center justify-center rounded-full"
-                  style={{ width: 32, height: 32, backgroundColor: 'rgba(217,139,82,0.15)' }}
+                  className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
+                  style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
                 >
-                  <span style={{ fontSize: 18, color: 'var(--accent)', lineHeight: 1 }}>+</span>
+                  {req.photo_url
+                    ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : req.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Добавить</span>
-              </button>
-            </div>
-          </div>
-
-          {/* ── Вкладка Друзья ── */}
-          <div className="overflow-y-auto pb-28 px-4" style={{ width: '50%' }}>
-            <div className="flex flex-col" style={{ paddingTop: 4, gap: 10 }}>
-              {/* Кнопка обновить */}
-              <div className="flex items-center justify-between">
-                <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>
-                  {friends.length + incomingRequests.length === 0 ? 'Пока нет друзей' : `${friends.length + incomingRequests.length} ${friends.length + incomingRequests.length === 1 ? 'человек' : 'человека'}`}
-                </p>
+                <p className="font-sans flex-1" style={{ fontSize: 15, color: 'var(--text)' }}>{req.name}</p>
                 <button
-                  onClick={handleRefreshFriends}
-                  className="transition-opacity active:opacity-60"
-                  style={{ background: 'none', border: 'none', padding: 0, lineHeight: 1 }}
+                  onClick={() => handleAccept(req)}
+                  className="font-sans font-medium transition-opacity active:opacity-70"
+                  style={{ fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '7px 16px' }}
                 >
-                  <span style={{ fontSize: 16, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
-                    ↻
-                  </span>
+                  Принять
                 </button>
               </div>
-
-              {/* Входящие заявки */}
-              {incomingRequests.length > 0 && (
-                <p className="font-sans font-medium" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: -2 }}>
-                  Заявки
-                </p>
-              )}
-              {incomingRequests.map((req) => (
-                <div
-                  key={req.friendship_id}
-                  className="flex items-center gap-4 px-4 py-3 rounded-2xl"
-                  style={{ backgroundColor: 'var(--surface)' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                    style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
-                  >
-                    {req.photo_url
-                      ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : req.name?.[0]?.toUpperCase() ?? '?'}
-                  </div>
-                  <p className="font-sans flex-1" style={{ fontSize: 15, color: 'var(--text)' }}>{req.name}</p>
-                  <button
-                    onClick={() => handleAccept(req)}
-                    className="font-sans font-medium transition-opacity active:opacity-70"
-                    style={{ fontSize: 13, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '7px 16px' }}
-                  >
-                    Принять
-                  </button>
-                </div>
-              ))}
-
-              {/* Список друзей */}
-              {friends.length > 0 && incomingRequests.length > 0 && (
-                <p className="font-sans font-medium" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: -2 }}>
-                  Друзья
-                </p>
-              )}
-              {friends.length === 0 && incomingRequests.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 48 }}>
-                  <p className="font-sans" style={{ fontSize: 15, color: 'var(--soft)' }}>Пока нет друзей</p>
-                  <button
-                    onClick={handleInvite}
-                    className="font-sans font-medium transition-opacity active:opacity-70"
-                    style={{ fontSize: 14, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '10px 24px' }}
-                  >
-                    Пригласить первого
-                  </button>
-                </div>
-              )}
-              {friends.map((f) => (
-                <button
-                  key={f.friendship_id}
-                  onClick={() => navigate(`/profile/${f.id}`)}
-                  className="flex items-center gap-4 px-4 py-3 rounded-2xl w-full transition-opacity active:opacity-70"
-                  style={{ backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
-                >
-                  <div
-                    className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                    style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
-                  >
-                    {f.photo_url
-                      ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : f.name?.[0]?.toUpperCase() ?? '?'}
-                  </div>
-                  <span className="font-sans flex-1 text-left" style={{ fontSize: 15, color: 'var(--text)' }}>{f.name}</span>
-                  <span style={{ fontSize: 18, color: 'var(--soft)' }}>›</span>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
+        )}
 
+        {/* Сетка людей с секциями */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 4, paddingBottom: 8 }}>
+
+          {friendsList.length > 0 && <SectionHeader label="Друзья" />}
+          {friendsList.map((p) => (
+            <PersonCard
+              key={p._fromFriend ? `friend-${p.id}` : p.id}
+              person={p}
+              momentCount={p._fromFriend ? 0 : momentCountFor(p.id)}
+              lastPhotos={p._fromFriend ? [] : lastPhotosFor(p.id)}
+              isFriend={true}
+              isInMemi={true}
+              onClick={getCardClick(p)}
+              onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+              {...getActionProps(p)}
+            />
+          ))}
+
+          {inMemiList.length > 0 && <SectionHeader label="В memi" />}
+          {inMemiList.map((p) => (
+            <PersonCard
+              key={p.id}
+              person={p}
+              momentCount={momentCountFor(p.id)}
+              lastPhotos={lastPhotosFor(p.id)}
+              isFriend={false}
+              isInMemi={true}
+              onClick={getCardClick(p)}
+              onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+              {...getActionProps(p)}
+            />
+          ))}
+
+          {othersList.length > 0 && <SectionHeader label="Остальные" />}
+          {othersList.map((p) => (
+            <PersonCard
+              key={p.id}
+              person={p}
+              momentCount={momentCountFor(p.id)}
+              lastPhotos={lastPhotosFor(p.id)}
+              isFriend={false}
+              isInMemi={false}
+              onClick={getCardClick(p)}
+              onLinkedClick={undefined}
+              {...getActionProps(p)}
+            />
+          ))}
+
+          {/* Кнопка добавить */}
+          <button
+            onClick={() => setShowAdd(true)}
+            className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
+            style={{
+              borderRadius: 14, minHeight: 110,
+              border: '1.5px dashed rgba(217,139,82,0.35)',
+              backgroundColor: 'transparent', cursor: 'pointer',
+            }}
+          >
+            <div
+              className="flex items-center justify-center rounded-full"
+              style={{ width: 32, height: 32, backgroundColor: 'rgba(217,139,82,0.15)' }}
+            >
+              <span style={{ fontSize: 18, color: 'var(--accent)', lineHeight: 1 }}>+</span>
+            </div>
+            <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Добавить</span>
+          </button>
         </div>
+
+        {/* Пустое состояние */}
+        {mergedPeople.length === 0 && incomingRequests.length === 0 && (
+          <div className="flex flex-col items-center justify-center gap-3" style={{ paddingTop: 48 }}>
+            <p className="font-sans" style={{ fontSize: 15, color: 'var(--soft)' }}>Пока нет друзей</p>
+            <button
+              onClick={handleInvite}
+              className="font-sans font-medium transition-opacity active:opacity-70"
+              style={{ fontSize: 14, color: '#fff', background: 'var(--accent)', border: 'none', borderRadius: 9999, padding: '10px 24px' }}
+            >
+              Пригласить первого
+            </button>
+          </div>
+        )}
       </div>
 
       <BottomNav active="people" />
