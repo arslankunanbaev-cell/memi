@@ -189,16 +189,6 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
-function formatMomentDate(createdAt) {
-  if (!createdAt) return ''
-
-  return new Date(createdAt).toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -323,32 +313,45 @@ export default function PublicProfile() {
   if (!profileUser) {
     return (
       <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
-        <div className="px-4 pt-topbar pb-4 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text)' }}
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <div className="px-4 pt-topbar">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '8px 0',
+                color: 'var(--mid)',
+                fontSize: 15,
+                fontWeight: 500,
+              }}
             >
-              <path d="M19 12H5M12 5l-7 7 7 7" />
-            </svg>
-          </button>
+              <svg
+                width="10"
+                height="16"
+                viewBox="0 0 10 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 2L2 8l6 6"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Назад
+            </button>
 
-          <h1
-            className="font-serif"
-            style={{ margin: 0, fontSize: 28, fontWeight: 600, color: 'var(--text)' }}
-          >
-            Профиль
-          </h1>
+            <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+              Профиль
+            </span>
+
+            <div style={{ width: 60 }} />
+          </div>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-4">
@@ -363,10 +366,9 @@ export default function PublicProfile() {
     )
   }
 
-  const name = profileUser.name || 'Пользователь'
+  const name = friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'
   const since = sinceLabel(profileUser.created_at)
   const totalMoments = momentStats.total ?? 0
-  const publicMomentsCount = moments.length
   const friendButtonLabel = isAlreadyFriend
     ? (removing ? '...' : 'Удалить из друзей')
     : (friendSent ? 'Запрос отправлен' : 'Добавить в друзья')
@@ -382,175 +384,196 @@ export default function PublicProfile() {
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
-      <div className="px-4 pt-topbar pb-4 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text)' }}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+      <div className="px-4 pt-topbar">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 transition-opacity active:opacity-60"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '8px 0',
+              color: 'var(--mid)',
+              fontSize: 15,
+              fontWeight: 500,
+            }}
           >
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-        </button>
+            <svg
+              width="10"
+              height="16"
+              viewBox="0 0 10 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 2L2 8l6 6"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Назад
+          </button>
 
-        <h1
-          className="font-serif"
-          style={{ margin: 0, fontSize: 28, fontWeight: 600, color: 'var(--text)' }}
-        >
-          Профиль
-        </h1>
+          <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+            Профиль
+          </span>
+
+          <div style={{ width: 60 }} />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pb-10">
-        <div className="flex items-start gap-3">
-          <div
-            className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
-            style={{
-              width: 54,
-              height: 54,
-              backgroundColor: profileUser.photo_url ? 'transparent' : 'var(--accent)',
-              color: '#fff',
-              fontSize: 20,
-              fontWeight: 600,
-            }}
-          >
-            {profileUser.photo_url ? (
-              <img
-                src={profileUser.photo_url}
-                alt={name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none'
-                }}
-              />
-            ) : (
-              name[0]?.toUpperCase()
-            )}
-          </div>
-
-          <div className="min-w-0 flex-1" style={{ paddingTop: 1 }}>
-            <p
-              className="font-serif"
+        <div
+          style={{
+            marginTop: 20,
+            backgroundColor: 'var(--card)',
+            borderRadius: 24,
+            padding: '24px 20px',
+            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+          }}
+        >
+          <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
+            <div
+              className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
               style={{
-                margin: 0,
-                fontSize: 24,
-                fontWeight: 600,
-                color: 'var(--text)',
-                lineHeight: 1.05,
+                width: 68,
+                height: 68,
+                backgroundColor: profileUser.photo_url ? 'transparent' : 'var(--accent)',
+                color: '#fff',
+                fontSize: 26,
+                fontWeight: 700,
+                border: '3px solid rgba(255,255,255,0.8)',
               }}
             >
-              {name}
-            </p>
+              {profileUser.photo_url ? (
+                <img
+                  src={profileUser.photo_url}
+                  alt={name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                name[0]?.toUpperCase()
+              )}
+            </div>
 
-            {since && (
+            <div className="flex-1 min-w-0">
               <p
                 className="font-sans"
                 style={{
-                  marginTop: 8,
-                  fontSize: 14,
-                  lineHeight: 1.35,
-                  color: 'var(--mid)',
+                  margin: 0,
+                  fontSize: 20,
+                  fontWeight: 700,
+                  color: 'var(--text)',
                 }}
               >
-                с memi с {since}
+                {name}
               </p>
-            )}
 
-            <p
-              className="font-sans"
-              style={{ marginTop: 6, fontSize: 14, color: 'var(--mid)' }}
-            >
-              {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
-            </p>
+              {since && (
+                <p
+                  className="font-sans"
+                  style={{ marginTop: 3, fontSize: 13, color: 'var(--mid)' }}
+                >
+                  с memi с {since}
+                </p>
+              )}
+
+              <p
+                className="font-sans"
+                style={{ marginTop: 1, fontSize: 13, color: 'var(--mid)' }}
+              >
+                {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
+              </p>
+            </div>
           </div>
+
+          {people.length > 0 && (
+            <button
+              type="button"
+              onClick={() => (
+                linkedPerson
+                  ? navigate(`/people/${linkedPerson.id}`)
+                  : setShowLinkSheet(true)
+              )}
+              className="flex items-center gap-2 transition-opacity active:opacity-60"
+              style={{
+                marginBottom: 16,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                color: linkedPerson ? 'var(--accent)' : 'var(--soft)',
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
+              <span className="font-sans">
+                {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
+              </span>
+            </button>
+          )}
 
           <button
             type="button"
             onClick={isAlreadyFriend ? handleRemoveFriend : handleAddFriend}
             disabled={removing || friendSent}
-            className="font-sans transition-all duration-150 ease-out active:opacity-70"
+            className="w-full font-sans transition-all duration-150 ease-out active:opacity-70"
             style={{
-              marginTop: 12,
-              border: 'none',
-              borderRadius: 9999,
-              padding: '11px 16px',
-              fontSize: 13,
+              borderRadius: 14,
+              padding: '11px',
+              fontSize: 14,
               fontWeight: 500,
-              whiteSpace: 'nowrap',
-              ...friendButtonStyles,
+              border: '1.5px solid rgba(180,150,120,0.3)',
+              backgroundColor: isAlreadyFriend ? 'transparent' : friendButtonStyles.backgroundColor,
+              color: isAlreadyFriend ? 'var(--mid)' : friendButtonStyles.color,
             }}
           >
             {friendButtonLabel}
           </button>
         </div>
 
-        {people.length > 0 && (
-          <button
-            type="button"
-            onClick={() => (
-              linkedPerson
-                ? navigate(`/people/${linkedPerson.id}`)
-                : setShowLinkSheet(true)
-            )}
-            className="flex items-center gap-2 transition-opacity active:opacity-60"
-            style={{
-              marginTop: 18,
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              color: linkedPerson ? 'var(--accent)' : 'var(--soft)',
-            }}
-          >
-            <LinkIcon color={linkedPerson ? 'var(--soft)' : 'var(--soft)'} />
-            <span className="font-sans" style={{ fontSize: 14 }}>
-              {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
-            </span>
-          </button>
-        )}
-
         <div
           className="flex flex-col items-center justify-center"
           style={{
-            marginTop: 18,
-            minHeight: 86,
-            borderRadius: 16,
-            backgroundColor: 'var(--surface)',
+            marginTop: 12,
+            backgroundColor: 'var(--card)',
+            borderRadius: 18,
+            padding: '20px',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
           }}
         >
           <span
             className="font-serif"
             style={{
               fontSize: 36,
+              fontWeight: 700,
               lineHeight: 1,
-              fontWeight: 600,
               color: 'var(--accent)',
             }}
           >
-            {publicMomentsCount}
+            {totalMoments}
           </span>
           <span
             className="font-sans"
-            style={{ marginTop: 6, fontSize: 14, color: 'var(--mid)' }}
+            style={{ marginTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--mid)' }}
           >
             открытых моментов
           </span>
         </div>
 
-        <div style={{ marginTop: 18 }}>
+        <div style={{ marginTop: 20 }}>
           <h2
             className="font-sans"
             style={{
               margin: 0,
+              marginBottom: 12,
               fontSize: 16,
               fontWeight: 700,
               color: 'var(--text)',
@@ -560,27 +583,45 @@ export default function PublicProfile() {
           </h2>
 
           {moments.length === 0 ? (
-            <p
-              className="font-sans text-center"
+            <div
               style={{
-                padding: '48px 24px 0',
-                fontSize: 15,
-                lineHeight: 1.55,
-                color: 'var(--mid)',
+                backgroundColor: 'var(--card)',
+                borderRadius: 20,
+                padding: '36px 24px',
+                textAlign: 'center',
+                boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
               }}
             >
-              Пока он не открыл воспоминания для всех
-            </p>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
+              <div
+                className="font-sans"
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  marginBottom: 6,
+                }}
+              >
+                Воспоминания закрыты
+              </div>
+              <div
+                className="font-sans"
+                style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
+              >
+                Пока он не открыл воспоминания для всех
+              </div>
+            </div>
           ) : (
-            <div className="flex flex-col gap-3" style={{ marginTop: 14 }}>
+            <div className="flex flex-col gap-3">
               {moments.map((moment) => (
                 <div
                   key={moment.id}
                   className="flex items-center gap-3"
                   style={{
-                    borderRadius: 16,
-                    backgroundColor: 'var(--surface)',
+                    backgroundColor: 'var(--card)',
+                    borderRadius: 18,
                     padding: '12px 13px',
+                    boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
                   }}
                 >
                   <div
@@ -595,20 +636,22 @@ export default function PublicProfile() {
                         : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
                     }}
                   >
-                    {moment.photo_url && (
+                    {moment.photo_url ? (
                       <img
                         src={moment.photo_url}
                         alt={moment.title}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="min-w-0">
                     <p
-                      className="font-sans font-medium"
+                      className="font-sans"
                       style={{
+                        margin: 0,
                         fontSize: 15,
+                        fontWeight: 600,
                         color: 'var(--text)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -617,12 +660,11 @@ export default function PublicProfile() {
                     >
                       {moment.title || 'Без названия'}
                     </p>
-
                     <p
                       className="font-sans"
                       style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
                     >
-                      {formatMomentDate(moment.created_at)}
+                      {since}
                     </p>
                   </div>
                 </div>
