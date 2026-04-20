@@ -15,7 +15,6 @@ import StoryPreview from './pages/StoryPreview'
 import StoryPreviewScreen from './pages/StoryPreviewScreen'
 import EditMoment from './pages/EditMoment'
 import PublicProfile from './pages/PublicProfile'
-import HeroOverlay from './components/HeroOverlay'
 
 export default function App() {
   const navigate   = useNavigate()
@@ -184,7 +183,6 @@ export default function App() {
 
   return (
     <React.Fragment>
-      <HeroOverlay />
       <Routes>
         <Route path="/"                  element={<Splash />} />
         <Route path="/onboarding"        element={<Onboarding />} />
