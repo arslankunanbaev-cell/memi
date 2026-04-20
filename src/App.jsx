@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { saveUser, getPeople, getMoments, getCapsule, getUserByPublicCode, findUserByTelegramIdSafe, sendFriendRequest, getFriendships, getSharedMoments } from './lib/api'
 import { useAppStore } from './store/useAppStore'
@@ -15,6 +15,7 @@ import StoryPreview from './pages/StoryPreview'
 import StoryPreviewScreen from './pages/StoryPreviewScreen'
 import EditMoment from './pages/EditMoment'
 import PublicProfile from './pages/PublicProfile'
+import HeroOverlay from './components/HeroOverlay'
 
 export default function App() {
   const navigate   = useNavigate()
@@ -176,21 +177,24 @@ export default function App() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <Routes>
-      <Route path="/"                  element={<Splash />} />
-      <Route path="/onboarding"        element={<Onboarding />} />
-      <Route path="/home"              element={<Home />} />
-      <Route path="/archive"           element={<Archive />} />
-      <Route path="/profile"           element={<Profile />} />
-      <Route path="/people"            element={<People />} />
-      <Route path="/people/:id"        element={<PersonDetail />} />
-      <Route path="/moment/:id"        element={<MomentDetail />} />
-      <Route path="/moment-saved"      element={<MomentSaved />} />
-      <Route path="/story/:id"         element={<StoryPreview />} />
-      <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
-      <Route path="/edit-moment/:id"   element={<EditMoment />} />
-      <Route path="/profile/:userId"   element={<PublicProfile />} />
-      <Route path="*"                  element={<Navigate to="/" replace />} />
-    </Routes>
+    <React.Fragment>
+      <HeroOverlay />
+      <Routes>
+        <Route path="/"                  element={<Splash />} />
+        <Route path="/onboarding"        element={<Onboarding />} />
+        <Route path="/home"              element={<Home />} />
+        <Route path="/archive"           element={<Archive />} />
+        <Route path="/profile"           element={<Profile />} />
+        <Route path="/people"            element={<People />} />
+        <Route path="/people/:id"        element={<PersonDetail />} />
+        <Route path="/moment/:id"        element={<MomentDetail />} />
+        <Route path="/moment-saved"      element={<MomentSaved />} />
+        <Route path="/story/:id"         element={<StoryPreview />} />
+        <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
+        <Route path="/edit-moment/:id"   element={<EditMoment />} />
+        <Route path="/profile/:userId"   element={<PublicProfile />} />
+        <Route path="*"                  element={<Navigate to="/" replace />} />
+      </Routes>
+    </React.Fragment>
   )
 }

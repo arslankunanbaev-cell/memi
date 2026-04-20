@@ -80,4 +80,9 @@ export const useAppStore = create((set) => ({
   // UI
   isOnboarded: false,
   setOnboarded: (v) => set({ isOnboarded: v }),
+
+  // Hero photo transition (card → detail)
+  heroTransition: null,
+  setHeroTransition: (data) => set({ heroTransition: data }),
+  clearHeroTransition: () => set({ heroTransition: null }),
 }))

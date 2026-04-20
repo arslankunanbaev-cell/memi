@@ -42,7 +42,7 @@ function GridCell({ moment }) {
   return (
     <div
       onClick={() => navigate(`/moment/${moment.id}`)}
-      style={{ position: 'relative', aspectRatio: '1', borderRadius: 12, overflow: 'hidden', cursor: 'pointer' }}
+      style={{ position: 'relative', aspectRatio: '3/4', borderRadius: 14, overflow: 'hidden', cursor: 'pointer' }}
       className="active:opacity-80 transition-opacity"
     >
       {moment.photo_url ? (
@@ -50,22 +50,24 @@ function GridCell({ moment }) {
       ) : (
         <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #E8D5C0, #C8A880)' }} />
       )}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.6) 0%, transparent 50%)' }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(28,20,16,0.55) 0%, transparent 55%)' }} />
       {moment.mood && (
-        <span style={{ position: 'absolute', top: 5, right: 5, fontSize: 12 }}>{moment.mood}</span>
+        <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 14 }}>{moment.mood}</span>
       )}
-      <div style={{ position: 'absolute', bottom: 5, left: 5, right: 5 }}>
-        <span
-          className="font-serif"
+      <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: '86%' }}>
+        <div
+          className="font-sans"
           style={{
-            display: 'inline-block', backgroundColor: 'rgba(255,255,255,0.88)',
-            color: 'var(--text)', borderRadius: 9999, padding: '2px 7px',
-            fontSize: 9, fontWeight: 400, maxWidth: '100%',
+            display: 'block', textAlign: 'center',
+            background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)',
+            borderRadius: 20, padding: '4px 10px',
+            fontSize: 10, fontWeight: 500, color: 'var(--text)',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.12)',
           }}
         >
           {moment.title}
-        </span>
+        </div>
       </div>
     </div>
   )
@@ -82,10 +84,10 @@ function FilterSheet({ onClose, onApply, people, current }) {
 
   return (
     <BottomSheet onClose={onClose} title="Фильтры">
-      <div className="px-5 pb-4 flex flex-col gap-5">
+      <div className="px-4 pb-4 flex flex-col gap-5">
         {people.length > 0 && (
           <div>
-            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>Люди</p>
+            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)', fontWeight: 700 }}>Люди</p>
             <div className="flex flex-wrap gap-2">
               {people.map((p) => {
                 const active = selectedPeople.includes(p.id)
@@ -96,7 +98,9 @@ function FilterSheet({ onClose, onApply, people, current }) {
                     className="flex items-center gap-2 transition-opacity active:opacity-70"
                     style={{
                       borderRadius: 9999, padding: '6px 12px 6px 8px',
-                      backgroundColor: active ? 'var(--accent)' : 'var(--surface)', border: 'none',
+                      backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                      border: 'none',
+                      boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
                     }}
                   >
                     <div
@@ -145,7 +149,6 @@ export default function Archive() {
   const [showFilter, setShowFilter] = useState(false)
   const [filterPeople, setFilterPeople] = useState([])
 
-  // Build month list
   const monthKeys = useMemo(() => {
     const keys = [...new Set(moments.map((m) => monthKey(m.created_at)))]
     keys.sort((a, b) => b.localeCompare(a))
@@ -175,37 +178,38 @@ export default function Archive() {
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
       {/* Topbar */}
-      <div
-        className="flex items-end justify-between px-4 pb-3 pt-topbar"
-      >
+      <div className="flex items-end justify-between px-4 pb-3 pt-topbar">
         <div>
-          <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Архив</h2>
-          <p className="font-sans" style={{ fontSize: 12, color: 'var(--soft)', marginTop: 1 }}>
+          <h2 className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--text)', margin: 0, letterSpacing: '-0.5px' }}>Архив</h2>
+          <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2, fontWeight: 400 }}>
             {moments.length} {moments.length === 1 ? 'момент' : 'моментов'}
           </p>
         </div>
-        {/* Кнопка фильтра — оранжевая + бейдж когда активен */}
         <button
           onClick={() => setShowFilter(true)}
-          className="flex items-center justify-center transition-opacity active:opacity-60"
+          className="flex items-center gap-2 transition-opacity active:opacity-60"
           style={{
+            height: 36, borderRadius: 12, border: 'none', padding: '0 14px',
+            backgroundColor: filterPeople.length > 0 ? 'var(--accent)' : 'var(--card)',
+            boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
             position: 'relative',
-            width: 36, height: 36, borderRadius: '50%', border: 'none',
-            backgroundColor: filterPeople.length > 0 ? 'var(--accent)' : 'var(--surface)',
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-            stroke={filterPeople.length > 0 ? '#fff' : 'var(--text)'}
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke={filterPeople.length > 0 ? '#fff' : 'var(--mid)'}
             strokeWidth="2" strokeLinecap="round"
           >
             <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
           </svg>
+          <span className="font-sans" style={{ fontSize: 13, fontWeight: 500, color: filterPeople.length > 0 ? '#fff' : 'var(--mid)' }}>
+            Фильтр
+          </span>
           {filterPeople.length > 0 && (
             <span
               className="font-sans font-medium"
               style={{
-                position: 'absolute', top: -3, right: -3,
-                width: 16, height: 16, borderRadius: '50%',
+                position: 'absolute', top: -4, right: -4,
+                width: 17, height: 17, borderRadius: '50%',
                 backgroundColor: 'var(--text)', color: 'var(--base)',
                 fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
@@ -216,9 +220,9 @@ export default function Archive() {
         </button>
       </div>
 
-      {/* Активные фильтры — чипы под топбаром */}
+      {/* Active filter chips */}
       {filterPeople.length > 0 && (
-        <div className="flex items-center gap-2 px-5 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex items-center gap-2 px-4 pb-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           <span className="font-sans flex-shrink-0" style={{ fontSize: 11, color: 'var(--soft)' }}>Фильтр:</span>
           {filterPeople.map((pid) => {
             const p = people.find((x) => x.id === pid)
@@ -228,15 +232,10 @@ export default function Archive() {
                 key={pid}
                 onClick={() => setFilterPeople((prev) => prev.filter((id) => id !== pid))}
                 className="flex items-center gap-1 flex-shrink-0 transition-opacity active:opacity-60"
-                style={{
-                  borderRadius: 9999, padding: '4px 8px 4px 6px',
-                  backgroundColor: 'var(--accent)', border: 'none',
-                }}
+                style={{ borderRadius: 9999, padding: '4px 8px 4px 6px', backgroundColor: 'var(--accent)', border: 'none' }}
               >
-                <div
-                  className="flex items-center justify-center rounded-full font-sans font-medium text-white flex-shrink-0"
-                  style={{ width: 16, height: 16, backgroundColor: 'rgba(255,255,255,0.3)', fontSize: 8 }}
-                >
+                <div className="flex items-center justify-center rounded-full font-sans font-medium text-white flex-shrink-0"
+                  style={{ width: 16, height: 16, backgroundColor: 'rgba(255,255,255,0.3)', fontSize: 8 }}>
                   {p.name[0].toUpperCase()}
                 </div>
                 <span className="font-sans" style={{ fontSize: 12, color: '#fff' }}>{p.name}</span>
@@ -255,7 +254,7 @@ export default function Archive() {
       )}
 
       {/* Month scroll */}
-      <div className="flex gap-2 px-5 pb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-2 px-4 pb-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {monthKeys.map((key) => {
           const active = key === activeMonth
           return (
@@ -264,9 +263,11 @@ export default function Archive() {
               onClick={() => setActiveMonth(key)}
               className="flex-shrink-0 font-sans transition-opacity active:opacity-70"
               style={{
-                borderRadius: 20, padding: '5px 14px', fontSize: 13,
-                backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
-                color: active ? '#fff' : 'var(--mid)', border: 'none', fontWeight: active ? 500 : 400,
+                borderRadius: 20, padding: '6px 16px', fontSize: 14,
+                backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                color: active ? '#fff' : 'var(--mid)',
+                border: 'none', fontWeight: active ? 600 : 400,
+                boxShadow: active ? 'none' : '0 2px 8px rgba(80,50,30,0.08)',
               }}
             >
               {monthLabel(key)}
@@ -276,24 +277,27 @@ export default function Archive() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2 px-5 mb-4">
+      <div className="flex gap-2 px-4 mb-4">
         {[
-          { label: 'Моментов', value: stats.count },
-          { label: 'Людей', value: stats.people },
-          { label: 'Слово', value: stats.word },
+          { label: 'Моментов', value: stats.count, serif: false },
+          { label: 'Людей', value: stats.people, serif: false },
+          { label: 'Слово', value: stats.word, serif: true },
         ].map((s) => (
           <div
             key={s.label}
-            className="flex flex-col items-center py-4 rounded-xl"
-            style={{ backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
+            className="flex-1 flex flex-col items-center py-3 rounded-2xl"
+            style={{ backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(80,50,30,0.10)' }}
           >
             <span
-              className="font-serif"
-              style={{ fontSize: 31, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
+              className={s.serif ? 'font-serif' : 'font-sans'}
+              style={{
+                fontSize: s.serif ? 20 : 28,
+                color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1,
+              }}
             >
               {s.value}
             </span>
-            <span className="font-sans" style={{ fontSize: 9, color: 'var(--mid)', marginTop: 2 }}>{s.label}</span>
+            <span className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 3, fontWeight: 500 }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -308,7 +312,7 @@ export default function Archive() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, padding: '0 4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3, padding: '0 16px' }}>
             {monthMoments.map((m, i) => (
               <div key={m.id} style={{ animation: 'fadeSlideUp 0.25s ease both', animationDelay: `${i * 40}ms` }}>
                 <GridCell moment={m} />

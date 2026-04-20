@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 
@@ -43,8 +43,10 @@ function MusicBlock({ title, artist }) {
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
   const [expanded, setExpanded] = useState(false)
-  const currentUser = useAppStore((s) => s.currentUser)
-  const friends = useAppStore((s) => s.friends)
+  const currentUser        = useAppStore((s) => s.currentUser)
+  const friends            = useAppStore((s) => s.friends)
+  const setHeroTransition  = useAppStore((s) => s.setHeroTransition)
+  const photoRef           = useRef(null)
 
   const isShared = moment.isShared || (moment.user_id && moment.user_id !== currentUser?.id)
   const author = isShared
@@ -64,7 +66,22 @@ export default function MomentCard({ moment }) {
         backgroundColor: 'var(--card)',
         boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
       }}
-      onClick={() => expanded ? navigate(`/moment/${moment.id}`) : setExpanded(true)}
+      onClick={() => {
+        if (expanded) {
+          const el = photoRef.current
+          if (el) {
+            const r = el.getBoundingClientRect()
+            setHeroTransition({
+              rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+              photoUrl: moment.photo_url ?? null,
+              momentId: moment.id,
+            })
+          }
+          navigate(`/moment/${moment.id}`)
+        } else {
+          setExpanded(true)
+        }
+      }}
     >
       {/* Author strip — shown only for friends' moments */}
       {isShared && author && (
@@ -82,7 +99,7 @@ export default function MomentCard({ moment }) {
       )}
 
       {/* Photo */}
-      <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
+      <div ref={photoRef} style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}

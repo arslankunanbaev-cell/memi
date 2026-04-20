@@ -9,7 +9,29 @@ import BottomSheet from '../components/BottomSheet'
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
-// ── Мини-шит добавления нового человека прямо из формы момента ───────────────
+function SectionLabel({ children }) {
+  return (
+    <p className="font-sans uppercase" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--soft)', marginBottom: 10 }}>
+      {children}
+    </p>
+  )
+}
+
+function FormCard({ children, style = {} }) {
+  return (
+    <div style={{
+      backgroundColor: 'var(--card)',
+      borderRadius: 16,
+      padding: '14px 16px',
+      boxShadow: '0 2px 12px rgba(80,50,30,0.08)',
+      ...style,
+    }}>
+      {children}
+    </div>
+  )
+}
+
+// ── Add person mini sheet ─────────────────────────────────────────────────────
 function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
   const [name, setName]       = useState('')
   const [saving, setSaving]   = useState(false)
@@ -38,7 +60,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
         avatarColor: color,
         photoFile:   photoFile ?? null,
       })
-      onCreated(saved)   // добавляет в стор + автовыбирает
+      onCreated(saved)
       onClose()
     } catch (err) {
       console.error('[AddPersonMini] ❌', err)
@@ -49,8 +71,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose} title="Новый человек">
-      <div className="px-5 flex flex-col gap-4 pb-5">
-        {/* Аватар */}
+      <div className="px-4 flex flex-col gap-4 pb-5">
         <div className="flex justify-center pt-1">
           <button
             onClick={() => fileRef.current?.click()}
@@ -58,7 +79,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
             style={{
               width: 56, height: 56, borderRadius: '50%', overflow: 'hidden',
               border: photoPreview ? 'none' : '2px dashed var(--accent)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--card)',
             }}
           >
             {photoPreview
@@ -68,7 +89,6 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
 
-        {/* Имя */}
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -76,8 +96,10 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           autoFocus
           className="w-full font-sans outline-none"
           style={{
-            backgroundColor: 'var(--surface)', borderRadius: 10,
-            padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none',
+            backgroundColor: 'var(--card)', borderRadius: 12,
+            padding: '12px 14px', fontSize: 15, color: 'var(--text)',
+            border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
           }}
         />
 
@@ -90,7 +112,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--card)',
             color: name.trim() && !saving ? '#fff' : 'var(--soft)',
             borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
           }}
@@ -110,8 +132,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
   )
 }
 
-// afterSave(moment) — опциональный callback для встроенного режима (капсула).
-// Если передан — вызывается вместо navigate('/moment-saved').
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
@@ -121,41 +142,27 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const addPerson    = useAppStore((s) => s.addPerson)
   const addRecentLocation = useAppStore((s) => s.addRecentLocation)
 
-  // Form state
   const [title, setTitle]       = useState('')
   const [body, setBody]         = useState('')
-  const [emoji, setEmoji]       = useState('✨')
   const [mood, setMood]         = useState('')
   const [location, setLocation] = useState('')
   const [selectedPeople, setSelectedPeople] = useState(initialPeopleIds ?? [])
-  const [momentDate, setMomentDate] = useState(() => {
-    // default: today in YYYY-MM-DD format
-    return new Date().toISOString().slice(0, 10)
-  })
+  const [momentDate, setMomentDate] = useState(() => new Date().toISOString().slice(0, 10))
 
-  // Song
-  const [song, setSong]           = useState(null) // { name, artist, cover }
+  const [song, setSong]           = useState(null)
   const [showSongSheet, setShowSongSheet] = useState(false)
 
-  // Photo
   const photoRef = useRef(null)
   const [photoFile, setPhotoFile]     = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
 
-  // Saving
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
 
-  // Visibility
   const [visibility, setVisibility] = useState('private')
-
-  // Tagged friends (platform users, not local people)
   const [taggedFriends, setTaggedFriends] = useState([])
-
-  // Add person inline
   const [showAddPerson, setShowAddPerson] = useState(false)
 
-  // Когда новый человек создан — добавляем в стор и сразу выбираем
   function handlePersonCreated(person) {
     addPerson(person)
     setSelectedPeople((prev) => [...prev, person.id])
@@ -180,18 +187,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
     setSaving(true)
     setError(null)
     try {
-      // ── Диагностика перед сохранением ──────────────────────────────────────
       console.log('[AddMoment] ── handleSave called ──')
       console.log('[AddMoment] currentUser:', JSON.stringify(currentUser))
-      console.log('[AddMoment] window.Telegram?.WebApp?.initDataUnsafe?.user:',
-        window.Telegram?.WebApp?.initDataUnsafe?.user)
 
-      if (!currentUser) {
-        throw new Error('currentUser не загружен. Проверь консоль — App.jsx init.')
-      }
-      if (!currentUser.id) {
-        throw new Error(`currentUser.id отсутствует: ${JSON.stringify(currentUser)}`)
-      }
+      if (!currentUser) throw new Error('currentUser не загружен.')
+      if (!currentUser.id) throw new Error(`currentUser.id отсутствует: ${JSON.stringify(currentUser)}`)
 
       const fields = {
         title: title.trim(),
@@ -202,7 +202,6 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
-        // Выбранная дата + текущее время (чтобы не сбрасывалось на полночь)
         created_at: (() => {
           const now = new Date()
           const [y, m, d] = momentDate.split('-').map(Number)
@@ -211,9 +210,6 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       }
       if (location.trim()) addRecentLocation(location.trim())
 
-      console.log('[AddMoment] userId to use:', currentUser.id)
-      console.log('[AddMoment] fields:', JSON.stringify(fields))
-
       const saved = await saveMoment({
         userId: currentUser?.id ?? 'local',
         fields,
@@ -221,7 +217,6 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         peopleIds: selectedPeople,
       })
 
-      // Tag friends as participants (non-fatal if it fails)
       if (taggedFriends.length > 0) {
         try {
           await addMomentParticipants(saved.id, taggedFriends)
@@ -234,7 +229,6 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       addMoment(full)
 
       if (afterSave) {
-        // Режим капсулы — возвращаем момент наверх, не уходим со страницы
         afterSave(full)
       } else {
         navigate('/moment-saved', { state: { moment: saved }, replace: false })
@@ -249,13 +243,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 py-4 pt-topbar"
-      >
+      <div className="flex items-center justify-between px-4 py-4 pt-topbar">
         <button
           onClick={onClose}
           className="font-sans transition-opacity active:opacity-60"
-          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}
+          style={{ color: 'var(--mid)', fontSize: 15, background: 'none', border: 'none' }}
         >
           Отмена
         </button>
@@ -265,83 +257,55 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         <button
           onClick={handleSave}
           disabled={!title.trim() || saving}
-          className="font-sans font-medium transition-opacity active:opacity-60"
+          className="font-sans font-semibold transition-opacity active:opacity-60"
           style={{
             color: title.trim() && !saving ? 'var(--accent)' : 'var(--soft)',
-            fontSize: 14,
-            background: 'none',
-            border: 'none',
+            fontSize: 15, background: 'none', border: 'none',
           }}
         >
           {saving ? '...' : 'Сохранить'}
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-6">
-        {/* Error */}
+      <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-5">
         {error && (
-          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>
-            {error}
-          </p>
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
         )}
 
         {/* Photo */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Фото
-          </p>
+          <SectionLabel>Фото</SectionLabel>
           <button
             onClick={() => photoRef.current?.click()}
             className="w-full transition-opacity active:opacity-70"
             style={{
-              height: photoPreview ? 160 : 80,
-              borderRadius: 14,
-              border: photoPreview ? 'none' : '2px dashed var(--soft)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
+              height: photoPreview ? 200 : 90,
+              borderRadius: 16,
+              border: photoPreview ? 'none' : '1.5px dashed rgba(201,122,58,0.5)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--card)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
+              boxShadow: photoPreview ? 'none' : '0 2px 12px rgba(80,50,30,0.08)',
             }}
           >
             {photoPreview ? (
               <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span style={{ fontSize: 28 }}>📷</span>
+              <div className="flex flex-col items-center gap-2">
+                <span style={{ fontSize: 28 }}>📷</span>
+                <span className="font-sans" style={{ fontSize: 13, color: 'var(--soft)' }}>Добавить фото</span>
+              </div>
             )}
           </button>
           <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
         </div>
 
-        {/* Mood emoji picker */}
-        <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Настроение
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {MOODS.map((m) => (
-              <button
-                key={m}
-                onClick={() => setMood(mood === m ? '' : m)}
-                className="transition-transform active:scale-90"
-                style={{
-                  width: 40, height: 40, borderRadius: 10, fontSize: 20,
-                  backgroundColor: mood === m ? 'var(--surface)' : 'transparent',
-                  border: mood === m ? '2px solid var(--accent)' : '2px solid transparent',
-                }}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Title */}
-        <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Заголовок
-          </p>
+        {/* Title + Description */}
+        <FormCard>
+          <SectionLabel>Заголовок</SectionLabel>
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -350,100 +314,109 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             className="w-full font-serif outline-none bg-transparent"
             style={{
               fontSize: 22, color: 'var(--text)',
-              borderBottom: '1px solid var(--surface)',
-              paddingBottom: 8, fontWeight: 300,
+              borderBottom: '1px solid rgba(180,150,120,0.2)',
+              paddingBottom: 10, marginBottom: 16, fontWeight: 300,
             }}
           />
-        </div>
-
-        {/* Description */}
-        <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Описание
-          </p>
+          <SectionLabel>Описание</SectionLabel>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="Опиши этот момент..."
-            rows={4}
+            rows={3}
             maxLength={1000}
             className="w-full font-sans outline-none bg-transparent resize-none"
             style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.6 }}
           />
+        </FormCard>
+
+        {/* Mood */}
+        <div>
+          <SectionLabel>Настроение</SectionLabel>
+          <div className="flex flex-wrap gap-2">
+            {MOODS.map((m) => (
+              <button
+                key={m}
+                onClick={() => setMood(mood === m ? '' : m)}
+                className="transition-transform active:scale-90"
+                style={{
+                  width: 42, height: 42, borderRadius: 12, fontSize: 20,
+                  backgroundColor: mood === m ? 'var(--card)' : 'transparent',
+                  border: mood === m ? '2px solid var(--accent)' : '2px solid rgba(180,150,120,0.2)',
+                  boxShadow: mood === m ? '0 2px 8px rgba(80,50,30,0.12)' : 'none',
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Location */}
-        <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Место
-          </p>
+        {/* Location + Date */}
+        <FormCard>
+          <SectionLabel>Место</SectionLabel>
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Где это было?"
             maxLength={80}
-            className="w-full font-sans outline-none"
+            className="w-full font-sans outline-none bg-transparent"
             style={{
-              backgroundColor: 'var(--surface)', borderRadius: 10,
-              padding: '10px 12px', fontSize: 14, color: 'var(--text)', border: 'none',
+              fontSize: 15, color: 'var(--text)',
+              borderBottom: '1px solid rgba(180,150,120,0.2)',
+              paddingBottom: 10, marginBottom: 16,
             }}
           />
-        </div>
-
-        {/* Date */}
-        <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Дата
-          </p>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="date"
-              value={momentDate}
-              max={new Date().toISOString().slice(0, 10)}
-              onChange={(e) => e.target.value && setMomentDate(e.target.value)}
-              className="w-full font-sans outline-none"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderRadius: 10,
-                padding: '10px 12px',
-                fontSize: 14,
-                color: 'var(--text)',
-                border: 'none',
-                appearance: 'none',
-                WebkitAppearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A7A6A' stroke-width='2' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 12px center',
-                paddingRight: 36,
-              }}
-            />
-          </div>
-        </div>
+          <SectionLabel>Дата</SectionLabel>
+          <input
+            type="date"
+            value={momentDate}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={(e) => e.target.value && setMomentDate(e.target.value)}
+            className="w-full font-sans outline-none bg-transparent"
+            style={{
+              fontSize: 15, color: 'var(--text)',
+              appearance: 'none', WebkitAppearance: 'none',
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237A6A5A' stroke-width='2' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E")`,
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right 0 center',
+              paddingRight: 28,
+            }}
+          />
+        </FormCard>
 
         {/* Song */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Трек
-          </p>
+          <SectionLabel>Трек</SectionLabel>
           {song ? (
             <div
               className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '10px 12px' }}
+              style={{ backgroundColor: 'var(--card)', borderRadius: 16, padding: '12px 14px', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
             >
               {song.cover ? (
-                <img src={song.cover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+                <img src={song.cover} alt={song.name} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
               ) : (
-                <span style={{ fontSize: 22 }}>🎵</span>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 8, flexShrink: 0,
+                  backgroundColor: 'var(--accent-light)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
+                    <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
+                  </svg>
+                </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-sans" style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <p className="font-sans" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {song.name}
                 </p>
-                <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>{song.artist}</p>
+                <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)', marginTop: 1 }}>{song.artist}</p>
               </div>
               <button
                 onClick={() => setSong(null)}
-                style={{ color: 'var(--soft)', background: 'none', border: 'none', fontSize: 18, lineHeight: 1 }}
+                style={{ color: 'var(--soft)', background: 'none', border: 'none', fontSize: 20, lineHeight: 1 }}
               >
                 ×
               </button>
@@ -451,25 +424,34 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           ) : (
             <button
               onClick={() => setShowSongSheet(true)}
-              className="w-full font-sans transition-opacity active:opacity-70"
+              className="w-full font-sans transition-opacity active:opacity-70 flex items-center gap-3"
               style={{
-                backgroundColor: 'var(--surface)', borderRadius: 10,
-                padding: '10px 12px', fontSize: 14, color: 'var(--mid)',
+                backgroundColor: 'var(--card)', borderRadius: 16,
+                padding: '12px 14px', fontSize: 15, color: 'var(--mid)',
                 border: 'none', textAlign: 'left',
+                boxShadow: '0 2px 12px rgba(80,50,30,0.08)',
               }}
             >
-              🎵 &nbsp;Найти трек...
+              <div style={{
+                width: 38, height: 38, borderRadius: 8, flexShrink: 0,
+                backgroundColor: 'var(--accent-light)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
+                  <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
+                </svg>
+              </div>
+              Найти трек...
             </button>
           )}
         </div>
 
-        {/* People — всегда видна, можно добавить нового прямо здесь */}
+        {/* People */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            С кем
-          </p>
+          <SectionLabel>С кем</SectionLabel>
           <div className="flex flex-wrap gap-2">
-            {/* Существующие люди */}
             {people.map((p) => {
               const active = selectedPeople.includes(p.id)
               return (
@@ -479,63 +461,62 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                   className="flex items-center gap-2 transition-all active:opacity-70"
                   style={{
                     borderRadius: 9999,
-                    padding: '6px 12px 6px 8px',
-                    backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
-                    border: active ? '2px solid transparent' : '2px solid transparent',
+                    padding: '7px 14px 7px 9px',
+                    backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                    border: 'none',
+                    boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
                   }}
                 >
                   <div
                     className="flex items-center justify-center rounded-full font-sans font-medium"
                     style={{
-                      width: 22, height: 22,
+                      width: 24, height: 24,
                       backgroundColor: active ? 'rgba(255,255,255,0.3)' : (p.avatar_color ?? 'var(--accent)'),
                       color: '#fff', fontSize: 10, flexShrink: 0,
+                      border: active ? 'none' : '2px solid rgba(255,255,255,0.6)',
                     }}
                   >
                     {p.name[0].toUpperCase()}
                   </div>
-                  <span className="font-sans" style={{ fontSize: 13, color: active ? '#fff' : 'var(--text)' }}>
+                  <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
                     {p.name}
                   </span>
                 </button>
               )
             })}
 
-            {/* Кнопка — добавить нового человека */}
             <button
               onClick={() => setShowAddPerson(true)}
               className="flex items-center gap-2 transition-opacity active:opacity-70"
               style={{
                 borderRadius: 9999,
-                padding: '6px 12px 6px 8px',
-                backgroundColor: 'var(--surface)',
-                border: '1.5px dashed rgba(217,139,82,0.5)',
+                padding: '7px 14px 7px 9px',
+                backgroundColor: 'var(--card)',
+                border: '1.5px dashed rgba(201,122,58,0.4)',
+                boxShadow: '0 2px 8px rgba(80,50,30,0.06)',
               }}
             >
               <div
                 className="flex items-center justify-center rounded-full"
                 style={{
-                  width: 22, height: 22,
-                  backgroundColor: 'rgba(217,139,82,0.15)',
-                  color: 'var(--accent)', fontSize: 14, flexShrink: 0,
-                  lineHeight: 1,
+                  width: 24, height: 24,
+                  backgroundColor: 'rgba(201,122,58,0.12)',
+                  color: 'var(--accent)', fontSize: 16, flexShrink: 0, lineHeight: 1,
                 }}
               >
                 +
               </div>
-              <span className="font-sans" style={{ fontSize: 13, color: 'var(--accent)' }}>
+              <span className="font-sans" style={{ fontSize: 14, color: 'var(--accent)' }}>
                 {people.length === 0 ? 'Добавить человека' : 'Новый'}
               </span>
             </button>
           </div>
         </div>
 
-        {/* Friends in memi — tag platform users */}
+        {/* Friends in memi */}
         {friends.length > 0 && (
           <div>
-            <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-              Друзья в memi
-            </p>
+            <SectionLabel>Друзья в memi</SectionLabel>
             <div className="flex flex-wrap gap-2">
               {friends.map((f) => {
                 const active = taggedFriends.includes(f.id)
@@ -550,23 +531,26 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                     className="flex items-center gap-2 transition-all active:opacity-70"
                     style={{
                       borderRadius: 9999,
-                      padding: '6px 12px 6px 8px',
-                      backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
+                      padding: '7px 14px 7px 9px',
+                      backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                      border: 'none',
+                      boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
                     }}
                   >
                     <div
                       className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
                       style={{
-                        width: 22, height: 22,
+                        width: 24, height: 24,
                         backgroundColor: active ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
                         color: '#fff', fontSize: 10, flexShrink: 0,
+                        border: '2px solid rgba(255,255,255,0.6)',
                       }}
                     >
                       {f.photo_url
                         ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : f.name?.[0]?.toUpperCase() ?? '?'}
                     </div>
-                    <span className="font-sans" style={{ fontSize: 13, color: active ? '#fff' : 'var(--text)' }}>
+                    <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
                       {f.name}
                     </span>
                   </button>
@@ -575,21 +559,21 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             </div>
           </div>
         )}
+
         {/* Visibility */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)' }}>
-            Видимость
-          </p>
+          <SectionLabel>Видимость</SectionLabel>
           <div className="flex gap-2">
-            {[{ value: 'private', label: 'Только я' }, { value: 'public', label: 'Открыто' }].map(({ value, label }) => (
+            {[{ value: 'private', label: '🔒 Только я' }, { value: 'public', label: '🌐 Открыто' }].map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setVisibility(value)}
                 className="font-sans font-medium transition-opacity active:opacity-70"
                 style={{
-                  padding: '8px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
-                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--surface)',
+                  padding: '9px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
+                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
                   color: visibility === value ? '#fff' : 'var(--mid)',
+                  boxShadow: visibility === value ? 'none' : '0 2px 8px rgba(80,50,30,0.08)',
                 }}
               >
                 {label}
@@ -597,10 +581,8 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* Song search bottom sheet */}
       {showSongSheet && (
         <SongSearchSheet
           onClose={() => setShowSongSheet(false)}
@@ -608,7 +590,6 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         />
       )}
 
-      {/* Add person mini sheet */}
       {showAddPerson && (
         <AddPersonMiniSheet
           currentUserId={currentUser?.id}

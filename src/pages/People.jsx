@@ -9,99 +9,93 @@ import { plural } from '../lib/ruPlural'
 
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 
-// ── Карточка человека ─────────────────────────────────────────────────────────
-function PersonCard({ person, momentCount, lastPhotos, photoTotal, onClick, onLinkedClick, isFriend, isInMemi, onAction, actionLabel }) {
-  const total = photoTotal ?? lastPhotos.length
-  const showMore = total > 5
-  const displayPhotos = showMore ? lastPhotos.slice(0, 4) : lastPhotos
-  const moreCount = showMore ? total - 4 : 0
-
+// ── Person row card ───────────────────────────────────────────────────────────
+function PersonRow({ person, momentCount, isFriend, isInMemi, onClick, onLinkedClick, onAction, actionLabel }) {
   return (
     <div
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
-      className="flex flex-col items-center gap-3 active:scale-95 transition-transform duration-150 w-full cursor-pointer select-none card-hover"
-      style={{ backgroundColor: 'var(--surface)', borderRadius: 14, padding: '16px 12px 14px' }}
+      className="flex items-center gap-3 active:opacity-75 transition-opacity cursor-pointer select-none"
+      style={{
+        backgroundColor: 'var(--card)',
+        borderRadius: 20,
+        padding: '14px 16px',
+        boxShadow: '0 2px 12px rgba(80,50,30,0.08)',
+      }}
     >
-      {/* Аватар */}
+      {/* Avatar */}
       <div
         className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
         style={{
-          width: 72, height: 72,
+          width: 56, height: 56,
           backgroundColor: person.photo_url ? 'transparent' : (person.avatar_color ?? 'var(--accent)'),
+          border: '2.5px solid rgba(255,255,255,0.8)',
           overflow: 'hidden',
         }}
       >
         {person.photo_url ? (
           <img src={person.photo_url} alt={person.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <span style={{ fontSize: 28, color: '#fff', fontWeight: 300 }}>{person.name[0].toUpperCase()}</span>
+          <span style={{ fontSize: 22, color: '#fff', fontWeight: 600 }}>{person.name[0].toUpperCase()}</span>
         )}
       </div>
 
-      {/* Имя + кол-во моментов */}
-      <div className="min-w-0 w-full text-center">
-        <p className="font-serif truncate" style={{ fontSize: 16, color: 'var(--text)' }}>{person.name}</p>
-        <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 2 }}>
-          {momentCount} {plural.момент(momentCount)}
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="font-sans truncate" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>{person.name}</p>
+        <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)', marginTop: 2 }}>
+          {momentCount === 0 ? 'нет моментов' : `${momentCount} ${plural.момент(momentCount)}`}
         </p>
       </div>
 
-      {/* До 5 последних фото */}
-      {lastPhotos.length > 0 && (
-        <div className="flex gap-1 justify-center">
-          {displayPhotos.map((url, i) => (
-            <div
-              key={i}
-              style={{ width: 28, height: 28, borderRadius: 5, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--base)', animation: 'scaleIn 0.2s ease both', animationDelay: `${i * 40}ms` }}
-            >
-              {url && <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none' }} />}
-            </div>
-          ))}
-          {showMore && (
-            <div
-              className="flex items-center justify-center flex-shrink-0"
-              style={{ width: 28, height: 28, borderRadius: 5, backgroundColor: 'var(--base)' }}
-            >
-              <span className="font-sans" style={{ fontSize: 9, color: 'var(--mid)', fontWeight: 600 }}>+{moreCount}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Бейдж: «друг» всегда для друзей; «в memi» только без фото */}
-      {(isFriend || (isInMemi && lastPhotos.length === 0)) && (
-        <span
-          onClick={isInMemi && !isFriend ? (e) => { e.stopPropagation(); onLinkedClick?.() } : undefined}
-          className="font-sans"
-          style={{
-            fontSize: 10, color: 'var(--deep)',
-            backgroundColor: 'rgba(160,94,44,0.12)',
-            borderRadius: 20, padding: '2px 8px',
-            marginTop: lastPhotos.length > 0 ? -8 : -4,
-          }}
-        >
-          {isFriend ? 'друг' : 'в memi'}
-        </span>
-      )}
-
-      {/* Кнопка действия */}
-      {actionLabel && (
-        <span
-          role="button"
-          onClick={(e) => { e.stopPropagation(); onAction?.() }}
-          className="font-sans font-medium transition-opacity active:opacity-70 w-full text-center block"
-          style={{
-            fontSize: 11, color: 'var(--accent)',
-            backgroundColor: 'rgba(217,139,82,0.12)',
-            borderRadius: 9999, padding: '5px 8px', marginTop: -6,
-          }}
-        >
-          {actionLabel}
-        </span>
-      )}
+      {/* Right side */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {isFriend && (
+          <div
+            className="font-sans"
+            style={{
+              background: 'var(--accent-pale)',
+              borderRadius: 10,
+              padding: '4px 10px',
+              fontSize: 12, fontWeight: 500, color: 'var(--accent)',
+            }}
+          >
+            друг
+          </div>
+        )}
+        {isInMemi && !isFriend && (
+          <div
+            className="font-sans"
+            style={{
+              background: 'var(--accent-pale)',
+              borderRadius: 10,
+              padding: '4px 10px',
+              fontSize: 12, fontWeight: 500, color: 'var(--accent)',
+            }}
+          >
+            в memi
+          </div>
+        )}
+        {actionLabel && (
+          <span
+            role="button"
+            onClick={(e) => { e.stopPropagation(); onAction?.() }}
+            className="font-sans font-medium transition-opacity active:opacity-70"
+            style={{
+              fontSize: 12, color: 'var(--accent)',
+              backgroundColor: 'rgba(201,122,58,0.10)',
+              borderRadius: 9999, padding: '5px 10px',
+            }}
+          >
+            {actionLabel}
+          </span>
+        )}
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+          <path d="M1 1l5 5-5 5" stroke="var(--soft)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
     </div>
   )
 }
@@ -115,7 +109,7 @@ function CameraIcon() {
   )
 }
 
-// ── Шит добавления человека ───────────────────────────────────────────────────
+// ── Add person sheet ──────────────────────────────────────────────────────────
 function AddPersonSheet({ onClose, onCreated }) {
   const currentUser = useAppStore((s) => s.currentUser)
   const [name, setName]     = useState('')
@@ -156,7 +150,7 @@ function AddPersonSheet({ onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="px-5 flex flex-col gap-5 pb-2">
+      <div className="px-4 flex flex-col gap-5 pb-2">
         <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
           Добавить человека
         </p>
@@ -193,9 +187,10 @@ function AddPersonSheet({ onClose, onCreated }) {
             autoFocus
             className="w-full font-sans outline-none"
             style={{
-              backgroundColor: 'var(--surface)', borderRadius: 10,
-              padding: '11px 14px', fontSize: 15, color: 'var(--text)',
+              backgroundColor: 'var(--card)', borderRadius: 12,
+              padding: '12px 14px', fontSize: 15, color: 'var(--text)',
               border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+              boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
             }}
           />
           <p className="font-sans" style={{ fontSize: 12, color: 'var(--accent)', lineHeight: 1.45 }}>
@@ -210,7 +205,7 @@ function AddPersonSheet({ onClose, onCreated }) {
           disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--card)',
             color: name.trim() && !saving ? '#fff' : 'var(--soft)',
             borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
           }}
@@ -226,7 +221,7 @@ function AddPersonSheet({ onClose, onCreated }) {
   )
 }
 
-// ── Шит привязки человека к другу ────────────────────────────────────────────
+// ── Link person sheet ─────────────────────────────────────────────────────────
 function LinkPersonSheet({ friend, people, onLink, onClose }) {
   const [saving, setSaving] = useState(false)
 
@@ -243,7 +238,7 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="px-5 flex flex-col gap-4 pb-2">
+      <div className="px-4 flex flex-col gap-4 pb-2">
         <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
           Связать с человеком?
         </p>
@@ -257,7 +252,7 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
               onClick={() => handleLink(p)}
               disabled={saving}
               className="flex items-center gap-3 px-4 py-3 rounded-2xl w-full transition-opacity active:opacity-70"
-              style={{ backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
+              style={{ backgroundColor: 'var(--card)', border: 'none', cursor: 'pointer', boxShadow: '0 2px 8px rgba(80,50,30,0.08)' }}
             >
               <div
                 className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
@@ -279,24 +274,23 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
   )
 }
 
-// ── Заголовок секции ──────────────────────────────────────────────────────────
-function SectionHeader({ label }) {
+// ── Section header ────────────────────────────────────────────────────────────
+function SectionHeader({ label, count }) {
   return (
     <p
-      className="font-sans font-semibold"
+      className="font-sans font-bold"
       style={{
-        gridColumn: '1 / -1',
-        fontSize: 11, color: 'var(--mid)',
-        textTransform: 'uppercase', letterSpacing: '0.06em',
-        marginBottom: -2, marginTop: 6,
+        fontSize: 11, color: 'var(--soft)',
+        textTransform: 'uppercase', letterSpacing: '0.08em',
+        marginBottom: 8, marginTop: 10,
       }}
     >
-      {label}
+      {label}{count != null ? ` · ${count}` : ''}
     </p>
   )
 }
 
-// ── Главный экран ─────────────────────────────────────────────────────────────
+// ── Main screen ───────────────────────────────────────────────────────────────
 export default function People() {
   const navigate  = useNavigate()
   const people    = useAppStore((s) => s.people)
@@ -313,7 +307,6 @@ export default function People() {
   const [refreshing, setRefreshing] = useState(false)
   const [linkTarget, setLinkTarget] = useState(null)
 
-  // Объединённый список: локальные люди + друзья без привязки
   const mergedPeople = useMemo(() => {
     try {
       const mapped = people.map((p) => {
@@ -412,62 +405,66 @@ export default function People() {
     return moments.filter((m) => (m.people ?? []).some((p) => p.id === personId)).length
   }
 
-  function lastPhotosFor(personId) {
-    const withPhotos = moments.filter((m) => (m.people ?? []).some((p) => p.id === personId) && m.photo_url)
-    return { urls: withPhotos.slice(0, 5).map((m) => m.photo_url), total: withPhotos.length }
-  }
-
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
-      {/* Топбар */}
+      {/* Topbar */}
       <div className="px-4 pt-topbar" style={{ paddingBottom: 0 }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-          <span className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)' }}>Люди</span>
+        <div className="flex items-center justify-between" style={{ marginBottom: 16 }}>
+          <span className="font-serif" style={{ fontSize: 32, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.5px' }}>Люди</span>
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefreshFriends}
               className="flex items-center justify-center transition-opacity active:opacity-60"
-              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', cursor: 'pointer' }}
+              style={{
+                width: 38, height: 38, borderRadius: 12,
+                backgroundColor: 'var(--card)', border: 'none', cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
+              }}
             >
-              <span style={{ fontSize: 16, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
+              <span style={{ fontSize: 18, color: 'var(--mid)', display: 'inline-block', transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}>
                 ↻
               </span>
             </button>
             <button
               onClick={() => setShowAdd(true)}
               className="flex items-center justify-center transition-opacity active:opacity-60"
-              style={{ width: 30, height: 30, borderRadius: '50%', backgroundColor: 'var(--surface)', border: 'none', fontSize: 18, color: 'var(--accent)', cursor: 'pointer' }}
+              style={{
+                width: 38, height: 38, borderRadius: 12,
+                backgroundColor: 'var(--card)', border: 'none', cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
+              }}
             >
-              +
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="var(--mid)" strokeWidth="1.8"/>
+                <path d="M12 8v8M8 12h8" stroke="var(--mid)" strokeWidth="1.8" strokeLinecap="round"/>
+              </svg>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Контент */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto pb-28 px-4">
 
-        {/* Входящие заявки */}
+        {/* Incoming requests */}
         {incomingRequests.length > 0 && (
           <div className="flex flex-col gap-2" style={{ paddingTop: 4, paddingBottom: 12 }}>
-            <p className="font-sans font-semibold" style={{ fontSize: 11, color: 'var(--mid)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Заявки
-            </p>
+            <SectionHeader label="Заявки" count={incomingRequests.length} />
             {incomingRequests.map((req) => (
               <div
                 key={req.friendship_id}
                 className="flex items-center gap-4 px-4 py-3 rounded-2xl"
-                style={{ backgroundColor: 'var(--surface)' }}
+                style={{ backgroundColor: 'var(--card)', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
               >
                 <div
                   className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-                  style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden' }}
+                  style={{ width: 46, height: 46, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 18, overflow: 'hidden', border: '2.5px solid rgba(255,255,255,0.8)' }}
                 >
                   {req.photo_url
                     ? <img src={req.photo_url} alt={req.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     : req.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <p className="font-sans flex-1" style={{ fontSize: 15, color: 'var(--text)' }}>{req.name}</p>
+                <p className="font-sans flex-1" style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>{req.name}</p>
                 <button
                   onClick={() => handleAccept(req)}
                   className="font-sans font-medium transition-opacity active:opacity-70"
@@ -480,92 +477,78 @@ export default function People() {
           </div>
         )}
 
-        {/* Сетка людей с секциями */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 4, paddingBottom: 8 }}>
+        {/* People list */}
+        <div className="flex flex-col gap-2" style={{ paddingTop: 4, paddingBottom: 8 }}>
 
-          {friendsList.length > 0 && <SectionHeader label="Друзья" />}
-          {friendsList.map((p, i) => {
-            const lp = p._fromFriend ? { urls: [], total: 0 } : lastPhotosFor(p.id)
-            return (
-              <div key={p._fromFriend ? `friend-${p.id}` : p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${i * 80}ms` }}>
-                <PersonCard
-                  person={p}
-                  momentCount={p._fromFriend ? 0 : momentCountFor(p.id)}
-                  lastPhotos={lp.urls}
-                  photoTotal={lp.total}
-                  isFriend={true}
-                  isInMemi={true}
-                  onClick={getCardClick(p)}
-                  onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
-                  {...getActionProps(p)}
-                />
-              </div>
-            )
-          })}
+          {friendsList.length > 0 && <SectionHeader label="Друзья" count={friendsList.length} />}
+          {friendsList.map((p, i) => (
+            <div key={p._fromFriend ? `friend-${p.id}` : p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${i * 60}ms` }}>
+              <PersonRow
+                person={p}
+                momentCount={p._fromFriend ? 0 : momentCountFor(p.id)}
+                isFriend={true}
+                isInMemi={true}
+                onClick={getCardClick(p)}
+                onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+                {...getActionProps(p)}
+              />
+            </div>
+          ))}
 
-          {inMemiList.length > 0 && <SectionHeader label="В memi" />}
-          {inMemiList.map((p, i) => {
-            const lp = lastPhotosFor(p.id)
-            return (
-              <div key={p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${(friendsList.length + i) * 80}ms` }}>
-                <PersonCard
-                  person={p}
-                  momentCount={momentCountFor(p.id)}
-                  lastPhotos={lp.urls}
-                  photoTotal={lp.total}
-                  isFriend={false}
-                  isInMemi={true}
-                  onClick={getCardClick(p)}
-                  onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
-                  {...getActionProps(p)}
-                />
-              </div>
-            )
-          })}
+          {inMemiList.length > 0 && <SectionHeader label="В memi" count={inMemiList.length} />}
+          {inMemiList.map((p, i) => (
+            <div key={p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${(friendsList.length + i) * 60}ms` }}>
+              <PersonRow
+                person={p}
+                momentCount={momentCountFor(p.id)}
+                isFriend={false}
+                isInMemi={true}
+                onClick={getCardClick(p)}
+                onLinkedClick={() => navigate(`/profile/${p.linked_user_id}`)}
+                {...getActionProps(p)}
+              />
+            </div>
+          ))}
 
-          {othersList.length > 0 && <SectionHeader label="Остальные" />}
-          {othersList.map((p, i) => {
-            const lp = lastPhotosFor(p.id)
-            return (
-              <div key={p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${(friendsList.length + inMemiList.length + i) * 80}ms` }}>
-                <PersonCard
-                  person={p}
-                  momentCount={momentCountFor(p.id)}
-                  lastPhotos={lp.urls}
-                  photoTotal={lp.total}
-                  isFriend={false}
-                  isInMemi={false}
-                  onClick={getCardClick(p)}
-                  onLinkedClick={undefined}
-                  {...getActionProps(p)}
-                />
-              </div>
-            )
-          })}
+          {othersList.length > 0 && <SectionHeader label="Остальные" count={othersList.length} />}
+          {othersList.map((p, i) => (
+            <div key={p.id} style={{ animation: 'fadeSlideUp 0.3s ease both', animationDelay: `${(friendsList.length + inMemiList.length + i) * 60}ms` }}>
+              <PersonRow
+                person={p}
+                momentCount={momentCountFor(p.id)}
+                isFriend={false}
+                isInMemi={false}
+                onClick={getCardClick(p)}
+                onLinkedClick={undefined}
+                {...getActionProps(p)}
+              />
+            </div>
+          ))}
 
-          {/* Кнопка добавить */}
+          {/* Add button */}
           <button
             onClick={() => setShowAdd(true)}
-            className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
+            className="flex items-center gap-3 transition-opacity active:opacity-60 w-full"
             style={{
-              borderRadius: 14, minHeight: 110,
-              border: '1.5px dashed rgba(217,139,82,0.35)',
+              borderRadius: 20, padding: '14px 16px',
+              border: '1.5px dashed rgba(201,122,58,0.35)',
               backgroundColor: 'transparent', cursor: 'pointer',
+              marginTop: mergedPeople.length > 0 ? 4 : 0,
             }}
           >
             <div
-              className="flex items-center justify-center rounded-full"
-              style={{ width: 32, height: 32, backgroundColor: 'rgba(217,139,82,0.15)' }}
+              className="flex items-center justify-center rounded-full flex-shrink-0"
+              style={{ width: 56, height: 56, backgroundColor: 'rgba(201,122,58,0.10)' }}
             >
-              <span style={{ fontSize: 18, color: 'var(--accent)', lineHeight: 1 }}>+</span>
+              <span style={{ fontSize: 22, color: 'var(--accent)', lineHeight: 1 }}>+</span>
             </div>
-            <span className="font-sans" style={{ fontSize: 11, color: 'var(--accent)' }}>Добавить</span>
+            <span className="font-sans" style={{ fontSize: 15, color: 'var(--accent)', fontWeight: 500 }}>Добавить человека</span>
           </button>
         </div>
 
-        {/* Пустое состояние */}
+        {/* Empty state */}
         {mergedPeople.length === 0 && incomingRequests.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-3 animate-fade-in" style={{ paddingTop: 48 }}>
+          <div className="flex flex-col items-center justify-center gap-3 animate-fade-in" style={{ paddingTop: 32 }}>
             <p className="font-sans" style={{ fontSize: 15, color: 'var(--soft)' }}>Пока нет друзей</p>
             <button
               onClick={handleInvite}
