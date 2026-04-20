@@ -99,16 +99,18 @@ export default function MomentCard({ moment }) {
       )}
 
       {/* Photo */}
-      <div ref={photoRef} style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden' }}>
-        {moment.photo_url ? (
-          <img
-            src={moment.photo_url}
-            alt={moment.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #E8D5C0, #C8A880)' }} />
-        )}
+      <div ref={photoRef} style={{ position: 'relative', paddingBottom: '75%', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0 }}>
+          {moment.photo_url ? (
+            <img
+              src={moment.photo_url}
+              alt={moment.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #E8D5C0, #C8A880)' }} />
+          )}
+        </div>
 
         {/* Bottom gradient */}
         <div
