@@ -215,7 +215,7 @@ export default function PersonDetail() {
   return (
     <div className="flex flex-col h-full animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
       {/* ── Шапка ─────────────────────────────────────────────────────────── */}
-      <div style={{ position: 'relative', height: 120, background: 'linear-gradient(135deg, #EDE6DC, #D4B896)', flexShrink: 0 }}>
+      <div style={{ position: 'relative', height: 120, background: 'linear-gradient(135deg, #FBF6F0, #D4B896)', flexShrink: 0 }}>
         {/* Кнопка назад */}
         <button
           onClick={() => navigate('/people')}
