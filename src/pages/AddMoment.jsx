@@ -448,117 +448,117 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           )}
         </div>
 
-        {/* People */}
-        <div>
-          <SectionLabel>С кем</SectionLabel>
-          <div className="flex flex-wrap gap-2">
-            {people.map((p) => {
-              const active = selectedPeople.includes(p.id)
-              return (
+        {/* People + unlinked friends — single "С кем" section */}
+        {(() => {
+          const linkedUserIds = new Set(people.map((p) => p.linked_user_id).filter(Boolean))
+          const unlinkedFriends = friends.filter((f) => !linkedUserIds.has(f.id))
+          return (
+            <div>
+              <SectionLabel>С кем</SectionLabel>
+              <div className="flex flex-wrap gap-2">
+                {people.map((p) => {
+                  const active = selectedPeople.includes(p.id)
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => togglePerson(p.id)}
+                      className="flex items-center gap-2 transition-all active:opacity-70"
+                      style={{
+                        borderRadius: 9999,
+                        padding: '7px 14px 7px 9px',
+                        backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                        border: 'none',
+                        boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+                      }}
+                    >
+                      <div
+                        className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
+                        style={{
+                          width: 24, height: 24,
+                          backgroundColor: active ? 'rgba(255,255,255,0.3)' : (p.avatar_color ?? 'var(--accent)'),
+                          color: '#fff', fontSize: 10, flexShrink: 0,
+                          border: active ? 'none' : '2px solid rgba(255,255,255,0.6)',
+                        }}
+                      >
+                        {p.photo_url
+                          ? <img src={p.photo_url} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : p.name[0].toUpperCase()}
+                      </div>
+                      <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
+                        {p.name}
+                      </span>
+                    </button>
+                  )
+                })}
+
+                {unlinkedFriends.map((f) => {
+                  const active = taggedFriends.includes(f.id)
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() =>
+                        setTaggedFriends((prev) =>
+                          prev.includes(f.id) ? prev.filter((id) => id !== f.id) : [...prev, f.id]
+                        )
+                      }
+                      className="flex items-center gap-2 transition-all active:opacity-70"
+                      style={{
+                        borderRadius: 9999,
+                        padding: '7px 14px 7px 9px',
+                        backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                        border: 'none',
+                        boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+                      }}
+                    >
+                      <div
+                        className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
+                        style={{
+                          width: 24, height: 24,
+                          backgroundColor: active ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
+                          color: '#fff', fontSize: 10, flexShrink: 0,
+                          border: '2px solid rgba(255,255,255,0.6)',
+                        }}
+                      >
+                        {f.photo_url
+                          ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : f.name?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                      <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
+                        {f.name}
+                      </span>
+                    </button>
+                  )
+                })}
+
                 <button
-                  key={p.id}
-                  onClick={() => togglePerson(p.id)}
-                  className="flex items-center gap-2 transition-all active:opacity-70"
+                  onClick={() => setShowAddPerson(true)}
+                  className="flex items-center gap-2 transition-opacity active:opacity-70"
                   style={{
                     borderRadius: 9999,
                     padding: '7px 14px 7px 9px',
-                    backgroundColor: active ? 'var(--accent)' : 'var(--card)',
-                    border: 'none',
-                    boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+                    backgroundColor: 'var(--card)',
+                    border: '1.5px dashed rgba(201,122,58,0.4)',
+                    boxShadow: '0 2px 8px rgba(80,50,30,0.06)',
                   }}
                 >
                   <div
-                    className="flex items-center justify-center rounded-full font-sans font-medium"
+                    className="flex items-center justify-center rounded-full"
                     style={{
                       width: 24, height: 24,
-                      backgroundColor: active ? 'rgba(255,255,255,0.3)' : (p.avatar_color ?? 'var(--accent)'),
-                      color: '#fff', fontSize: 10, flexShrink: 0,
-                      border: active ? 'none' : '2px solid rgba(255,255,255,0.6)',
+                      backgroundColor: 'rgba(201,122,58,0.12)',
+                      color: 'var(--accent)', fontSize: 16, flexShrink: 0, lineHeight: 1,
                     }}
                   >
-                    {p.name[0].toUpperCase()}
+                    +
                   </div>
-                  <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
-                    {p.name}
+                  <span className="font-sans" style={{ fontSize: 14, color: 'var(--accent)' }}>
+                    {people.length === 0 && unlinkedFriends.length === 0 ? 'Добавить человека' : 'Новый'}
                   </span>
                 </button>
-              )
-            })}
-
-            <button
-              onClick={() => setShowAddPerson(true)}
-              className="flex items-center gap-2 transition-opacity active:opacity-70"
-              style={{
-                borderRadius: 9999,
-                padding: '7px 14px 7px 9px',
-                backgroundColor: 'var(--card)',
-                border: '1.5px dashed rgba(201,122,58,0.4)',
-                boxShadow: '0 2px 8px rgba(80,50,30,0.06)',
-              }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full"
-                style={{
-                  width: 24, height: 24,
-                  backgroundColor: 'rgba(201,122,58,0.12)',
-                  color: 'var(--accent)', fontSize: 16, flexShrink: 0, lineHeight: 1,
-                }}
-              >
-                +
               </div>
-              <span className="font-sans" style={{ fontSize: 14, color: 'var(--accent)' }}>
-                {people.length === 0 ? 'Добавить человека' : 'Новый'}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Friends in memi */}
-        {friends.length > 0 && (
-          <div>
-            <SectionLabel>Друзья в memi</SectionLabel>
-            <div className="flex flex-wrap gap-2">
-              {friends.map((f) => {
-                const active = taggedFriends.includes(f.id)
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() =>
-                      setTaggedFriends((prev) =>
-                        prev.includes(f.id) ? prev.filter((id) => id !== f.id) : [...prev, f.id]
-                      )
-                    }
-                    className="flex items-center gap-2 transition-all active:opacity-70"
-                    style={{
-                      borderRadius: 9999,
-                      padding: '7px 14px 7px 9px',
-                      backgroundColor: active ? 'var(--accent)' : 'var(--card)',
-                      border: 'none',
-                      boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
-                    }}
-                  >
-                    <div
-                      className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
-                      style={{
-                        width: 24, height: 24,
-                        backgroundColor: active ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
-                        color: '#fff', fontSize: 10, flexShrink: 0,
-                        border: '2px solid rgba(255,255,255,0.6)',
-                      }}
-                    >
-                      {f.photo_url
-                        ? <img src={f.photo_url} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : f.name?.[0]?.toUpperCase() ?? '?'}
-                    </div>
-                    <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
-                      {f.name}
-                    </span>
-                  </button>
-                )
-              })}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* Visibility */}
         <div>
