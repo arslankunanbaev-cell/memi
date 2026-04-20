@@ -5,7 +5,7 @@ function formatTime(iso) {
   return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
 
-function MusicBlock({ title, artist }) {
+function MusicBlock({ title, artist, cover }) {
   return (
     <div
       style={{
@@ -14,19 +14,27 @@ function MusicBlock({ title, artist }) {
         padding: '10px 12px', marginTop: 10,
       }}
     >
-      <div
-        style={{
-          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-          background: 'var(--accent-light)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
-          <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
-        </svg>
-      </div>
+      {cover ? (
+        <img
+          src={cover}
+          alt={title}
+          style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0, display: 'block' }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+            background: 'var(--accent-light)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
+            <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
+          </svg>
+        </div>
+      )}
       <div style={{ minWidth: 0 }}>
         <p className="font-sans" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {title}
@@ -176,7 +184,7 @@ export default function MomentCard({ moment }) {
 
           {/* Music block */}
           {moment.song_title && (
-            <MusicBlock title={moment.song_title} artist={moment.song_artist} />
+            <MusicBlock title={moment.song_title} artist={moment.song_artist} cover={moment.song_cover} />
           )}
 
           {/* People chips */}
