@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const BOT_TOKEN       = Deno.env.get('TELEGRAM_BOT_TOKEN')        ?? ''
 const SUPABASE_URL    = Deno.env.get('SUPABASE_URL')               ?? ''
 const SERVICE_KEY     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')  ?? ''
-const JWT_SECRET      = Deno.env.get('SUPABASE_JWT_SECRET')        ?? ''
+const ANON_KEY        = Deno.env.get('SUPABASE_ANON_KEY')          ?? ''
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -46,7 +46,6 @@ async function validateInitData(initData: string): Promise<URLSearchParams | nul
 }
 
 // ── Детерминированный UUID из telegram_id ─────────────────────────────────────
-// Один и тот же telegram_id всегда даёт один и тот же UUID — идемпотентность
 async function telegramIdToUUID(telegramId: number): Promise<string> {
   const bytes = new Uint8Array(
     await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`tg:${telegramId}`))
@@ -55,35 +54,6 @@ async function telegramIdToUUID(telegramId: number): Promise<string> {
   bytes[8] = (bytes[8] & 0x3f) | 0x80  // variant
   const h = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
   return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`
-}
-
-// ── Подписываем JWT совместимый с Supabase ────────────────────────────────────
-async function signJWT(sub: string, email: string): Promise<string> {
-  const enc = new TextEncoder()
-  const b64url = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  const header  = b64url({ alg: 'HS256', typ: 'JWT' })
-  const now     = Math.floor(Date.now() / 1000)
-  const payload = b64url({
-    sub,
-    email,
-    role:  'authenticated',
-    iss:   'supabase',
-    aud:   'authenticated',
-    iat:   now,
-    exp:   now + 60 * 60 * 24,  // 24 часа
-  })
-
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(JWT_SECRET),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`${header}.${payload}`))
-  const signature = btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  return `${header}.${payload}.${signature}`
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -108,10 +78,10 @@ serve(async (req: Request) => {
         })
       }
 
-      // Replay protection: reject payloads older than 5 minutes.
+      // Replay protection: reject payloads older than 10 minutes.
       const authDate = Number(params.get('auth_date') ?? '0')
       const nowSec = Math.floor(Date.now() / 1000)
-      if (!authDate || nowSec - authDate > 300) {
+      if (!authDate || nowSec - authDate > 600) {
         return new Response(JSON.stringify({ error: 'Telegram auth data expired' }), {
           status: 401, headers: { 'Content-Type': 'application/json', ...CORS },
         })
@@ -175,9 +145,46 @@ serve(async (req: Request) => {
       })
     }
 
-    // ── Выдаём JWT ─────────────────────────────────────────────────────────────
-    const access_token = await signJWT(authId, email)
+    // ── Получаем настоящий Supabase-токен через magic link ────────────────────
+    // generateLink + verifyOtp гарантируют валидный JWT без зависимости от
+    // ручной настройки SUPABASE_JWT_SECRET в секретах Edge Function.
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: 'magiclink',
+      email,
+      options: { shouldCreateUser: false },
+    })
 
+    if (!linkErr && linkData?.properties?.hashed_token && ANON_KEY) {
+      const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { data: otpData, error: otpErr } = await anonClient.auth.verifyOtp({
+        token_hash: linkData.properties.hashed_token,
+        type: 'magiclink',
+      })
+
+      if (!otpErr && otpData?.session?.access_token) {
+        return new Response(JSON.stringify({
+          access_token:  otpData.session.access_token,
+          refresh_token: otpData.session.refresh_token,
+        }), {
+          headers: { 'Content-Type': 'application/json', ...CORS },
+        })
+      }
+      console.warn('[telegram-auth] verifyOtp failed:', otpErr?.message)
+    } else if (linkErr) {
+      console.warn('[telegram-auth] generateLink failed:', linkErr.message)
+    }
+
+    // ── Запасной вариант: собственный JWT (работает если SUPABASE_JWT_SECRET задан) ──
+    const JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET') ?? ''
+    if (!JWT_SECRET) {
+      return new Response(JSON.stringify({ error: 'Auth token generation failed' }), {
+        status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
+      })
+    }
+
+    const access_token = await signJWT(authId, email, JWT_SECRET)
     return new Response(JSON.stringify({ access_token }), {
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
@@ -189,3 +196,32 @@ serve(async (req: Request) => {
     })
   }
 })
+
+// ── Запасной JWT-сigner ────────────────────────────────────────────────────────
+async function signJWT(sub: string, email: string, secret: string): Promise<string> {
+  const enc = new TextEncoder()
+  const b64url = (obj: unknown) =>
+    btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+
+  const header  = b64url({ alg: 'HS256', typ: 'JWT' })
+  const now     = Math.floor(Date.now() / 1000)
+  const payload = b64url({
+    sub,
+    email,
+    role:  'authenticated',
+    iss:   'supabase',
+    aud:   'authenticated',
+    iat:   now,
+    exp:   now + 60 * 60 * 24,
+  })
+
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`${header}.${payload}`))
+  const signature = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+
+  return `${header}.${payload}.${signature}`
+}

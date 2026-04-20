@@ -73,9 +73,9 @@ export default function App() {
           }
           console.warn('[App] auth failed in dev, continuing anyway')
         } else {
-          const { access_token } = await authRes.json()
+          const { access_token, refresh_token } = await authRes.json()
           const { supabase } = await import('./lib/supabase')
-          await supabase.auth.setSession({ access_token, refresh_token: access_token })
+          await supabase.auth.setSession({ access_token, refresh_token: refresh_token ?? access_token })
         }
 
         // Сохраняем / получаем пользователя из БД
