@@ -49,7 +49,7 @@ export default function App() {
         if (!initData) {
           // production без initData — невалидный контекст
           clearTimeout(fallbackTimer)
-          setInitResult({ id: null, name: 'Гость' }, false)
+          setInitResult({ id: null, name: 'Гость [A: нет initData]' }, false)
           navigate('/home', { replace: true })
           return
         }
@@ -58,7 +58,10 @@ export default function App() {
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/telegram-auth`,
           {
             method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
             body:    JSON.stringify({ initData }),
           }
         )
@@ -67,9 +70,10 @@ export default function App() {
           const errBody = await authRes.text().catch(() => '')
           console.error('[App] auth error', authRes.status, errBody)
           if (!import.meta.env.DEV) {
-            // Auth failed in production — cannot proceed without confirmed session
+            let errMsg = ''
+            try { errMsg = JSON.parse(errBody)?.error ?? errBody } catch { errMsg = errBody }
             clearTimeout(fallbackTimer)
-            setInitResult({ id: null, name: 'Гость' }, false)
+            setInitResult({ id: null, name: `Гость [B:${authRes.status} ${errMsg}]` }, false)
             navigate('/home', { replace: true })
             return
           }
@@ -86,7 +90,7 @@ export default function App() {
 
         if (!tgUser) {
           clearTimeout(fallbackTimer)
-          setInitResult({ id: null, name: 'Гость' }, false)
+          setInitResult({ id: null, name: 'Гость [C: нет user]' }, false)
           navigate('/home', { replace: true })
           return
         }
