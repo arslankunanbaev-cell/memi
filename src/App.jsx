@@ -64,6 +64,8 @@ export default function App() {
         )
 
         if (!authRes.ok) {
+          const errBody = await authRes.text().catch(() => '')
+          console.error('[App] auth error', authRes.status, errBody)
           if (!import.meta.env.DEV) {
             // Auth failed in production — cannot proceed without confirmed session
             clearTimeout(fallbackTimer)

@@ -1,10 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const BOT_TOKEN       = Deno.env.get('TELEGRAM_BOT_TOKEN')        ?? ''
-const SUPABASE_URL    = Deno.env.get('SUPABASE_URL')               ?? ''
-const SERVICE_KEY     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')  ?? ''
-const ANON_KEY        = Deno.env.get('SUPABASE_ANON_KEY')          ?? ''
+const BOT_TOKEN    = Deno.env.get('TELEGRAM_BOT_TOKEN')       ?? ''
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')              ?? ''
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const ANON_KEY     = Deno.env.get('SUPABASE_ANON_KEY')         ?? ''
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -24,21 +24,16 @@ async function validateInitData(initData: string): Promise<URLSearchParams | nul
     .join('\n')
 
   const enc = new TextEncoder()
-
-  // secret_key = HMAC_SHA256(bot_token, "WebAppData")
   const baseKey = await crypto.subtle.importKey(
     'raw', enc.encode('WebAppData'),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   )
   const secretBytes = await crypto.subtle.sign('HMAC', baseKey, enc.encode(BOT_TOKEN))
-
-  // computed_hash = HMAC_SHA256(data_check_string, secret_key)
   const hmacKey = await crypto.subtle.importKey(
     'raw', secretBytes,
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   )
   const sigBytes = await crypto.subtle.sign('HMAC', hmacKey, enc.encode(dataCheckString))
-
   const computed = Array.from(new Uint8Array(sigBytes))
     .map(b => b.toString(16).padStart(2, '0')).join('')
 
@@ -50,10 +45,23 @@ async function telegramIdToUUID(telegramId: number): Promise<string> {
   const bytes = new Uint8Array(
     await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`tg:${telegramId}`))
   ).slice(0, 16)
-  bytes[6] = (bytes[6] & 0x0f) | 0x40  // version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80  // variant
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
   const h = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
   return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`
+}
+
+// ── Детерминированный пароль из telegram_id + bot_token ───────────────────────
+// Пароль вычисляется только на сервере; клиент его никогда не видит.
+async function derivePassword(telegramId: number): Promise<string> {
+  const secret = BOT_TOKEN || 'dev-key-memi'
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`memi:${telegramId}:v1`))
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -66,7 +74,6 @@ serve(async (req: Request) => {
     // ── Определяем пользователя Telegram ──────────────────────────────────────
     let tgUser: { id: number; first_name: string; last_name?: string; photo_url?: string }
 
-    // Dev mode only when BOT_TOKEN is absent — never bypassed in production.
     const isDev = !BOT_TOKEN
     if (isDev) {
       tgUser = { id: 12345, first_name: 'Dev', last_name: 'User' }
@@ -100,24 +107,29 @@ serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     })
 
-    const authId = await telegramIdToUUID(tgUser.id)
-    const email  = `tg_${tgUser.id}@memi.internal`
-    const name   = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
+    const authId   = await telegramIdToUUID(tgUser.id)
+    const email    = `tg_${tgUser.id}@memi.internal`
+    const name     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
+    const password = await derivePassword(tgUser.id)
 
-    // Stable public code: SHA-256 hex of telegram_id (matches security_hardening.sql backfill).
-    const enc2 = new TextEncoder()
-    const hashBytes = await crypto.subtle.digest('SHA-256', enc2.encode(String(tgUser.id)))
+    // Stable public code: SHA-256 hex of telegram_id.
+    const hashBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(tgUser.id)))
     const publicCode = Array.from(new Uint8Array(hashBytes))
       .map(b => b.toString(16).padStart(2, '0')).join('')
 
-    // ── Создаём auth.users (идемпотентно — если уже есть, игнорируем ошибку) ──
-    await admin.auth.admin.createUser({
+    // ── Создаём auth.users (если уже есть — обновляем пароль) ─────────────────
+    const { error: createErr } = await admin.auth.admin.createUser({
       id: authId,
       email,
+      password,
       email_confirm: true,
       user_metadata: { telegram_id: tgUser.id, name, photo_url: tgUser.photo_url ?? null },
     })
-    // Ошибка "already exists" нас не волнует — UUID детерминирован, просто используем его
+
+    if (createErr) {
+      // Пользователь уже существует — обновляем пароль, чтобы он оставался в синхронизации
+      await admin.auth.admin.updateUserById(authId, { password })
+    }
 
     // ── Синхронизируем public.users ────────────────────────────────────────────
     const { data: existingUser } = await admin
@@ -128,10 +140,10 @@ serve(async (req: Request) => {
 
     if (existingUser) {
       const updates: Record<string, unknown> = {}
-      if (!existingUser.auth_id)                        updates.auth_id     = authId
-      if (existingUser.name      !== name)              updates.name        = name
-      if (existingUser.photo_url !== (tgUser.photo_url ?? null)) updates.photo_url = tgUser.photo_url ?? null
-      if (!existingUser.public_code)                    updates.public_code = publicCode
+      if (!existingUser.auth_id)                                              updates.auth_id     = authId
+      if (existingUser.name      !== name)                                    updates.name        = name
+      if (existingUser.photo_url !== (tgUser.photo_url ?? null))              updates.photo_url   = tgUser.photo_url ?? null
+      if (!existingUser.public_code)                                          updates.public_code = publicCode
       if (Object.keys(updates).length > 0) {
         await admin.from('users').update(updates).eq('id', existingUser.id)
       }
@@ -145,47 +157,29 @@ serve(async (req: Request) => {
       })
     }
 
-    // ── Получаем настоящий Supabase-токен через magic link ────────────────────
-    // generateLink + verifyOtp гарантируют валидный JWT без зависимости от
-    // ручной настройки SUPABASE_JWT_SECRET в секретах Edge Function.
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: { shouldCreateUser: false },
+    // ── Получаем настоящий Supabase-сессион через стандартный signInWithPassword ──
+    // Надёжнее custom JWT: не зависит от SUPABASE_JWT_SECRET; использует
+    // реальные токены Supabase которые корректно проходят RLS-проверки.
+    const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
     })
 
-    if (!linkErr && linkData?.properties?.hashed_token && ANON_KEY) {
-      const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      })
-      const { data: otpData, error: otpErr } = await anonClient.auth.verifyOtp({
-        token_hash: linkData.properties.hashed_token,
-        type: 'magiclink',
-      })
+    const { data: signInData, error: signInErr } = await anonClient.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-      if (!otpErr && otpData?.session?.access_token) {
-        return new Response(JSON.stringify({
-          access_token:  otpData.session.access_token,
-          refresh_token: otpData.session.refresh_token,
-        }), {
-          headers: { 'Content-Type': 'application/json', ...CORS },
-        })
-      }
-      console.warn('[telegram-auth] verifyOtp failed:', otpErr?.message)
-    } else if (linkErr) {
-      console.warn('[telegram-auth] generateLink failed:', linkErr.message)
-    }
-
-    // ── Запасной вариант: собственный JWT (работает если SUPABASE_JWT_SECRET задан) ──
-    const JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET') ?? ''
-    if (!JWT_SECRET) {
-      return new Response(JSON.stringify({ error: 'Auth token generation failed' }), {
+    if (signInErr || !signInData?.session?.access_token) {
+      console.error('[telegram-auth] signInWithPassword failed:', signInErr?.message)
+      return new Response(JSON.stringify({ error: signInErr?.message ?? 'Sign in failed' }), {
         status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
       })
     }
 
-    const access_token = await signJWT(authId, email, JWT_SECRET)
-    return new Response(JSON.stringify({ access_token }), {
+    return new Response(JSON.stringify({
+      access_token:  signInData.session.access_token,
+      refresh_token: signInData.session.refresh_token,
+    }), {
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
 
@@ -196,32 +190,3 @@ serve(async (req: Request) => {
     })
   }
 })
-
-// ── Запасной JWT-сigner ────────────────────────────────────────────────────────
-async function signJWT(sub: string, email: string, secret: string): Promise<string> {
-  const enc = new TextEncoder()
-  const b64url = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  const header  = b64url({ alg: 'HS256', typ: 'JWT' })
-  const now     = Math.floor(Date.now() / 1000)
-  const payload = b64url({
-    sub,
-    email,
-    role:  'authenticated',
-    iss:   'supabase',
-    aud:   'authenticated',
-    iat:   now,
-    exp:   now + 60 * 60 * 24,
-  })
-
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(`${header}.${payload}`))
-  const signature = btoa(String.fromCharCode(...new Uint8Array(sig)))
-    .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
-
-  return `${header}.${payload}.${signature}`
-}
