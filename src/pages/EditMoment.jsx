@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { updateMoment as updateMomentApi, createPerson } from '../lib/api'
+import { updateMoment as updateMomentApi, createPerson, uploadPhoto } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
@@ -185,21 +185,9 @@ export default function EditMoment() {
       let photo_path = moment.photo_path ?? null
       if (newPhotoFile) {
         const sb = assertSupabase()
-        const ext = newPhotoFile.name.split('.').pop() || 'jpg'
-        const path = `${currentUser.id}/${Date.now()}.${ext}`
-        const { error: uploadError } = await sb.storage
-          .from('photos')
-          .upload(path, newPhotoFile, { contentType: newPhotoFile.type, upsert: false })
-        if (uploadError) throw uploadError
-        const { data: signedData, error: signErr } = await sb.storage
-          .from('photos').createSignedUrl(path, 315_360_000)
-        if (signErr || !signedData?.signedUrl) {
-          const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-          photo_url = urlData.publicUrl
-        } else {
-          photo_url  = signedData.signedUrl
-          photo_path = path
-        }
+        const result = await uploadPhoto(sb, currentUser.id, newPhotoFile)
+        photo_url  = result.photo_url
+        photo_path = result.photo_path
       }
 
       const updated = await updateMomentApi(moment.id, {

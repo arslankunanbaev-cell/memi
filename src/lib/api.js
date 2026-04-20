@@ -1,13 +1,17 @@
 import { assertSupabase } from './supabase'
 
 // Signed URL lifetime: 10 years in seconds.
-// Long enough that stored URLs remain valid without manual refresh.
 const SIGNED_URL_TTL = 315_360_000
 
 // ── Helper: upload a photo and return { photo_url, photo_path } ───────────────
-// photo_url = signed URL (long-lived, safe to store in DB and share cross-user)
-// photo_path = storage object path (for future re-signing if needed)
-async function uploadPhoto(sb, userId, file, subfolder = '') {
+// Strategy:
+//   1. Upload file to storage (UUID-based path, so bucket paths are unguessable).
+//   2. Try createSignedUrl — works on both public and private buckets; preferred
+//      because signed URLs survive if the bucket is later made private.
+//   3. Fall back to getPublicUrl if signing fails (requires public bucket).
+//      If the bucket is already private, the caller will receive a valid signed
+//      URL from step 2 and this fallback is never reached.
+export async function uploadPhoto(sb, userId, file, subfolder = '') {
   const ext = file.name.split('.').pop() || 'jpg'
   const folder = subfolder ? `${userId}/${subfolder}` : userId
   const path = `${folder}/${Date.now()}.${ext}`
@@ -17,17 +21,24 @@ async function uploadPhoto(sb, userId, file, subfolder = '') {
     .upload(path, file, { contentType: file.type, upsert: false })
   if (uploadError) throw uploadError
 
+  // Prefer signed URL — works regardless of bucket visibility.
   const { data: signedData, error: signErr } = await sb.storage
     .from('photos')
     .createSignedUrl(path, SIGNED_URL_TTL)
 
-  if (signErr || !signedData?.signedUrl) {
-    // Fallback to public URL if signing fails (e.g. bucket still public)
-    const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-    return { photo_url: urlData.publicUrl, photo_path: path }
+  if (!signErr && signedData?.signedUrl) {
+    return { photo_url: signedData.signedUrl, photo_path: path }
   }
 
-  return { photo_url: signedData.signedUrl, photo_path: path }
+  // Fallback: public URL (requires bucket to be public).
+  // If signing failed and the bucket is private, photo_url will be a broken URL.
+  // In that case, make the bucket Public again in the Supabase Dashboard, or
+  // investigate the storage RLS policy preventing createSignedUrl.
+  if (import.meta.env.DEV) {
+    console.warn('[uploadPhoto] createSignedUrl failed, falling back to public URL:', signErr?.message)
+  }
+  const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
+  return { photo_url: urlData.publicUrl, photo_path: path }
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────

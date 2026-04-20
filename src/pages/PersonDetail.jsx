@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { deletePerson, updatePerson } from '../lib/api'
+import { deletePerson, updatePerson, uploadPhoto } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
 import BottomSheet from '../components/BottomSheet'
 import AddMoment from './AddMoment'
@@ -51,20 +51,9 @@ function EditPersonSheet({ person, onClose, onSaved, onDeleted }) {
       let photo_path = person.photo_path ?? null
       if (photoFile) {
         const sb = assertSupabase()
-        const ext = photoFile.name.split('.').pop() || 'jpg'
-        const path = `${person.user_id}/people/${Date.now()}.${ext}`
-        const { error: uploadError } = await sb.storage
-          .from('photos').upload(path, photoFile, { contentType: photoFile.type })
-        if (uploadError) throw uploadError
-        const { data: signedData, error: signErr } = await sb.storage
-          .from('photos').createSignedUrl(path, 315_360_000)
-        if (signErr || !signedData?.signedUrl) {
-          const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
-          photo_url = urlData.publicUrl
-        } else {
-          photo_url  = signedData.signedUrl
-          photo_path = path
-        }
+        const result = await uploadPhoto(sb, person.user_id, photoFile, 'people')
+        photo_url  = result.photo_url
+        photo_path = result.photo_path
       }
       const updated = await updatePerson(person.id, { name: name.trim(), photoUrl: photo_url, photoPath: photo_path, metYear: metYear ? Number(metYear) : null })
       onSaved(updated)

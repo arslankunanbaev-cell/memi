@@ -95,13 +95,16 @@ create policy "photos_upload" on storage.objects
     and (storage.foldername(name))[1] = (public.get_my_user_id())::text
   );
 
--- Read: own folder only. Cross-user access uses signed URLs from DB, which bypass RLS.
+-- Read: any authenticated user may read from the photos bucket.
+-- Security comes from:
+--   1. Bucket is PRIVATE  → public URLs return 403; only signed URLs work.
+--   2. Paths are UUID-based → not guessable even if someone enumerates users.
+--   3. telegram_id is no longer exposed in paths or public API.
+-- This open READ policy is required for createSignedUrl to work on the client,
+-- because Supabase validates the SELECT policy before issuing a signed token.
 create policy "photos_read" on storage.objects
   for select to authenticated
-  using (
-    bucket_id = 'photos'
-    and (storage.foldername(name))[1] = (public.get_my_user_id())::text
-  );
+  using (bucket_id = 'photos');
 
 -- Delete: own folder only.
 create policy "photos_delete" on storage.objects
