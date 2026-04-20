@@ -14,7 +14,7 @@ const BATCH_SIZE = 50
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-migrate-token',
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -50,10 +50,9 @@ function extractStoragePath(url: string): string | null {
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
-  // Simple secret token guard — prevents accidental re-runs from the web.
-  // Set MIGRATE_SECRET_TOKEN in edge function env vars before calling.
-  const authHeader = req.headers.get('authorization') ?? ''
-  if (MIGRATE_TOKEN && authHeader !== `Bearer ${MIGRATE_TOKEN}`) {
+  // Secret token guard — pass as x-migrate-token header to prevent accidental re-runs.
+  const migrateToken = req.headers.get('x-migrate-token') ?? ''
+  if (MIGRATE_TOKEN && migrateToken !== MIGRATE_TOKEN) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { 'Content-Type': 'application/json', ...CORS },
     })
