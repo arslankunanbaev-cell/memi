@@ -2,222 +2,275 @@ import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
-  return new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function Avatar({ person, name, photoUrl, fallbackColor }) {
+  const initial = (name || person?.name || '?')[0]?.toUpperCase() ?? '?'
+  const photo = photoUrl ?? person?.photo_url
+  const bg = fallbackColor ?? person?.avatar_color ?? 'var(--accent)'
+
+  return (
+    <div
+      className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
+      style={{
+        width: 26,
+        height: 26,
+        backgroundColor: bg,
+        border: '2px solid rgba(255,255,255,0.65)',
+      }}
+    >
+      {photo ? (
+        <img src={photo} alt={name || person?.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <span className="font-sans" style={{ color: '#fff', fontSize: 11, fontWeight: 600 }}>
+          {initial}
+        </span>
+      )}
+    </div>
+  )
 }
 
 function MusicBlock({ title, artist, cover }) {
   return (
     <div
+      className="flex items-center gap-3"
       style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        background: 'var(--card-alt)', borderRadius: 12,
-        padding: '10px 12px', marginTop: 10,
+        marginTop: 12,
+        backgroundColor: 'var(--card-alt)',
+        borderRadius: 14,
+        padding: '12px 14px',
       }}
     >
       {cover ? (
         <img
           src={cover}
           alt={title}
-          style={{ width: 32, height: 32, borderRadius: 8, objectFit: 'cover', flexShrink: 0, display: 'block' }}
+          style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
         />
       ) : (
         <div
+          className="flex items-center justify-center"
           style={{
-            width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-            background: 'var(--accent-light)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            backgroundColor: 'var(--accent-light)',
+            flexShrink: 0,
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2"/>
-            <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2" />
+            <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2" />
           </svg>
         </div>
       )}
-      <div style={{ minWidth: 0 }}>
-        <p className="font-sans" style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+
+      <div className="min-w-0">
+        <p
+          className="font-sans"
+          style={{
+            color: 'var(--text)',
+            fontSize: 14,
+            fontWeight: 600,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
           {title}
         </p>
         {artist && (
-          <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)', marginTop: 1 }}>{artist}</p>
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 1 }}>
+            {artist}
+          </p>
         )}
       </div>
     </div>
   )
 }
 
+function PhotoChip({ children, center = false }) {
+  return (
+    <div
+      className="font-sans"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: center ? 'center' : 'flex-start',
+        gap: 5,
+        maxWidth: '100%',
+        background: 'rgba(255,255,255,0.88)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        borderRadius: 999,
+        padding: '5px 12px',
+        boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
+        color: 'var(--text)',
+        fontSize: 13,
+        fontWeight: 500,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
-  const currentUser        = useAppStore((s) => s.currentUser)
-  const friends            = useAppStore((s) => s.friends)
+  const currentUser = useAppStore((state) => state.currentUser)
+  const friends = useAppStore((state) => state.friends)
 
   const isShared = moment.isShared || (moment.user_id && moment.user_id !== currentUser?.id)
   const author = isShared
-    ? (friends.find((f) => f.id === moment.user_id) ?? { name: 'Пользователь', photo_url: null })
+    ? friends.find((friend) => friend.id === moment.user_id) ?? { name: 'Пользователь', photo_url: null }
     : null
 
-  const allPeople = [
-    ...(moment.people ?? []),
-    ...(moment.taggedFriends ?? []).map((u) => ({ ...u, avatar_color: null })),
+  const participants = [
+    ...(moment.people ?? []).map((person) => ({
+      id: `person-${person.id}`,
+      name: person.name,
+      photo_url: person.photo_url ?? null,
+      avatar_color: person.avatar_color ?? 'var(--accent)',
+    })),
+    ...(moment.taggedFriends ?? []).map((friend) => ({
+      id: `friend-${friend.id}`,
+      name: friend.name,
+      photo_url: friend.photo_url ?? null,
+      avatar_color: 'var(--accent)',
+    })),
   ]
-  const hasPeople = allPeople.length > 0
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden cursor-pointer"
+    <article
+      className="overflow-hidden rounded-[20px] cursor-pointer"
       style={{
         backgroundColor: 'var(--card)',
-        boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
+        boxShadow: 'var(--shadow-card)',
       }}
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
-      {/* Author strip — shown only for friends' moments */}
       {isShared && author && (
-        <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: '0.5px solid var(--base)' }}>
-          <div
-            className="flex items-center justify-center rounded-full font-sans font-medium flex-shrink-0"
-            style={{ width: 20, height: 20, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 9, overflow: 'hidden' }}
-          >
-            {author.photo_url
-              ? <img src={author.photo_url} alt={author.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : author.name[0]?.toUpperCase()}
-          </div>
-          <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>{author.name}</span>
+        <div
+          className="flex items-center gap-2 px-4 py-3"
+          style={{ borderBottom: '1px solid var(--divider)' }}
+        >
+          <Avatar name={author.name} photoUrl={author.photo_url} />
+          <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500 }}>
+            {author.name}
+          </span>
         </div>
       )}
 
-      {/* Photo */}
-      <div style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
+      <div style={{ position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
-            alt={moment.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            alt={moment.title || 'Момент'}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #C8A478, #8C5830)' }} />
+          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg, #7C5436 0%, #C98957 48%, #F0D0A1 100%)' }} />
         )}
 
-        {/* Bottom gradient */}
         <div
           style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.55) 100%)',
-            pointerEvents: 'none',
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(to bottom, transparent 42%, rgba(0,0,0,0.58) 100%)',
           }}
         />
 
-        {/* TOP-LEFT: location — frosted glass chip */}
         {moment.location && (
-          <div style={{ position: 'absolute', top: 10, left: 10 }}>
-            <span
-              className="font-sans"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                background: 'rgba(255,255,255,0.88)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                borderRadius: 20, padding: '4px 10px',
-                fontSize: 12, fontWeight: 500, color: 'var(--text)',
-                boxShadow: '0 1px 6px rgba(0,0,0,0.12)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              📍 {moment.location}
-            </span>
+          <div style={{ position: 'absolute', top: 12, left: 12, maxWidth: 'calc(100% - 24px)' }}>
+            <PhotoChip>
+              <span style={{ fontSize: 12 }}>📍</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{moment.location}</span>
+            </PhotoChip>
           </div>
         )}
 
-        {/* BOTTOM-RIGHT: time + mood */}
-        <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {moment.mood && <span style={{ fontSize: 16 }}>{moment.mood}</span>}
-          <span
+        {moment.title && (
+          <div style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 100px)' }}>
+            <PhotoChip>{moment.title}</PhotoChip>
+          </div>
+        )}
+
+        <div
+          style={{
+            position: 'absolute',
+            right: 12,
+            bottom: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          {moment.mood && <span style={{ fontSize: 18 }}>{moment.mood}</span>}
+          <div
             className="font-sans"
             style={{
-              background: 'rgba(0,0,0,0.45)', borderRadius: 8,
-              padding: '3px 8px', fontSize: 12, fontWeight: 600, color: '#fff',
+              background: 'rgba(0,0,0,0.45)',
+              borderRadius: 10,
+              padding: '3px 8px',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
             }}
           >
             {formatTime(moment.created_at)}
-          </span>
-        </div>
-
-        {/* BOTTOM-LEFT: title pill */}
-        <div style={{ position: 'absolute', bottom: 8, left: 8, maxWidth: 'calc(100% - 90px)' }}>
-          <span
-            className="font-serif"
-            style={{
-              display: 'inline-block',
-              backgroundColor: 'rgba(255,255,255,0.90)',
-              color: 'var(--text)',
-              borderRadius: 9999,
-              padding: '5px 14px',
-              fontSize: 15, fontWeight: 600, letterSpacing: '0.2px',
-              maxWidth: '100%',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}
-          >
-            {moment.title}
-          </span>
+          </div>
         </div>
       </div>
 
-      {/* Body */}
-      {(moment.description || moment.song_title || hasPeople) && (
-        <div style={{ padding: '12px 14px 14px' }}>
-          {/* Description */}
+      {(moment.description || moment.song_title || participants.length > 0) && (
+        <div style={{ padding: '14px 16px 16px' }}>
           {moment.description && (
             <p
               className="font-sans"
               style={{
-                fontSize: 15, color: 'var(--text)', lineHeight: 1.55,
+                color: 'var(--text)',
+                fontSize: 15,
+                lineHeight: 1.55,
                 display: '-webkit-box',
-                WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                marginBottom: (moment.song_title || hasPeople) ? 0 : 0,
               }}
             >
               {moment.description}
             </p>
           )}
 
-          {/* Music block */}
           {moment.song_title && (
-            <MusicBlock title={moment.song_title} artist={moment.song_artist} cover={moment.song_cover} />
+            <MusicBlock
+              title={moment.song_title}
+              artist={moment.song_artist}
+              cover={moment.song_cover}
+            />
           )}
 
-          {/* People chips */}
-          {hasPeople && (
-            <div className="flex flex-wrap gap-2" style={{ marginTop: 10 }}>
-              {allPeople.map((p) => {
-                const linked = p.linked_user_id ? friends.find((f) => f.id === p.linked_user_id) : null
-                const photo = linked?.photo_url ?? p.photo_url
-                const displayName = linked?.name ?? p.name
-                return (
-                  <div key={p.id} className="flex items-center gap-1.5">
-                    <div
-                      className="flex items-center justify-center rounded-full flex-shrink-0"
-                      style={{
-                        width: 22, height: 22,
-                        backgroundColor: p.avatar_color ?? 'var(--accent)',
-                        border: '1.5px solid rgba(255,255,255,0.6)',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {photo
-                        ? <img src={photo} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        : <span className="font-sans" style={{ fontSize: 9, fontWeight: 600, color: '#fff' }}>{displayName[0]?.toUpperCase()}</span>
-                      }
-                    </div>
-                    <span className="font-sans" style={{ fontSize: 13, color: 'var(--mid)', fontWeight: 500 }}>{displayName}</span>
-                  </div>
-                )
-              })}
+          {participants.length > 0 && (
+            <div className="flex flex-wrap gap-2" style={{ marginTop: 12 }}>
+              {participants.map((person) => (
+                <div key={person.id} className="flex items-center gap-2">
+                  <Avatar person={person} />
+                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500 }}>
+                    {person.name}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
       )}
-    </div>
+    </article>
   )
 }

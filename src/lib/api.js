@@ -22,9 +22,11 @@ export async function uploadPhoto(sb, userId, file, subfolder = '') {
   if (uploadError) throw uploadError
 
   // Prefer signed URL — works regardless of bucket visibility.
-  const { data: signedData, error: signErr } = await sb.storage
-    .from('photos')
-    .createSignedUrl(path, SIGNED_URL_TTL)
+  const photosBucket = sb.storage.from('photos')
+  const signedResult = typeof photosBucket.createSignedUrl === 'function'
+    ? await photosBucket.createSignedUrl(path, SIGNED_URL_TTL)
+    : { data: null, error: new Error('createSignedUrl is unavailable') }
+  const { data: signedData, error: signErr } = signedResult
 
   if (!signErr && signedData?.signedUrl) {
     return { photo_url: signedData.signedUrl, photo_path: path }
@@ -37,7 +39,7 @@ export async function uploadPhoto(sb, userId, file, subfolder = '') {
   if (import.meta.env.DEV) {
     console.warn('[uploadPhoto] createSignedUrl failed, falling back to public URL:', signErr?.message)
   }
-  const { data: urlData } = sb.storage.from('photos').getPublicUrl(path)
+  const { data: urlData } = photosBucket.getPublicUrl(path)
   return { photo_url: urlData.publicUrl, photo_path: path }
 }
 

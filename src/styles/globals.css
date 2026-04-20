@@ -7,17 +7,21 @@
 
 @layer base {
   :root {
-    --base: #F5EDE0;
-    --surface: #FBF6F0;
+    --base: #F7F4F0;
+    --surface: #EDE6DC;
     --card: #FBF7F0;
-    --card-alt: #F0E8D8;
+    --card-alt: #F3ECE3;
     --accent: #D98B52;
-    --accent-light: #EDD8B8;
-    --accent-pale: #F5ECD8;
+    --accent-light: #E9D2BC;
+    --accent-pale: #F5EBDD;
     --deep: #A05E2C;
     --text: #17140E;
     --mid: #8A7A6A;
     --soft: #B8A898;
+    --divider: rgba(160, 94, 44, 0.14);
+    --shadow-card: 0 4px 20px rgba(80, 50, 30, 0.1);
+    --shadow-card-strong: 0 10px 28px rgba(80, 50, 30, 0.14);
+    --shadow-accent: 0 10px 24px rgba(217, 139, 82, 0.3);
   }
 
   * {
@@ -32,85 +36,142 @@
   }
 
   body {
-    background-color: var(--base);
+    margin: 0;
+    background:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.75), transparent 48%),
+      linear-gradient(180deg, #FBF9F5 0%, var(--base) 42%, #F2ECE4 100%);
     color: var(--text);
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
 }
 
-/* Shimmer keyframe for skeleton loaders */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50% { opacity: 0.4; }
 }
 
-/* Stagger entrance for cards */
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Screen / section fade-in */
 @keyframes fadeIn {
   from { opacity: 0; }
-  to   { opacity: 1; }
+  to { opacity: 1; }
 }
 
-/* Thumbnail / avatar scale-in */
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.88); }
-  to   { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* Skeleton shimmer */
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @layer utilities {
-  .bg-base    { background-color: var(--base); }
+  .bg-base { background-color: var(--base); }
   .bg-surface { background-color: var(--surface); }
-  .bg-card    { background-color: var(--card); }
-  .bg-accent  { background-color: var(--accent); }
-  .bg-deep    { background-color: var(--deep); }
+  .bg-card { background-color: var(--card); }
+  .bg-accent { background-color: var(--accent); }
+  .bg-deep { background-color: var(--deep); }
 
   .text-base-color { color: var(--base); }
-  .text-main  { color: var(--text); }
-  .text-mid   { color: var(--mid); }
-  .text-soft  { color: var(--soft); }
+  .text-main { color: var(--text); }
+  .text-mid { color: var(--mid); }
+  .text-soft { color: var(--soft); }
   .text-accent { color: var(--accent); }
-  .text-deep  { color: var(--deep); }
+  .text-deep { color: var(--deep); }
 
   .border-surface { border-color: var(--surface); }
-  .border-soft    { border-color: var(--soft); }
-  .border-accent  { border-color: var(--accent); }
+  .border-soft { border-color: var(--soft); }
+  .border-accent { border-color: var(--accent); }
 
-  /* Safe area for Telegram */
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
+
   .pt-safe {
     padding-top: max(0px, env(safe-area-inset-top));
   }
-  /* Standard screen top padding: 24px min, respects notch */
+
   .pt-topbar {
     padding-top: max(1.5rem, env(safe-area-inset-top));
   }
 
-  /* Screen / section fade-in */
   .animate-fade-in {
     animation: fadeIn 0.18s ease both;
   }
 
-  /* Hover lift for cards — subtle shadow increase on desktop */
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .surface-card {
+    background-color: var(--card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .surface-card-strong {
+    background-color: var(--card);
+    box-shadow: var(--shadow-card-strong);
+  }
+
+  .section-label {
+    color: var(--soft);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .soft-divider {
+    border-color: var(--divider);
+  }
+
   .card-hover {
     transition: box-shadow 0.15s ease, transform 0.15s ease;
   }
+
   .card-hover:hover {
-    box-shadow: 0 4px 20px rgba(80,50,30,0.15) !important;
+    box-shadow: var(--shadow-card-strong) !important;
   }
 }

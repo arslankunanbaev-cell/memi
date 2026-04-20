@@ -229,16 +229,17 @@ export default function EditMoment() {
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-4 pt-topbar"
+        className="flex items-center justify-between px-4 pt-topbar"
+        style={{ borderBottom: '1px solid var(--divider)', paddingBottom: 12 }}
       >
         <button
           onClick={() => navigate(-1)}
           className="font-sans transition-opacity active:opacity-60"
-          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}
+          style={{ color: 'var(--mid)', fontSize: 15, fontWeight: 500, background: 'none', border: 'none' }}
         >
           Отмена
         </button>
-        <span className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>
+        <span className="font-serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>
           Редактировать момент
         </span>
         <button
@@ -247,7 +248,7 @@ export default function EditMoment() {
           className="font-sans font-medium transition-opacity active:opacity-60"
           style={{
             color: title.trim() && !saving ? 'var(--accent)' : 'var(--soft)',
-            fontSize: 14,
+            fontSize: 15,
             background: 'none',
             border: 'none',
           }}
@@ -256,7 +257,7 @@ export default function EditMoment() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-6">
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-6" style={{ paddingTop: 20 }}>
         {/* Error */}
         {error && (
           <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>
@@ -266,22 +267,24 @@ export default function EditMoment() {
 
         {/* Photo */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Фото
           </p>
           <button
             onClick={() => photoRef.current?.click()}
             className="w-full transition-opacity active:opacity-70"
             style={{
-              height: photoPreview ? 160 : 80,
-              borderRadius: 14,
-              border: photoPreview ? 'none' : '2px dashed var(--soft)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
+              aspectRatio: '16 / 9',
+              minHeight: photoPreview ? undefined : 180,
+              borderRadius: 20,
+              border: photoPreview ? 'none' : '2px dashed var(--accent-light)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--card-alt)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
+              boxShadow: photoPreview ? 'none' : 'var(--shadow-card)',
             }}
           >
             {photoPreview ? (
@@ -306,7 +309,7 @@ export default function EditMoment() {
 
         {/* Mood emoji picker */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Настроение
           </p>
           <div className="flex flex-wrap gap-2">
@@ -316,9 +319,10 @@ export default function EditMoment() {
                 onClick={() => setMood(mood === m ? '' : m)}
                 className="transition-transform active:scale-90"
                 style={{
-                  width: 40, height: 40, borderRadius: 10, fontSize: 20,
-                  backgroundColor: mood === m ? 'var(--surface)' : 'transparent',
-                  border: mood === m ? '2px solid var(--accent)' : '2px solid transparent',
+                  width: 46, height: 46, borderRadius: 14, fontSize: 24,
+                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--card)',
+                  border: 'none',
+                  boxShadow: mood === m ? '0 0 0 1.5px var(--accent), var(--shadow-card)' : 'var(--shadow-card)',
                 }}
               >
                 {m}
@@ -329,7 +333,7 @@ export default function EditMoment() {
 
         {/* Title */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Заголовок
           </p>
           <input
@@ -340,7 +344,7 @@ export default function EditMoment() {
             className="w-full font-serif outline-none bg-transparent"
             style={{
               fontSize: 22, color: 'var(--text)',
-              borderBottom: '1px solid var(--surface)',
+              borderBottom: '1.5px solid var(--divider)',
               paddingBottom: 8, fontWeight: 300,
             }}
           />
@@ -348,7 +352,7 @@ export default function EditMoment() {
 
         {/* Description */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Описание
           </p>
           <textarea
@@ -364,7 +368,7 @@ export default function EditMoment() {
 
         {/* Location */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Место
           </p>
           <input
@@ -374,21 +378,22 @@ export default function EditMoment() {
             maxLength={80}
             className="w-full font-sans outline-none"
             style={{
-              backgroundColor: 'var(--surface)', borderRadius: 10,
-              padding: '10px 12px', fontSize: 14, color: 'var(--text)', border: 'none',
+              backgroundColor: 'var(--card)', borderRadius: 14,
+              padding: '12px 14px', fontSize: 15, color: 'var(--text)', border: 'none',
+              boxShadow: 'var(--shadow-card)',
             }}
           />
         </div>
 
         {/* Song */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Трек
           </p>
           {song ? (
             <div
               className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '10px 12px' }}
+              style={{ backgroundColor: 'var(--card)', borderRadius: 14, padding: '12px 14px', boxShadow: 'var(--shadow-card)' }}
             >
               {song.cover ? (
                 <img src={song.cover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
@@ -413,9 +418,10 @@ export default function EditMoment() {
               onClick={() => setShowSongSheet(true)}
               className="w-full font-sans transition-opacity active:opacity-70"
               style={{
-                backgroundColor: 'var(--surface)', borderRadius: 10,
-                padding: '10px 12px', fontSize: 14, color: 'var(--mid)',
+                backgroundColor: 'var(--card)', borderRadius: 14,
+                padding: '12px 14px', fontSize: 15, color: 'var(--mid)',
                 border: 'none', textAlign: 'left',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               🎵 &nbsp;Найти трек...
@@ -425,7 +431,7 @@ export default function EditMoment() {
 
         {/* People */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             С кем
           </p>
           <div className="flex flex-wrap gap-2">
@@ -439,8 +445,9 @@ export default function EditMoment() {
                   style={{
                     borderRadius: 9999,
                     padding: '6px 12px 6px 8px',
-                    backgroundColor: active ? 'var(--accent)' : 'var(--surface)',
-                    border: active ? '2px solid transparent' : '2px solid transparent',
+                    backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                    border: 'none',
+                    boxShadow: active ? 'none' : 'var(--shadow-card)',
                   }}
                 >
                   <div
@@ -465,8 +472,9 @@ export default function EditMoment() {
               style={{
                 borderRadius: 9999,
                 padding: '6px 12px 6px 8px',
-                backgroundColor: 'var(--surface)',
+                backgroundColor: 'var(--card)',
                 border: '1.5px dashed rgba(217,139,82,0.5)',
+                boxShadow: 'var(--shadow-card)',
               }}
             >
               <div
@@ -488,7 +496,7 @@ export default function EditMoment() {
 
         {/* Visibility */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 10, color: 'var(--soft)' }}>
+          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Видимость
           </p>
           <div className="flex gap-2">
@@ -499,8 +507,9 @@ export default function EditMoment() {
                 className="font-sans font-medium transition-opacity active:opacity-70"
                 style={{
                   padding: '8px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
-                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--surface)',
+                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
                   color: visibility === value ? '#fff' : 'var(--mid)',
+                  boxShadow: visibility === value ? 'none' : 'var(--shadow-card)',
                 }}
               >
                 {label}

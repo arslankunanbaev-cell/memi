@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore.js'
 import Profile from '../Profile.jsx'
@@ -11,8 +11,10 @@ vi.mock('react-router-dom', async (orig) => ({
 }))
 
 vi.mock('../../lib/api.js', () => ({
-  saveMoment:   vi.fn().mockResolvedValue({ id: 'm1', title: 'Test' }),
+  saveMoment: vi.fn().mockResolvedValue({ id: 'm1', title: 'Test' }),
   createPerson: vi.fn(),
+  saveCapsuleSlot: vi.fn().mockResolvedValue({}),
+  deleteCapsuleSlot: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock('../AddMoment.jsx', () => ({
@@ -31,7 +33,11 @@ vi.mock('../../components/BottomNav.jsx', () => ({
 }))
 
 function renderProfile() {
-  return render(<MemoryRouter><Profile /></MemoryRouter>)
+  return render(
+    <MemoryRouter>
+      <Profile />
+    </MemoryRouter>,
+  )
 }
 
 describe('Profile', () => {
@@ -60,39 +66,38 @@ describe('Profile', () => {
     useAppStore.setState({
       currentUser: { id: 'u1', name: 'Test' },
       moments: [
-        { id: 'm1', title: 'Первый', created_at: '2024-01-01' },
-        { id: 'm2', title: 'Второй', created_at: '2024-02-01' },
+        { id: 'm1', title: 'Первый', created_at: '2024-01-01', user_id: 'u1' },
+        { id: 'm2', title: 'Второй', created_at: '2024-02-01', user_id: 'u1' },
       ],
     })
+
     renderProfile()
-    // Ищем блок "Моментов" и проверяем что рядом стоит число 2
-    const label = screen.getByText('Моментов')
-    expect(label.closest('div').querySelector('span')).toHaveTextContent('2')
+    const momentsStat = screen.getByText('момента').parentElement
+    expect(momentsStat).toHaveTextContent('2')
   })
 
   it('рендерит 4 слота капсулы', () => {
     renderProfile()
-    // 4 слота × кнопка "добавить"
-    const addBtns = screen.getAllByText('добавить')
-    expect(addBtns).toHaveLength(4)
+    expect(screen.getAllByText('Добавить')).toHaveLength(4)
   })
 
   it('открывает PickMomentSheet при нажатии на пустой слот', () => {
     renderProfile()
-    fireEvent.click(screen.getAllByText('добавить')[0])
+    fireEvent.click(screen.getAllByText('Добавить')[0])
     expect(screen.getByText('В капсулу')).toBeInTheDocument()
   })
 
   it('в PickMomentSheet есть кнопка "Создать момент"', () => {
     renderProfile()
-    fireEvent.click(screen.getAllByText('добавить')[0])
+    fireEvent.click(screen.getAllByText('Добавить')[0])
     expect(screen.getByText('Создать момент')).toBeInTheDocument()
   })
 
   it('нажатие "Создать момент" открывает AddMoment оверлей', async () => {
     renderProfile()
-    fireEvent.click(screen.getAllByText('добавить')[0])
+    fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
+
     await waitFor(() => {
       expect(screen.getByTestId('add-moment-overlay')).toBeInTheDocument()
     })
@@ -100,11 +105,9 @@ describe('Profile', () => {
 
   it('после сохранения момент попадает в капсулу', async () => {
     renderProfile()
-    // Открываем слот 0
-    fireEvent.click(screen.getAllByText('добавить')[0])
+    fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
 
-    // Нажимаем сохранить в моке AddMoment
     await waitFor(() => screen.getByTestId('add-moment-overlay'))
     fireEvent.click(screen.getByText('Сохранить момент'))
 
@@ -116,7 +119,7 @@ describe('Profile', () => {
 
   it('после сохранения AddMoment оверлей закрывается', async () => {
     renderProfile()
-    fireEvent.click(screen.getAllByText('добавить')[0])
+    fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
     await waitFor(() => screen.getByTestId('add-moment-overlay'))
     fireEvent.click(screen.getByText('Сохранить момент'))

@@ -1,46 +1,56 @@
 import { useState } from 'react'
-import { useAppStore } from '../store/useAppStore'
-import BottomNav from '../components/BottomNav'
-import MomentCard from '../components/MomentCard'
-import FAB from '../components/FAB'
-import AddMoment from './AddMoment'
 import { pluralRu } from '../lib/ruPlural'
-
-// ── helpers ──────────────────────────────────────────────────────────────────
+import BottomNav from '../components/BottomNav'
+import FAB from '../components/FAB'
+import MomentCard from '../components/MomentCard'
+import { useAppStore } from '../store/useAppStore'
+import AddMoment from './AddMoment'
 
 function today() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  return date
 }
 
 const SEASONS = ['зимой', 'зимой', 'весной', 'весной', 'весной', 'летом', 'летом', 'летом', 'осенью', 'осенью', 'осенью', 'зимой']
 
 function dayLabel(iso) {
-  const d = new Date(iso)
-  const dayStart = new Date(d); dayStart.setHours(0, 0, 0, 0)
-  const t = today()
-  const diff = Math.round((t - dayStart) / 86400000)
+  const date = new Date(iso)
+  const dayStart = new Date(date)
+  dayStart.setHours(0, 0, 0, 0)
+
+  const diff = Math.round((today() - dayStart) / 86400000)
+
   if (diff === 0) return 'Сегодня'
   if (diff === 1) return 'Вчера'
   if (diff < 7) return `${diff} ${pluralRu(diff, 'день', 'дня', 'дней')} назад`
-  const nowYear = new Date().getFullYear()
-  if (d.getFullYear() < nowYear) {
-    return `${SEASONS[d.getMonth()].charAt(0).toUpperCase() + SEASONS[d.getMonth()].slice(1)} ${d.getFullYear()}`
+
+  const currentYear = new Date().getFullYear()
+  if (date.getFullYear() < currentYear) {
+    const season = SEASONS[date.getMonth()]
+    return `${season[0].toUpperCase()}${season.slice(1)} ${date.getFullYear()}`
   }
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
 }
 
 function groupByDay(moments) {
-  const map = new Map()
-  for (const m of moments) {
-    const d = new Date(m.created_at)
-    d.setHours(0, 0, 0, 0)
-    const key = d.toISOString()
-    if (!map.has(key)) map.set(key, [])
-    map.get(key).push(m)
+  const groups = new Map()
+
+  for (const moment of moments) {
+    const date = new Date(moment.created_at)
+    date.setHours(0, 0, 0, 0)
+
+    const key = date.toISOString()
+
+    if (!groups.has(key)) {
+      groups.set(key, [])
+    }
+
+    groups.get(key).push(moment)
   }
-  return Array.from(map.entries()).map(([key, items]) => ({
+
+  return Array.from(groups.values()).map((items) => ({
     label: dayLabel(items[0].created_at),
     items,
   }))
@@ -54,109 +64,133 @@ function formatTopbarDate() {
   })
 }
 
-// ── component ─────────────────────────────────────────────────────────────────
-
 export default function Home() {
-  const moments = useAppStore((s) => s.moments)
+  const moments = useAppStore((state) => state.moments)
   const [showAdd, setShowAdd] = useState(false)
 
   const groups = groupByDay(moments)
   const isEmpty = moments.length === 0
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
+    <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
-        /* ── Empty state ── */
-        <div className="flex-1 flex flex-col items-center justify-center px-4 gap-5 pb-20 animate-fade-in">
-          {/* Central FAB-like circle */}
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              backgroundColor: 'var(--surface)',
-            }}
-          >
-            <span style={{ fontSize: 34 }}>✨</span>
-          </div>
-
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h2
-              className="font-serif"
-              style={{ fontSize: 26, color: 'var(--text)', fontWeight: 400 }}
-            >
-              Твой первый момент
-            </h2>
-            <p
-              className="font-sans"
-              style={{ fontSize: 15, color: 'var(--mid)', lineHeight: 1.6, maxWidth: 240 }}
-            >
-              Запомни что-то прямо сейчас — фото, слово, ощущение
-            </p>
-          </div>
-
-          <button
-            onClick={() => setShowAdd(true)}
-            className="font-sans font-medium transition-opacity active:opacity-70"
-            style={{
-              backgroundColor: 'var(--accent)',
-              color: '#fff',
-              borderRadius: 9999,
-              padding: '13px 32px',
-              fontSize: 15,
-              border: 'none',
-            }}
-          >
-            Добавить момент
-          </button>
-        </div>
-      ) : (
-        /* ── Moments list ── */
-        <>
-          {/* Topbar */}
-          <div
-            className="flex items-center justify-between px-4 pt-topbar"
-            style={{ paddingBottom: 12 }}
-          >
+        <div className="flex flex-1 flex-col px-4 pt-topbar">
+          <div className="flex items-center justify-between" style={{ paddingBottom: 18 }}>
             <h1
               className="font-serif"
-              style={{ fontSize: 28, color: 'var(--text)', fontWeight: 600 }}
+              style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}
             >
               memi
             </h1>
-            <span
-              className="font-sans capitalize"
-              style={{ fontSize: 13, color: 'var(--mid)' }}
-            >
+            <span className="font-sans capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--mid)' }}>
               {formatTopbarDate()}
             </span>
           </div>
 
-          {/* Grouped list */}
-          <div className="flex-1 overflow-y-auto px-4 pb-28">
-            {groups.map((group, gi) => (
-              <div key={group.label} className="mb-6">
+          <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ paddingBottom: 108 }}>
+            <div
+              className="flex items-center justify-center rounded-full"
+              style={{
+                width: 88,
+                height: 88,
+                backgroundColor: 'var(--card)',
+                boxShadow: 'var(--shadow-card)',
+                marginBottom: 20,
+              }}
+            >
+              <span style={{ fontSize: 36 }}>✨</span>
+            </div>
+
+            <h2
+              className="font-serif"
+              style={{
+                color: 'var(--text)',
+                fontSize: 30,
+                fontWeight: 700,
+                lineHeight: 1.05,
+                margin: 0,
+              }}
+            >
+              Первый момент
+            </h2>
+
+            <p
+              className="font-sans"
+              style={{
+                color: 'var(--mid)',
+                fontSize: 15,
+                lineHeight: 1.6,
+                maxWidth: 250,
+                marginTop: 10,
+              }}
+            >
+              Сохрани фото, слово или чувство, чтобы лента начала собираться сама.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowAdd(true)}
+              className="font-sans transition-opacity active:opacity-70"
+              style={{
+                marginTop: 22,
+                border: 'none',
+                borderRadius: 20,
+                backgroundColor: 'var(--accent)',
+                color: '#fff',
+                padding: '15px 26px',
+                fontSize: 16,
+                fontWeight: 600,
+                boxShadow: 'var(--shadow-accent)',
+              }}
+            >
+              Добавить момент
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between px-4 pt-topbar" style={{ paddingBottom: 16 }}>
+            <h1
+              className="font-serif"
+              style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}
+            >
+              memi
+            </h1>
+            <span className="font-sans capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--mid)' }}>
+              {formatTopbarDate()}
+            </span>
+          </div>
+
+          <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 110 }}>
+            {groups.map((group, groupIndex) => (
+              <section key={group.label} style={{ paddingBottom: 18 }}>
                 <p
-                  className="font-sans uppercase tracking-widest mb-3 font-semibold"
-                  style={{ fontSize: 12, color: 'var(--soft)' }}
+                  className="font-sans font-semibold"
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--soft)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.14em',
+                    marginBottom: 10,
+                  }}
                 >
                   {group.label}
                 </p>
-                <div className="flex flex-col gap-3">
-                  {group.items.map((m, i) => (
+
+                <div className="flex flex-col gap-4">
+                  {group.items.map((moment, itemIndex) => (
                     <div
-                      key={m.id}
+                      key={moment.id}
                       style={{
-                        animation: 'fadeSlideUp 0.3s ease both',
-                        animationDelay: `${(gi * 3 + i) * 80}ms`,
+                        animation: 'fadeSlideUp 0.28s ease both',
+                        animationDelay: `${(groupIndex * 3 + itemIndex) * 55}ms`,
                       }}
                     >
-                      <MomentCard moment={m} />
+                      <MomentCard moment={moment} />
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
 

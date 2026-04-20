@@ -1,20 +1,21 @@
 export default function FAB({ onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="fixed z-40 flex items-center justify-center shadow-lg transition-transform active:scale-90"
+      className="fixed z-40 flex items-center justify-center transition-transform active:scale-95"
       style={{
-        bottom: 'calc(max(0.75rem, env(safe-area-inset-bottom)) + 68px)',
-        right: '1.25rem',
+        right: 20,
+        bottom: 'calc(max(1rem, env(safe-area-inset-bottom)) + 72px)',
         width: 52,
         height: 52,
+        border: 'none',
         borderRadius: '50%',
         backgroundColor: 'var(--accent)',
         color: '#fff',
-        border: 'none',
-        fontSize: 26,
+        fontSize: 28,
         lineHeight: 1,
-        boxShadow: '0 4px 20px rgba(217,139,82,0.45)',
+        boxShadow: 'var(--shadow-accent)',
       }}
       aria-label="Добавить момент"
     >

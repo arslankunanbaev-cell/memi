@@ -1,122 +1,176 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppStore } from '../store/useAppStore'
-import { saveCapsuleSlot, deleteCapsuleSlot } from '../lib/api'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import { deleteCapsuleSlot, saveCapsuleSlot } from '../lib/api'
+import { MONTHS_GENITIVE, plural } from '../lib/ruPlural'
+import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
-import { plural, MONTHS_GENITIVE } from '../lib/ruPlural'
-
-const STOP_WORDS = new Set(['в','на','и','с','а','но','или','что','как','это','я','ты','он','она','мы','вы','они','не','по','за','до','из','от','у','к'])
-
-function topWord(moments) {
-  const freq = {}
-  for (const m of moments) {
-    for (const w of (m.title ?? '').toLowerCase().split(/\s+/)) {
-      if (w.length > 2 && !STOP_WORDS.has(w)) freq[w] = (freq[w] ?? 0) + 1
-    }
-  }
-  return Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
-}
 
 function uniqueMonths(moments) {
-  return new Set(moments.map((m) => {
-    const d = new Date(m.created_at)
-    return `${d.getFullYear()}-${d.getMonth()}`
-  })).size
+  return new Set(
+    moments.map((moment) => {
+      const date = new Date(moment.created_at)
+      return `${date.getFullYear()}-${date.getMonth()}`
+    }),
+  ).size
 }
 
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
-  const d = new Date(createdAt)
-  return `${MONTHS_GENITIVE[d.getMonth()]} ${d.getFullYear()}`
+
+  const date = new Date(createdAt)
+  return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
-// ── Capsule slot ──────────────────────────────────────────────────────────────
-
-function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
-  const [holding, setHolding] = useState(false)
-  const [showHoldMenu, setShowHoldMenu] = useState(false)
-  const navigate = useNavigate()
+function CapsuleTile({ slot, index, onEmpty, onFilled }) {
+  const [showMenu, setShowMenu] = useState(false)
 
   if (!slot) {
     return (
       <button
+        type="button"
         onClick={onEmpty}
         className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
         style={{
-          aspectRatio: '2/3', borderRadius: 18,
+          aspectRatio: '3 / 4',
+          borderRadius: 20,
           border: '1.5px dashed var(--accent-light)',
-          background: `repeating-linear-gradient(45deg, var(--card-alt), var(--card-alt) 4px, var(--base) 4px, var(--base) 12px)`,
+          background: 'repeating-linear-gradient(45deg, var(--card-alt), var(--card-alt) 4px, var(--base) 4px, var(--base) 12px)',
         }}
       >
         <div
-          style={{
-            width: 32, height: 32, borderRadius: '50%',
-            backgroundColor: 'var(--accent-light)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
+          className="flex items-center justify-center rounded-full"
+          style={{ width: 36, height: 36, backgroundColor: 'var(--accent-light)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </div>
-        <span className="font-sans" style={{ fontSize: 11, color: 'var(--soft)' }}>Добавить</span>
+        <span className="font-sans" style={{ color: 'var(--soft)', fontSize: 12, fontWeight: 500 }}>
+          Добавить
+        </span>
       </button>
     )
   }
 
   return (
     <>
-      <div
-        onClick={() => !showHoldMenu && navigate(`/moment/${slot.id}`)}
-        onContextMenu={(e) => { e.preventDefault(); setShowHoldMenu(true) }}
-        onTouchStart={() => {
-          const t = setTimeout(() => setShowHoldMenu(true), 500)
-          setHolding(t)
+      <button
+        type="button"
+        onClick={() => setShowMenu(true)}
+        className="transition-opacity active:opacity-80"
+        style={{
+          position: 'relative',
+          aspectRatio: '3 / 4',
+          border: 'none',
+          borderRadius: 20,
+          overflow: 'hidden',
+          padding: 0,
+          boxShadow: 'var(--shadow-card)',
+          background: slot.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
         }}
-        onTouchEnd={() => clearTimeout(holding)}
-        className="active:opacity-80 transition-opacity cursor-pointer"
-        style={{ position: 'relative', aspectRatio: '2/3', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(80,50,30,0.12)' }}
       >
-        {slot.photo_url ? (
-          <img src={slot.photo_url} alt={slot.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: '100%', height: '100%', background: 'linear-gradient(145deg, #C8A478, #8C5830)' }} />
+        {slot.photo_url && (
+          <img src={slot.photo_url} alt={slot.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.65) 0%, transparent 50%)' }} />
-        <span
-          className="font-sans font-medium"
-          style={{ position: 'absolute', top: 8, left: 10, fontSize: 10, color: 'rgba(255,255,255,0.7)' }}
+
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.6) 0%, transparent 58%)' }} />
+
+        <div
+          className="font-sans"
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            borderRadius: 8,
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            padding: '2px 8px',
+          }}
         >
           0{index + 1}
-        </span>
-        <span
-          className="font-serif"
-          style={{ position: 'absolute', bottom: 8, left: 8, right: 8, fontSize: 12, color: '#fff', fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-        >
-          {slot.title}
-        </span>
-      </div>
+        </div>
 
-      {showHoldMenu && (
-        <BottomSheet onClose={() => setShowHoldMenu(false)}>
-          <div>
+        <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10 }}>
+          <div
+            className="font-sans"
+            style={{
+              display: 'inline-flex',
+              maxWidth: '100%',
+              background: 'rgba(255,255,255,0.88)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              borderRadius: 999,
+              boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
+              color: 'var(--text)',
+              fontSize: 12,
+              fontWeight: 500,
+              overflow: 'hidden',
+              padding: '4px 10px',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {slot.title || 'Без названия'}
+          </div>
+        </div>
+      </button>
+
+      {showMenu && (
+        <BottomSheet onClose={() => setShowMenu(false)} title="Капсула">
+          <div className="px-5 pb-4">
             <button
-              onClick={() => { onEmpty(); setShowHoldMenu(false) }}
-              className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-              style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+              type="button"
+              onClick={() => {
+                setShowMenu(false)
+                onEmpty()
+              }}
+              className="flex w-full items-center gap-4 rounded-[18px] text-left transition-opacity active:opacity-60"
+              style={{
+                border: 'none',
+                backgroundColor: 'var(--base)',
+                marginBottom: 8,
+                padding: '16px 18px',
+              }}
             >
-              <span style={{ fontSize: 16 }}>🔄</span>
-              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>Заменить</span>
+              <div
+                className="flex items-center justify-center rounded-[14px]"
+                style={{ width: 40, height: 40, backgroundColor: 'var(--accent-light)' }}
+              >
+                <span style={{ color: 'var(--accent)', fontSize: 18 }}>↻</span>
+              </div>
+              <span className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 500 }}>
+                Заменить
+              </span>
             </button>
+
             <button
-              onClick={() => { onFilled(); setShowHoldMenu(false) }}
-              className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-              style={{ background: 'none', border: 'none' }}
+              type="button"
+              onClick={() => {
+                setShowMenu(false)
+                onFilled()
+              }}
+              className="flex w-full items-center gap-4 rounded-[18px] text-left transition-opacity active:opacity-60"
+              style={{
+                border: 'none',
+                backgroundColor: 'rgba(224, 82, 82, 0.07)',
+                padding: '16px 18px',
+              }}
             >
-              <span style={{ fontSize: 16 }}>✕</span>
-              <span className="font-sans" style={{ fontSize: 15, color: '#E05252' }}>Убрать из капсулы</span>
+              <div
+                className="flex items-center justify-center rounded-[14px]"
+                style={{ width: 40, height: 40, backgroundColor: 'rgba(224, 82, 82, 0.12)' }}
+              >
+                <span style={{ color: '#E05252', fontSize: 18 }}>✕</span>
+              </div>
+              <span className="font-sans" style={{ color: '#E05252', fontSize: 17, fontWeight: 500 }}>
+                Убрать из капсулы
+              </span>
             </button>
           </div>
         </BottomSheet>
@@ -125,65 +179,99 @@ function CapsuleSlot({ slot, index, onEmpty, onFilled }) {
   )
 }
 
-// ── Pick moment sheet ─────────────────────────────────────────────────────────
-
 function PickMomentSheet({ onClose, onPick, onCreateNew }) {
-  const moments = useAppStore((s) => s.moments)
-  const currentUser = useAppStore((s) => s.currentUser)
-  const ownMoments = moments.filter((m) => !m.isShared && m.user_id === currentUser?.id)
+  const moments = useAppStore((state) => state.moments)
+  const currentUser = useAppStore((state) => state.currentUser)
+  const ownMoments = moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id)
+
   return (
     <BottomSheet onClose={onClose} title="В капсулу">
-      <div className="overflow-y-auto" style={{ maxHeight: '65dvh' }}>
-
-        {/* ── Кнопка «Создать момент» ── */}
+      <div className="pb-3">
         <button
-          onClick={() => { onClose(); onCreateNew() }}
-          className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-          style={{ background: 'none', border: 'none', borderBottom: '1px solid var(--surface)' }}
+          type="button"
+          onClick={() => {
+            onClose()
+            onCreateNew()
+          }}
+          className="flex w-full items-center gap-3 px-5 py-4 text-left transition-opacity active:opacity-60"
+          style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
         >
           <div
-            className="flex items-center justify-center flex-shrink-0"
-            style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: 'var(--accent)' }}
+            className="flex items-center justify-center rounded-[10px]"
+            style={{ width: 36, height: 36, backgroundColor: 'var(--accent)', color: '#fff', flexShrink: 0 }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14" />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
           </div>
-          <div className="flex-1 text-left">
-            <p className="font-sans font-medium" style={{ fontSize: 15, color: 'var(--text)' }}>Создать момент</p>
-            <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)' }}>Новый — сразу в капсулу</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
+              Создать момент
+            </p>
+            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 1 }}>
+              Новый — сразу в капсулу
+            </p>
           </div>
           <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
         </button>
 
-        {/* ── Разделитель ── */}
         {ownMoments.length > 0 && (
-          <p className="font-sans px-5 py-2" style={{ fontSize: 10, color: 'var(--soft)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <p
+            className="font-sans font-semibold"
+            style={{
+              color: 'var(--soft)',
+              fontSize: 12,
+              letterSpacing: '0.14em',
+              margin: '12px 20px 8px',
+              textTransform: 'uppercase',
+            }}
+          >
             Или выбери существующий
           </p>
         )}
 
-        {/* ── Список существующих моментов ── */}
         {ownMoments.length === 0 && (
-          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>
-            Пока нет моментов — создай первый ↑
+          <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, padding: '20px 0 8px' }}>
+            Пока нет моментов — создай первый выше.
           </p>
         )}
-        {ownMoments.map((m) => (
+
+        {ownMoments.map((moment) => (
           <button
-            key={m.id}
-            onClick={() => { onPick(m); onClose() }}
-            className="w-full flex items-center gap-3 px-5 py-3 transition-opacity active:opacity-60"
-            style={{ background: 'none', border: 'none', borderBottom: '0.5px solid var(--surface)' }}
+            key={moment.id}
+            type="button"
+            onClick={() => {
+              onPick(moment)
+              onClose()
+            }}
+            className="flex w-full items-center gap-3 px-5 py-3 text-left transition-opacity active:opacity-60"
+            style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
           >
-            <div style={{
-              width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0,
-              background: m.photo_url ? 'none' : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
-            }}>
-              {m.photo_url && <img src={m.photo_url} alt={m.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 8,
+                overflow: 'hidden',
+                flexShrink: 0,
+                background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
+              }}
+            >
+              {moment.photo_url && (
+                <img src={moment.photo_url} alt={moment.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
             </div>
-            <span className="font-sans flex-1 text-left" style={{ fontSize: 14, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {m.title}
+            <span
+              className="font-sans flex-1"
+              style={{
+                color: 'var(--text)',
+                fontSize: 14,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {moment.title}
             </span>
             <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
           </button>
@@ -193,41 +281,22 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
   )
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
-
 export default function Profile() {
-  const currentUser       = useAppStore((s) => s.currentUser)
-  const moments           = useAppStore((s) => s.moments)
-  const people            = useAppStore((s) => s.people)
-  const capsule           = useAppStore((s) => s.capsule)
-  const addToCapsule      = useAppStore((s) => s.addToCapsule)
-  const removeFromCapsule = useAppStore((s) => s.removeFromCapsule)
+  const navigate = useNavigate()
+  const currentUser = useAppStore((state) => state.currentUser)
+  const moments = useAppStore((state) => state.moments)
+  const people = useAppStore((state) => state.people)
+  const capsule = useAppStore((state) => state.capsule)
+  const addToCapsule = useAppStore((state) => state.addToCapsule)
+  const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
 
-  const [pickSlot, setPickSlot]           = useState(null)
+  const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
 
-  async function handleAddToCapsule(slotIndex, moment) {
-    addToCapsule(slotIndex, moment)  // optimistic update
-    try {
-      await saveCapsuleSlot(currentUser.id, slotIndex, moment.id)
-    } catch (err) {
-      console.error('[Capsule] save error:', err)
-    }
-  }
-
-  async function handleRemoveFromCapsule(slotIndex) {
-    removeFromCapsule(slotIndex)  // optimistic update
-    try {
-      await deleteCapsuleSlot(currentUser.id, slotIndex)
-    } catch (err) {
-      console.error('[Capsule] delete error:', err)
-    }
-  }
-
-  // Показываем реальное имя из Telegram (сохраняется в users.name через saveUser)
-  const name  = currentUser?.name || 'Пользователь'
-  const since = sinceLabel(currentUser?.created_at)
-  const ownMoments = useMemo(() => moments.filter((m) => !m.isShared && m.user_id === currentUser?.id), [moments, currentUser])
+  const ownMoments = useMemo(
+    () => moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id),
+    [moments, currentUser?.id],
+  )
 
   const stats = useMemo(() => ({
     total: ownMoments.length,
@@ -235,105 +304,154 @@ export default function Profile() {
     people: people.length,
   }), [ownMoments, people])
 
+  async function handleAddToCapsule(slotIndex, moment) {
+    addToCapsule(slotIndex, moment)
+
+    try {
+      await saveCapsuleSlot(currentUser.id, slotIndex, moment.id)
+    } catch (error) {
+      console.error('[Capsule] save error:', error)
+    }
+  }
+
+  async function handleRemoveFromCapsule(slotIndex) {
+    removeFromCapsule(slotIndex)
+
+    try {
+      await deleteCapsuleSlot(currentUser.id, slotIndex)
+    } catch (error) {
+      console.error('[Capsule] delete error:', error)
+    }
+  }
+
+  const name = currentUser?.name || 'Пользователь'
+  const since = sinceLabel(currentUser?.created_at)
+
   return (
-    <div className="flex flex-col h-full animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
-      {/* Topbar */}
-      <div
-        className="px-4 pb-3 pt-topbar"
-      >
-        <h2 className="font-serif" style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}>Профиль</h2>
+    <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
+      <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
+        <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
+          Профиль
+        </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-28 flex flex-col gap-4">
-        {/* Hero card: avatar + name + stats */}
-        <div
-          style={{
-            backgroundColor: 'var(--card)',
-            borderRadius: 20,
-            padding: '18px 16px',
-            boxShadow: '0 2px 12px rgba(80,50,30,0.10)',
-          }}
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
+        <section
+          className="surface-card rounded-[24px]"
+          style={{ padding: 20, marginBottom: 12 }}
         >
-          <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
+          <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center rounded-full font-serif flex-shrink-0"
-              style={{ width: 56, height: 56, backgroundColor: 'var(--accent)', color: '#fff', fontSize: 22, fontWeight: 300, overflow: 'hidden', border: '2.5px solid rgba(255,255,255,0.7)' }}
+              className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
+              style={{
+                width: 64,
+                height: 64,
+                background: currentUser?.photo_url ? 'transparent' : 'linear-gradient(160deg, #854E2A 0%, #D98B52 58%, #F0C88E 100%)',
+                border: '3px solid rgba(255,255,255,0.8)',
+                color: '#fff',
+                fontSize: 24,
+                fontWeight: 700,
+              }}
             >
               {currentUser?.photo_url ? (
                 <img
                   src={currentUser.photo_url}
                   alt={name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(e) => { e.currentTarget.style.display = 'none' }}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
                 />
               ) : (
                 name[0]?.toUpperCase() ?? 'M'
               )}
             </div>
-            <div>
-              <p className="font-serif" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>{name}</p>
+
+            <div className="min-w-0">
+              <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, margin: 0 }}>
+                {name}
+              </p>
               {since && (
-                <p className="font-sans" style={{ fontSize: 12, color: 'var(--mid)', marginTop: 3 }}>с memi с {since}</p>
+                <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
+                  с memi с {since}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Stats inside hero card */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2" style={{ marginTop: 18 }}>
             {[
-              { label: plural.момент(stats.total),   value: stats.total },
-              { label: plural.месяц(stats.months),   value: stats.months },
-              { label: plural.человек(stats.people), value: stats.people },
-            ].map((s) => (
+              { value: stats.total, label: plural.момент(stats.total) },
+              { value: stats.months, label: plural.месяц(stats.months) },
+              { value: stats.people, label: plural.человек(stats.people) },
+            ].map((item) => (
               <div
-                key={s.label}
-                className="flex flex-col items-center py-3 rounded-xl"
-                style={{ backgroundColor: 'var(--base)' }}
+                key={item.label}
+                className="flex flex-col items-center rounded-[14px]"
+                style={{ backgroundColor: 'var(--base)', padding: '12px 8px' }}
               >
-                <span
-                  className="font-serif"
-                  style={{ fontSize: 28, color: 'var(--accent)', fontWeight: 700, lineHeight: 1.1 }}
-                >
-                  {s.value}
+                <span className="font-serif" style={{ color: 'var(--accent)', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>
+                  {item.value}
                 </span>
-                <span className="font-sans" style={{ fontSize: 10, color: 'var(--mid)', marginTop: 3 }}>{s.label}</span>
+                <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 4 }}>
+                  {item.label}
+                </span>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Capsule */}
-        <div>
-          <p className="font-sans font-medium mb-3" style={{ fontSize: 14, color: 'var(--text)' }}>
-            Капсула · <span className="font-sans" style={{ color: 'var(--mid)', fontWeight: 400 }}>моменты на всю жизнь</span>
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {capsule.map((slot, i) => (
-              <CapsuleSlot
-                key={i}
+          <button
+            type="button"
+            onClick={() => navigate('/people')}
+            className="font-sans transition-opacity active:opacity-60"
+            style={{
+              marginTop: 14,
+              border: 'none',
+              background: 'none',
+              color: 'var(--accent)',
+              fontSize: 14,
+              fontWeight: 600,
+              padding: 0,
+            }}
+          >
+            Мои люди
+          </button>
+        </section>
+
+        <section>
+          <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
+            <span className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
+              Капсула
+            </span>
+            <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
+              · моменты на всю жизнь
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {capsule.map((slot, index) => (
+              <CapsuleTile
+                key={index}
                 slot={slot}
-                index={i}
-                onEmpty={() => setPickSlot(i)}
-                onFilled={() => handleRemoveFromCapsule(i)}
+                index={index}
+                onEmpty={() => setPickSlot(index)}
+                onFilled={() => handleRemoveFromCapsule(index)}
               />
             ))}
           </div>
-        </div>
-
+        </section>
       </div>
 
       <BottomNav active="profile" />
 
-      {/* Шит выбора момента для капсулы */}
       {pickSlot !== null && (
         <PickMomentSheet
           onClose={() => setPickSlot(null)}
-          onPick={(m) => handleAddToCapsule(pickSlot, m)}
+          onPick={(moment) => handleAddToCapsule(pickSlot, moment)}
           onCreateNew={() => setAddMomentSlot(pickSlot)}
         />
       )}
 
-      {/* Оверлей создания нового момента прямо в капсулу */}
       {addMomentSlot !== null && (
         <AddMoment
           onClose={() => setAddMomentSlot(null)}

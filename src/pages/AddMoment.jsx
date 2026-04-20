@@ -11,7 +11,7 @@ const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#
 
 function SectionLabel({ children }) {
   return (
-    <p className="font-sans uppercase" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--soft)', marginBottom: 10 }}>
+    <p className="font-sans uppercase" style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: 'var(--soft)', marginBottom: 12 }}>
       {children}
     </p>
   )
@@ -21,9 +21,9 @@ function FormCard({ children, style = {} }) {
   return (
     <div style={{
       backgroundColor: 'var(--card)',
-      borderRadius: 16,
-      padding: '14px 16px',
-      boxShadow: '0 2px 12px rgba(80,50,30,0.08)',
+      borderRadius: 18,
+      padding: '16px',
+      boxShadow: 'var(--shadow-card)',
       ...style,
     }}>
       {children}
@@ -243,15 +243,15 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4 pt-topbar">
+      <div className="flex items-center justify-between px-4 pt-topbar" style={{ borderBottom: '1px solid var(--divider)', paddingBottom: 12 }}>
         <button
           onClick={onClose}
           className="font-sans transition-opacity active:opacity-60"
-          style={{ color: 'var(--mid)', fontSize: 15, background: 'none', border: 'none' }}
+          style={{ color: 'var(--mid)', fontSize: 15, fontWeight: 500, background: 'none', border: 'none' }}
         >
           Отмена
         </button>
-        <h2 className="font-serif" style={{ fontSize: 20, color: 'var(--text)', fontWeight: 400 }}>
+        <h2 className="font-serif" style={{ fontSize: 20, color: 'var(--text)', fontWeight: 700 }}>
           Новый момент
         </h2>
         <button
@@ -267,10 +267,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-5">
-        {error && (
-          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
-        )}
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-10" style={{ paddingTop: 20 }}>
+        <div className="flex flex-col gap-6">
+          {error && (
+            <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
+          )}
 
         {/* Photo */}
         <div>
@@ -279,16 +280,17 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             onClick={() => photoRef.current?.click()}
             className="w-full transition-opacity active:opacity-70"
             style={{
-              height: photoPreview ? 200 : 90,
-              borderRadius: 16,
-              border: photoPreview ? 'none' : '1.5px dashed rgba(201,122,58,0.5)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--card)',
+              aspectRatio: '16 / 9',
+              minHeight: photoPreview ? undefined : 180,
+              borderRadius: 20,
+              border: photoPreview ? 'none' : '2px dashed var(--accent-light)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--card-alt)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               position: 'relative',
-              boxShadow: photoPreview ? 'none' : '0 2px 12px rgba(80,50,30,0.08)',
+              boxShadow: photoPreview ? 'none' : 'var(--shadow-card)',
             }}
           >
             {photoPreview ? (
@@ -314,7 +316,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             className="w-full font-serif outline-none bg-transparent"
             style={{
               fontSize: 22, color: 'var(--text)',
-              borderBottom: '1px solid rgba(180,150,120,0.2)',
+              borderBottom: '1.5px solid var(--divider)',
               paddingBottom: 10, marginBottom: 16, fontWeight: 300,
             }}
           />
@@ -340,10 +342,10 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                 onClick={() => setMood(mood === m ? '' : m)}
                 className="transition-transform active:scale-90"
                 style={{
-                  width: 42, height: 42, borderRadius: 12, fontSize: 20,
-                  backgroundColor: mood === m ? 'var(--card)' : 'transparent',
-                  border: mood === m ? '2px solid var(--accent)' : '2px solid rgba(180,150,120,0.2)',
-                  boxShadow: mood === m ? '0 2px 8px rgba(80,50,30,0.12)' : 'none',
+                  width: 46, height: 46, borderRadius: 14, fontSize: 24,
+                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--card)',
+                  border: 'none',
+                  boxShadow: mood === m ? '0 0 0 1.5px var(--accent), var(--shadow-card)' : 'var(--shadow-card)',
                 }}
               >
                 {m}
@@ -363,7 +365,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             className="w-full font-sans outline-none bg-transparent"
             style={{
               fontSize: 15, color: 'var(--text)',
-              borderBottom: '1px solid rgba(180,150,120,0.2)',
+              borderBottom: '1.5px solid var(--divider)',
               paddingBottom: 10, marginBottom: 16,
             }}
           />
@@ -571,15 +573,16 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                 className="font-sans font-medium transition-opacity active:opacity-70"
                 style={{
                   padding: '9px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
-                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
-                  color: visibility === value ? '#fff' : 'var(--mid)',
-                  boxShadow: visibility === value ? 'none' : '0 2px 8px rgba(80,50,30,0.08)',
+                backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
+                color: visibility === value ? '#fff' : 'var(--mid)',
+                boxShadow: visibility === value ? 'none' : 'var(--shadow-card)',
                 }}
               >
                 {label}
               </button>
             ))}
           </div>
+        </div>
         </div>
       </div>
 
