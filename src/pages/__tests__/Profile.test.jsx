@@ -136,14 +136,13 @@ describe('Profile', () => {
     expect(screen.queryByText('Мои люди')).not.toBeInTheDocument()
   })
 
-  it('shows the public profile settings block', () => {
+  it('shows the public profile entry card on the main screen', () => {
     renderProfile()
-    expect(screen.getByText('Публичный профиль')).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: 'Показывать профиль другим' })).toBeInTheDocument()
-    expect(screen.getByText('Редактировать')).toBeInTheDocument()
+    expect(screen.getByTestId('profile-public-entry')).toBeInTheDocument()
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 
-  it('swipes to the public profile preview and shows only public moments', () => {
+  it('opens the public profile preview and shows only public moments', () => {
     useAppStore.setState({
       currentUser: {
         id: 'u1',
@@ -161,14 +160,11 @@ describe('Profile', () => {
 
     renderProfile()
 
-    const swipeContainer = screen.getByTestId('profile-swipe-container')
-    fireEvent.touchStart(swipeContainer, { touches: [{ clientX: 220, clientY: 100 }] })
-    fireEvent.touchMove(swipeContainer, { touches: [{ clientX: 140, clientY: 104 }] })
-    fireEvent.touchEnd(swipeContainer)
+    fireEvent.click(screen.getByTestId('profile-public-entry'))
 
     const previewScreen = screen.getByTestId('profile-preview-screen')
-    expect(previewScreen).toHaveAttribute('aria-hidden', 'false')
-    expect(screen.getByTestId('profile-swipe-track')).toHaveStyle({ transform: 'translateX(-50%)' })
+    expect(previewScreen).toBeInTheDocument()
+    expect(screen.getByRole('switch')).toBeInTheDocument()
 
     const preview = within(previewScreen)
     expect(preview.getByText('Short bio')).toBeInTheDocument()
@@ -186,7 +182,8 @@ describe('Profile', () => {
     })
 
     renderProfile()
-    fireEvent.click(screen.getByText('Редактировать'))
+    fireEvent.click(screen.getByTestId('profile-public-entry'))
+    fireEvent.click(screen.getByTestId('public-profile-edit-button'))
 
     expect(screen.getByText('Open Moment')).toBeInTheDocument()
     expect(screen.queryByText('Private Moment')).not.toBeInTheDocument()

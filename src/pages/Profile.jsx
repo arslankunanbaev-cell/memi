@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
@@ -316,6 +316,62 @@ function PublicProfileToggle({ checked, disabled, onChange, label }) {
   )
 }
 
+function ChevronRightIcon({ color = 'var(--soft)' }) {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 2l6 6-6 6"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function BackArrowIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="10" height="16" viewBox="0 0 10 16" fill="none" aria-hidden="true">
+      <path
+        d="M8 2L2 8l6 6"
+        stroke={color}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function PublicProfileIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 12a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 18.5a7 7 0 0 1 14 0"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.5 7.5h2.5M19.75 6.25v2.5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   const [enabled, setEnabled] = useState(currentUser?.public_profile_enabled === true)
   const [bio, setBio] = useState(currentUser?.bio ?? '')
@@ -544,25 +600,73 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   )
 }
 
-const SWIPE_THRESHOLD = 60
+function PublicProfileEntryCard({ onOpen }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="surface-card flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-60"
+      style={{
+        padding: '16px 18px',
+        marginBottom: 18,
+        backgroundColor: 'var(--moment-surface)',
+        border: 'none',
+      }}
+      data-testid="profile-public-entry"
+    >
+      <div
+        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
+        style={{
+          width: 40,
+          height: 40,
+          backgroundColor: 'var(--base)',
+          color: 'var(--accent)',
+        }}
+      >
+        <PublicProfileIcon />
+      </div>
 
-function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
+      <div className="min-w-0 flex-1">
+        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
+          Публичный профиль
+        </p>
+        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+          Что видят другие
+        </p>
+      </div>
+
+      <div className="flex items-center justify-center flex-shrink-0" style={{ color: 'var(--soft)' }}>
+        <ChevronRightIcon />
+      </div>
+    </button>
+  )
+}
+
+function PublicPreviewSettingsCard({ checked, disabled, onChange, onEdit, error }) {
   return (
     <section
       className="surface-card rounded-[24px]"
-      style={{ padding: 20, backgroundColor: 'var(--moment-surface)' }}
+      style={{ padding: 16, backgroundColor: 'var(--moment-surface)' }}
     >
-      <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
-        Публичный профиль
-      </p>
+      <div className="flex items-center gap-3">
+        <div
+          className="flex items-center justify-center rounded-[14px] flex-shrink-0"
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor: 'var(--base)',
+            color: 'var(--accent)',
+          }}
+        >
+          <PublicProfileIcon />
+        </div>
 
-      <div className="flex items-start justify-between gap-3" style={{ marginTop: 14 }}>
-        <div className="min-w-0">
-          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
+        <div className="min-w-0 flex-1">
+          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
             Показывать профиль другим
           </p>
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
-            Другие смогут видеть ваши открытые воспоминания
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+            Профиль виден всем
           </p>
         </div>
 
@@ -570,7 +674,7 @@ function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
           checked={checked}
           disabled={disabled}
           onChange={onChange}
-          label="Показывать профиль другим"
+          label={'\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u0434\u0440\u0443\u0433\u0438\u043c'}
         />
       </div>
 
@@ -579,6 +683,24 @@ function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
           {error}
         </p>
       )}
+
+      <button
+        type="button"
+        onClick={onEdit}
+        data-testid="public-profile-edit-button"
+        className="font-sans transition-opacity active:opacity-60"
+        style={{
+          marginTop: 12,
+          padding: 0,
+          border: 'none',
+          background: 'none',
+          color: 'var(--accent)',
+          fontSize: 14,
+          fontWeight: 600,
+        }}
+      >
+        Редактировать
+      </button>
     </section>
   )
 }
@@ -599,9 +721,6 @@ export default function Profile() {
   const [publicProfileError, setPublicProfileError] = useState(null)
   const [activeScreen, setActiveScreen] = useState(0)
 
-  const touchStartRef = useRef(null)
-  const touchCurrentRef = useRef(null)
-
   const ownMoments = useMemo(
     () => moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id),
     [moments, currentUser?.id],
@@ -617,60 +736,6 @@ export default function Profile() {
     people: people.length,
   }), [ownMoments, people])
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
-  const publicProfileBio = currentUser?.bio?.trim() ?? ''
-  const featuredPublicMoment = publicMoments.find((moment) => moment.id === currentUser?.featured_moment_id) ?? null
-
-  function resetTouch() {
-    touchStartRef.current = null
-    touchCurrentRef.current = null
-  }
-
-  function goToScreen(nextScreen) {
-    setActiveScreen(Math.max(0, Math.min(1, nextScreen)))
-  }
-
-  function handleTouchStart(event) {
-    const touch = event.touches[0]
-    if (!touch) return
-
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
-    touchCurrentRef.current = { x: touch.clientX, y: touch.clientY }
-  }
-
-  function handleTouchMove(event) {
-    if (!touchStartRef.current) return
-
-    const touch = event.touches[0]
-    if (!touch) return
-
-    touchCurrentRef.current = { x: touch.clientX, y: touch.clientY }
-  }
-
-  function handleTouchEnd() {
-    const start = touchStartRef.current
-    const current = touchCurrentRef.current
-
-    resetTouch()
-
-    if (!start || !current) return
-
-    const deltaX = current.x - start.x
-    const deltaY = current.y - start.y
-
-    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) <= Math.abs(deltaY)) return
-
-    goToScreen(deltaX < 0 ? 1 : 0)
-  }
-
-  function handleSwipeKeyDown(event) {
-    if (event.key === 'ArrowLeft') {
-      goToScreen(0)
-    }
-
-    if (event.key === 'ArrowRight') {
-      goToScreen(1)
-    }
-  }
 
   async function handleAddToCapsule(slotIndex, moment) {
     addToCapsule(slotIndex, moment)
@@ -705,44 +770,23 @@ export default function Profile() {
       setCurrentUser(updated)
     } catch (error) {
       console.error('[PublicProfile] toggle error:', error)
-      setPublicProfileError('Не удалось обновить настройки.')
+      setPublicProfileError('\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438.')
     } finally {
       setSavingPublicVisibility(false)
     }
   }
 
-  function handlePreviewFallbackClick(event) {
-    const target = event.target
-    if (target instanceof HTMLElement && target.closest('button')) return
-
-    goToScreen(1)
-  }
-
-  const name = currentUser?.name || 'Пользователь'
+  const name = currentUser?.name || '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c'
   const since = sinceLabel(currentUser?.created_at)
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
-      <div
-        className="flex-1 overflow-hidden outline-none"
-        style={{ touchAction: 'pan-y' }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={resetTouch}
-        onKeyDown={handleSwipeKeyDown}
-        tabIndex={0}
-        data-testid="profile-swipe-container"
-      >
-        <div
-          className="flex h-full w-[200%] transition-transform duration-200 ease-out"
-          style={{ transform: `translateX(-${activeScreen * 50}%)` }}
-          data-testid="profile-swipe-track"
-        >
+      <div className="flex-1 overflow-hidden">
+        {activeScreen === 0 ? (
           <div
-            className="flex w-1/2 min-w-0 flex-col overflow-hidden"
+            className="flex h-full min-w-0 flex-col overflow-hidden"
             data-testid="profile-main-screen"
-            aria-hidden={activeScreen !== 0}
+            aria-hidden={false}
           >
             <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
               <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
@@ -816,86 +860,7 @@ export default function Profile() {
                 </div>
               </section>
 
-              <section
-                className="surface-card rounded-[24px]"
-                style={{ padding: 20, marginBottom: 18, backgroundColor: 'var(--moment-surface)' }}
-                onClick={handlePreviewFallbackClick}
-              >
-                <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
-                  Публичный профиль
-                </p>
-
-                <div className="flex items-start justify-between gap-3" style={{ marginTop: 14 }}>
-                  <div className="min-w-0">
-                    <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
-                      Показывать профиль другим
-                    </p>
-                    <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
-                      Другие смогут видеть ваши открытые воспоминания
-                    </p>
-                  </div>
-
-                  <PublicProfileToggle
-                    checked={publicProfileEnabled}
-                    disabled={savingPublicVisibility}
-                    onChange={handleTogglePublicProfile}
-                    label="Показывать профиль другим"
-                  />
-                </div>
-
-                {(publicProfileBio || featuredPublicMoment) && (
-                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--divider)' }}>
-                    {publicProfileBio && (
-                      <p
-                        className="font-sans"
-                        style={{
-                          color: 'var(--mid)',
-                          fontSize: 13,
-                          lineHeight: 1.5,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {publicProfileBio}
-                      </p>
-                    )}
-
-                    {featuredPublicMoment && (
-                      <p className="font-sans" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, marginTop: publicProfileBio ? 8 : 0 }}>
-                        Главное воспоминание: {featuredPublicMoment.title || 'Без названия'}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {publicProfileError && (
-                  <p className="font-sans" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
-                    {publicProfileError}
-                  </p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPublicProfileError(null)
-                    setShowPublicProfileSheet(true)
-                  }}
-                  className="font-sans transition-opacity active:opacity-60"
-                  style={{
-                    marginTop: 14,
-                    border: 'none',
-                    background: 'none',
-                    color: 'var(--accent)',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    padding: 0,
-                  }}
-                >
-                  Редактировать
-                </button>
-              </section>
+              <PublicProfileEntryCard onOpen={() => setActiveScreen(1)} />
 
               <section>
                 <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
@@ -921,44 +886,65 @@ export default function Profile() {
               </section>
             </div>
           </div>
-
+        ) : (
           <div
-            className="flex w-1/2 min-w-0 flex-col overflow-hidden"
+            className="flex h-full min-w-0 flex-col overflow-hidden"
             data-testid="profile-preview-screen"
-            aria-hidden={activeScreen !== 1}
+            aria-hidden={false}
           >
-            {activeScreen === 1 && (
-              <>
-                <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
-                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
-                    Публичный профиль
-                  </span>
-                </div>
-
-                <PublicProfileContent
-                  profileUser={currentUser}
-                  moments={publicMoments}
-                  publicMomentsTotal={publicMoments.length}
-                  displayName={name}
-                  statusStat={{
-                    value: publicProfileEnabled ? '✓' : '○',
-                    label: publicProfileEnabled ? 'открыт' : 'скрыт',
-                    valueColor: publicProfileEnabled ? 'var(--deep)' : 'var(--soft)',
+            <div className="px-4 pt-topbar" style={{ paddingBottom: 8 }}>
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveScreen(0)}
+                  className="flex items-center gap-2 transition-opacity active:opacity-60"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: '8px 0',
+                    color: 'var(--mid)',
+                    fontSize: 15,
+                    fontWeight: 500,
                   }}
-                  topContent={(
-                    <PublicPreviewSettingsCard
-                      checked={publicProfileEnabled}
-                      disabled={savingPublicVisibility}
-                      onChange={handleTogglePublicProfile}
-                      error={publicProfileError}
-                    />
-                  )}
-                  contentPaddingBottom={108}
+                >
+                  <BackArrowIcon />
+                  Назад
+                </button>
+
+                <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+                  Публичный профиль
+                </span>
+
+                <div style={{ width: 60 }} />
+              </div>
+            </div>
+
+            <PublicProfileContent
+              profileUser={currentUser}
+              moments={publicMoments}
+              publicMomentsTotal={publicMoments.length}
+              displayName={name}
+              statusStat={{
+                value: publicProfileEnabled ? '✓' : '○',
+                label: publicProfileEnabled ? 'открыт' : 'скрыт',
+                valueColor: publicProfileEnabled ? 'var(--deep)' : 'var(--soft)',
+              }}
+              topContent={(
+                <PublicPreviewSettingsCard
+                  checked={publicProfileEnabled}
+                  disabled={savingPublicVisibility}
+                  onChange={handleTogglePublicProfile}
+                  onEdit={() => {
+                    setPublicProfileError(null)
+                    setShowPublicProfileSheet(true)
+                  }}
+                  error={publicProfileError}
                 />
-              </>
-            )}
+              )}
+              contentPaddingBottom={108}
+            />
           </div>
-        </div>
+        )}
       </div>
 
       <BottomNav active="profile" />
