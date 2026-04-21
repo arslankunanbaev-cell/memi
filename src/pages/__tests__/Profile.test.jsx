@@ -15,6 +15,14 @@ vi.mock('../../lib/api.js', () => ({
   createPerson: vi.fn(),
   saveCapsuleSlot: vi.fn().mockResolvedValue({}),
   deleteCapsuleSlot: vi.fn().mockResolvedValue({}),
+  updatePublicProfile: vi.fn().mockImplementation(async (_userId, payload) => ({
+    id: 'u1',
+    name: 'Arslan',
+    created_at: '2024-01-15T00:00:00Z',
+    public_profile_enabled: payload.publicProfileEnabled ?? false,
+    bio: payload.bio?.trim() || null,
+    featured_moment_id: payload.featuredMomentId ?? null,
+  })),
 }))
 
 vi.mock('../AddMoment.jsx', () => ({
@@ -51,18 +59,18 @@ describe('Profile', () => {
     })
   })
 
-  it('показывает имя пользователя из currentUser', () => {
+  it('shows the current user name', () => {
     renderProfile()
     expect(screen.getByText('Arslan')).toBeInTheDocument()
   })
 
-  it('показывает "Пользователь" если имя не задано', () => {
+  it('falls back to the default user name', () => {
     useAppStore.setState({ currentUser: { id: 'u1', name: '' } })
     renderProfile()
     expect(screen.getByText('Пользователь')).toBeInTheDocument()
   })
 
-  it('показывает статистику моментов', () => {
+  it('shows moment stats', () => {
     useAppStore.setState({
       currentUser: { id: 'u1', name: 'Test' },
       moments: [
@@ -76,24 +84,24 @@ describe('Profile', () => {
     expect(momentsStat).toHaveTextContent('2')
   })
 
-  it('рендерит 4 слота капсулы', () => {
+  it('renders 4 capsule slots', () => {
     renderProfile()
     expect(screen.getAllByText('Добавить')).toHaveLength(4)
   })
 
-  it('открывает PickMomentSheet при нажатии на пустой слот', () => {
+  it('opens PickMomentSheet on empty slot click', () => {
     renderProfile()
     fireEvent.click(screen.getAllByText('Добавить')[0])
     expect(screen.getByText('В капсулу')).toBeInTheDocument()
   })
 
-  it('в PickMomentSheet есть кнопка "Создать момент"', () => {
+  it('shows the create moment action in PickMomentSheet', () => {
     renderProfile()
     fireEvent.click(screen.getAllByText('Добавить')[0])
     expect(screen.getByText('Создать момент')).toBeInTheDocument()
   })
 
-  it('нажатие "Создать момент" открывает AddMoment оверлей', async () => {
+  it('opens AddMoment overlay from PickMomentSheet', async () => {
     renderProfile()
     fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
@@ -103,7 +111,7 @@ describe('Profile', () => {
     })
   })
 
-  it('после сохранения момент попадает в капсулу', async () => {
+  it('puts the saved moment into capsule', async () => {
     renderProfile()
     fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
@@ -117,7 +125,7 @@ describe('Profile', () => {
     })
   })
 
-  it('после сохранения AddMoment оверлей закрывается', async () => {
+  it('closes AddMoment overlay after save', async () => {
     renderProfile()
     fireEvent.click(screen.getAllByText('Добавить')[0])
     fireEvent.click(screen.getByText('Создать момент'))
@@ -129,9 +137,41 @@ describe('Profile', () => {
     })
   })
 
-  it('ссылка "Мои люди" ведёт на /people', () => {
+  it('navigates to /people from "Мои люди"', () => {
     renderProfile()
     fireEvent.click(screen.getByText('Мои люди'))
     expect(mockNavigate).toHaveBeenCalledWith('/people')
+  })
+
+  it('shows the public profile settings block', () => {
+    renderProfile()
+    expect(screen.getByText('Публичный профиль')).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: 'Показывать профиль другим' })).toBeInTheDocument()
+    expect(screen.getByText('Редактировать')).toBeInTheDocument()
+  })
+
+  it('shows only public moments in the public profile editor and saves bio', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'u1', name: 'Arslan', created_at: '2024-01-15T00:00:00Z' },
+      moments: [
+        { id: 'm-public', title: 'Open Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'public' },
+        { id: 'm-private', title: 'Private Moment', created_at: '2024-02-02', user_id: 'u1', visibility: 'private' },
+      ],
+    })
+
+    renderProfile()
+    fireEvent.click(screen.getByText('Редактировать'))
+
+    expect(screen.getByText('Open Moment')).toBeInTheDocument()
+    expect(screen.queryByText('Private Moment')).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Пара слов о себе'), {
+      target: { value: 'Short bio' },
+    })
+    fireEvent.click(screen.getByText('Сохранить'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Short bio')).toBeInTheDocument()
+    })
   })
 })

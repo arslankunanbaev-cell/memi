@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAppStore } from '../store/useAppStore'
+import BottomSheet from '../components/BottomSheet'
 import {
-  getUserMomentsStats,
   getUserProfile,
   linkPersonToUser,
   removeFriend,
   sendFriendRequest,
 } from '../lib/api'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
-import BottomSheet from '../components/BottomSheet'
+import { useAppStore } from '../store/useAppStore'
 
 function LinkIcon({ color = 'var(--soft)' }) {
   return (
@@ -189,6 +188,68 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
+function FeaturedMomentCard({ moment }) {
+  return (
+    <div
+      style={{
+        backgroundColor: 'var(--moment-surface)',
+        borderRadius: 20,
+        overflow: 'hidden',
+        boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          aspectRatio: '4 / 3',
+          background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
+        }}
+      >
+        {moment.photo_url && (
+          <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        )}
+
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.55) 0%, transparent 58%)' }} />
+
+        <div style={{ position: 'absolute', left: 14, bottom: 14 }}>
+          <div
+            className="font-sans"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.9)',
+              color: 'var(--text)',
+              fontSize: 12,
+              fontWeight: 600,
+              padding: '5px 11px',
+            }}
+          >
+            Главное воспоминание
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: '14px 16px 16px' }}>
+        <p
+          className="font-sans"
+          style={{
+            margin: 0,
+            color: 'var(--text)',
+            fontSize: 15,
+            fontWeight: 600,
+          }}
+        >
+          {moment.title || 'Без названия'}
+        </p>
+        <p className="font-sans" style={{ marginTop: 4, fontSize: 12, color: 'var(--mid)' }}>
+          {sinceLabel(moment.created_at)}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -200,7 +261,7 @@ export default function PublicProfile() {
 
   const [profileUser, setProfileUser] = useState(null)
   const [moments, setMoments] = useState([])
-  const [momentStats, setMomentStats] = useState({ total: null, lastCreatedAt: null })
+  const [publicMomentsTotal, setPublicMomentsTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -220,18 +281,15 @@ export default function PublicProfile() {
       setLoading(true)
 
       try {
-        const [{ user, moments: publicMoments }, stats] = await Promise.all([
-          getUserProfile(userId),
-          getUserMomentsStats(userId).catch(() => ({ total: null, lastCreatedAt: null })),
-        ])
+        const { user, moments: publicMoments, total } = await getUserProfile(userId)
 
         setProfileUser(user)
         setMoments(publicMoments)
-        setMomentStats(stats)
+        setPublicMomentsTotal(total ?? 0)
       } catch {
         setProfileUser(null)
         setMoments([])
-        setMomentStats({ total: null, lastCreatedAt: null })
+        setPublicMomentsTotal(0)
       } finally {
         setLoading(false)
       }
@@ -368,7 +426,16 @@ export default function PublicProfile() {
 
   const name = friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'
   const since = sinceLabel(profileUser.created_at)
-  const totalMoments = momentStats.total ?? 0
+  const profileEnabled = profileUser.public_profile_enabled === true
+  const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
+  const featuredMoment = profileEnabled
+    ? moments.find((moment) => moment.id === profileUser.featured_moment_id) ?? null
+    : null
+  const listMoments = featuredMoment
+    ? moments.filter((moment) => moment.id !== featuredMoment.id)
+    : moments
+  const totalMoments = profileEnabled ? publicMomentsTotal : 0
+  const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
   const friendButtonLabel = isAlreadyFriend
     ? (removing ? '...' : 'Удалить из друзей')
     : (friendSent ? 'Запрос отправлен' : 'Добавить в друзья')
@@ -484,9 +551,18 @@ export default function PublicProfile() {
                 </p>
               )}
 
+              {bio && (
+                <p
+                  className="font-sans"
+                  style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
+                >
+                  {bio}
+                </p>
+              )}
+
               <p
                 className="font-sans"
-                style={{ marginTop: 1, fontSize: 13, color: 'var(--mid)' }}
+                style={{ marginTop: bio ? 8 : 1, fontSize: 13, color: 'var(--mid)' }}
               >
                 {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
               </p>
@@ -568,110 +644,131 @@ export default function PublicProfile() {
           </span>
         </div>
 
-        <div style={{ marginTop: 20 }}>
-          <h2
-            className="font-sans"
-            style={{
-              margin: 0,
-              marginBottom: 12,
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--text)',
-            }}
-          >
-            Моменты пользователя
-          </h2>
-
-          {moments.length === 0 ? (
-            <div
+        {featuredMoment && (
+          <div style={{ marginTop: 20 }}>
+            <h2
+              className="font-sans"
               style={{
-                backgroundColor: 'var(--moment-surface)',
-                borderRadius: 20,
-                padding: '36px 24px',
-                textAlign: 'center',
-                boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                margin: 0,
+                marginBottom: 12,
+                fontSize: 16,
+                fontWeight: 700,
+                color: 'var(--text)',
               }}
             >
-              <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
+              Главное воспоминание
+            </h2>
+
+            <FeaturedMomentCard moment={featuredMoment} />
+          </div>
+        )}
+
+        {showMomentsSection && (
+          <div style={{ marginTop: 20 }}>
+            <h2
+              className="font-sans"
+              style={{
+                margin: 0,
+                marginBottom: 12,
+                fontSize: 16,
+                fontWeight: 700,
+                color: 'var(--text)',
+              }}
+            >
+              Моменты пользователя
+            </h2>
+
+            {!profileEnabled || listMoments.length === 0 ? (
               <div
-                className="font-sans"
                 style={{
-                  fontSize: 15,
-                  fontWeight: 600,
-                  color: 'var(--text)',
-                  marginBottom: 6,
+                  backgroundColor: 'var(--moment-surface)',
+                  borderRadius: 20,
+                  padding: '36px 24px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
                 }}
               >
-                Воспоминания закрыты
-              </div>
-              <div
-                className="font-sans"
-                style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
-              >
-                Пока он не открыл воспоминания для всех
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {moments.map((moment) => (
+                <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
                 <div
-                  key={moment.id}
-                  className="flex items-center gap-3"
+                  className="font-sans"
                   style={{
-                    backgroundColor: 'var(--card)',
-                    borderRadius: 18,
-                    padding: '12px 13px',
-                    boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: 'var(--text)',
+                    marginBottom: 6,
                   }}
                 >
+                  {!profileEnabled ? 'Профиль закрыт' : 'Воспоминания закрыты'}
+                </div>
+                <div
+                  className="font-sans"
+                  style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
+                >
+                  {!profileEnabled ? 'Пока пользователь не показывает публичный профиль.' : 'Пока он не открыл воспоминания для всех'}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {listMoments.map((moment) => (
                   <div
+                    key={moment.id}
+                    className="flex items-center gap-3"
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 12,
-                      overflow: 'hidden',
-                      flexShrink: 0,
-                      background: moment.photo_url
-                        ? 'none'
-                        : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+                      backgroundColor: 'var(--card)',
+                      borderRadius: 18,
+                      padding: '12px 13px',
+                      boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
                     }}
                   >
-                    {moment.photo_url ? (
-                      <img
-                        src={moment.photo_url}
-                        alt={moment.title}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p
-                      className="font-sans"
+                    <div
                       style={{
-                        margin: 0,
-                        fontSize: 15,
-                        fontWeight: 600,
-                        color: 'var(--text)',
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        background: moment.photo_url
+                          ? 'none'
+                          : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
                       }}
                     >
-                      {moment.title || 'Без названия'}
-                    </p>
-                    <p
-                      className="font-sans"
-                      style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
-                    >
-                      {since}
-                    </p>
+                      {moment.photo_url ? (
+                        <img
+                          src={moment.photo_url}
+                          alt={moment.title}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p
+                        className="font-sans"
+                        style={{
+                          margin: 0,
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color: 'var(--text)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {moment.title || 'Без названия'}
+                      </p>
+                      <p
+                        className="font-sans"
+                        style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
+                      >
+                        {sinceLabel(moment.created_at)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showLinkSheet && profileUser && (

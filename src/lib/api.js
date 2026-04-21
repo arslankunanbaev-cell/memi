@@ -82,6 +82,25 @@ export async function saveUser(tgUser) {
   return { user: newUser, isNew: true }
 }
 
+export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId } = {}) {
+  const sb = assertSupabase()
+  const payload = {}
+
+  if (publicProfileEnabled !== undefined) payload.public_profile_enabled = Boolean(publicProfileEnabled)
+  if (bio !== undefined) payload.bio = bio?.trim() ? bio.trim() : null
+  if (featuredMomentId !== undefined) payload.featured_moment_id = featuredMomentId || null
+
+  const { data, error } = await sb
+    .from('users')
+    .update(payload)
+    .eq('id', userId)
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return data
+}
+
 // Cross-user lookup by public_code via SECURITY DEFINER RPC (never exposes telegram_id).
 export async function getUserByPublicCode(publicCode) {
   const sb = assertSupabase()
