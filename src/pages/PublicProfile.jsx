@@ -250,6 +250,301 @@ function FeaturedMomentCard({ moment }) {
   )
 }
 
+export function PublicProfileContent({
+  profileUser,
+  moments = [],
+  publicMomentsTotal,
+  displayName,
+  people = [],
+  linkedPerson = null,
+  onLinkedPersonPress,
+  onLinkPersonPress,
+  actionButton = null,
+  topContent = null,
+  contentPaddingBottom = 40,
+}) {
+  if (!profileUser) return null
+
+  const name = displayName || linkedPerson?.name || profileUser.name || 'Пользователь'
+  const since = sinceLabel(profileUser.created_at)
+  const profileEnabled = profileUser.public_profile_enabled === true
+  const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
+  const featuredMoment = profileEnabled
+    ? moments.find((moment) => moment.id === profileUser.featured_moment_id) ?? null
+    : null
+  const listMoments = featuredMoment
+    ? moments.filter((moment) => moment.id !== featuredMoment.id)
+    : moments
+  const totalMoments = profileEnabled ? (publicMomentsTotal ?? moments.length) : 0
+  const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
+  const showLinkControl = linkedPerson
+    ? people.length > 0 && typeof onLinkedPersonPress === 'function'
+    : people.length > 0 && typeof onLinkPersonPress === 'function'
+
+  return (
+    <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
+      {topContent && <div style={{ marginTop: 20, marginBottom: 12 }}>{topContent}</div>}
+
+      <div
+        style={{
+          marginTop: topContent ? 0 : 20,
+          backgroundColor: 'var(--moment-surface)',
+          borderRadius: 24,
+          padding: '24px 20px',
+          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+        }}
+      >
+        <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
+          <div
+            className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
+            style={{
+              width: 68,
+              height: 68,
+              backgroundColor: profileUser.photo_url ? 'transparent' : 'var(--accent)',
+              color: '#fff',
+              fontSize: 26,
+              fontWeight: 700,
+              border: '3px solid rgba(255,255,255,0.8)',
+            }}
+          >
+            {profileUser.photo_url ? (
+              <img
+                src={profileUser.photo_url}
+                alt={name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
+              />
+            ) : (
+              name[0]?.toUpperCase()
+            )}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <p
+              className="font-sans"
+              style={{
+                margin: 0,
+                fontSize: 20,
+                fontWeight: 700,
+                color: 'var(--text)',
+              }}
+            >
+              {name}
+            </p>
+
+            {since && (
+              <p
+                className="font-sans"
+                style={{ marginTop: 3, fontSize: 13, color: 'var(--mid)' }}
+              >
+                с memi с {since}
+              </p>
+            )}
+
+            {bio && (
+              <p
+                className="font-sans"
+                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
+              >
+                {bio}
+              </p>
+            )}
+
+            <p
+              className="font-sans"
+              style={{ marginTop: bio ? 8 : 1, fontSize: 13, color: 'var(--mid)' }}
+            >
+              {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
+            </p>
+          </div>
+        </div>
+
+        {showLinkControl && (
+          <button
+            type="button"
+            onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
+            className="flex items-center gap-2 transition-opacity active:opacity-60"
+            style={{
+              marginBottom: 16,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: linkedPerson ? 'var(--accent)' : 'var(--soft)',
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
+            <span className="font-sans">
+              {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
+            </span>
+          </button>
+        )}
+
+        {actionButton}
+      </div>
+
+      <div
+        className="flex flex-col items-center justify-center"
+        style={{
+          marginTop: 12,
+          backgroundColor: 'var(--moment-surface)',
+          borderRadius: 18,
+          padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+        }}
+      >
+        <span
+          className="font-serif"
+          style={{
+            fontSize: 36,
+            fontWeight: 700,
+            lineHeight: 1,
+            color: 'var(--accent)',
+          }}
+        >
+          {totalMoments}
+        </span>
+        <span
+          className="font-sans"
+          style={{ marginTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--mid)' }}
+        >
+          открытых моментов
+        </span>
+      </div>
+
+      {featuredMoment && (
+        <div style={{ marginTop: 20 }}>
+          <h2
+            className="font-sans"
+            style={{
+              margin: 0,
+              marginBottom: 12,
+              fontSize: 16,
+              fontWeight: 700,
+              color: 'var(--text)',
+            }}
+          >
+            Главное воспоминание
+          </h2>
+
+          <FeaturedMomentCard moment={featuredMoment} />
+        </div>
+      )}
+
+      {showMomentsSection && (
+        <div style={{ marginTop: 20 }}>
+          <h2
+            className="font-sans"
+            style={{
+              margin: 0,
+              marginBottom: 12,
+              fontSize: 16,
+              fontWeight: 700,
+              color: 'var(--text)',
+            }}
+          >
+            Моменты пользователя
+          </h2>
+
+          {!profileEnabled || listMoments.length === 0 ? (
+            <div
+              style={{
+                backgroundColor: 'var(--moment-surface)',
+                borderRadius: 20,
+                padding: '36px 24px',
+                textAlign: 'center',
+                boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+              }}
+            >
+              <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
+              <div
+                className="font-sans"
+                style={{
+                  fontSize: 15,
+                  fontWeight: 600,
+                  color: 'var(--text)',
+                  marginBottom: 6,
+                }}
+              >
+                {!profileEnabled ? 'Профиль закрыт' : 'Воспоминания закрыты'}
+              </div>
+              <div
+                className="font-sans"
+                style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
+              >
+                {!profileEnabled ? 'Пока пользователь не показывает публичный профиль.' : 'Пока он не открыл воспоминания для всех'}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {listMoments.map((moment) => (
+                <div
+                  key={moment.id}
+                  className="flex items-center gap-3"
+                  style={{
+                    backgroundColor: 'var(--card)',
+                    borderRadius: 18,
+                    padding: '12px 13px',
+                    boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      background: moment.photo_url
+                        ? 'none'
+                        : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+                    }}
+                  >
+                    {moment.photo_url ? (
+                      <img
+                        src={moment.photo_url}
+                        alt={moment.title || 'Момент'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p
+                      className="font-sans"
+                      style={{
+                        margin: 0,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        color: 'var(--text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {moment.title || 'Без названия'}
+                    </p>
+                    <p
+                      className="font-sans"
+                      style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
+                    >
+                      {sinceLabel(moment.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function PublicProfile() {
   const { userId } = useParams()
   const navigate = useNavigate()
@@ -424,18 +719,6 @@ export default function PublicProfile() {
     )
   }
 
-  const name = friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'
-  const since = sinceLabel(profileUser.created_at)
-  const profileEnabled = profileUser.public_profile_enabled === true
-  const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
-  const featuredMoment = profileEnabled
-    ? moments.find((moment) => moment.id === profileUser.featured_moment_id) ?? null
-    : null
-  const listMoments = featuredMoment
-    ? moments.filter((moment) => moment.id !== featuredMoment.id)
-    : moments
-  const totalMoments = profileEnabled ? publicMomentsTotal : 0
-  const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
   const friendButtonLabel = isAlreadyFriend
     ? (removing ? '...' : 'Удалить из друзей')
     : (friendSent ? 'Запрос отправлен' : 'Добавить в друзья')
@@ -492,109 +775,16 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-10">
-        <div
-          style={{
-            marginTop: 20,
-            backgroundColor: 'var(--moment-surface)',
-            borderRadius: 24,
-            padding: '24px 20px',
-            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-          }}
-        >
-          <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
-            <div
-              className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
-              style={{
-                width: 68,
-                height: 68,
-                backgroundColor: profileUser.photo_url ? 'transparent' : 'var(--accent)',
-                color: '#fff',
-                fontSize: 26,
-                fontWeight: 700,
-                border: '3px solid rgba(255,255,255,0.8)',
-              }}
-            >
-              {profileUser.photo_url ? (
-                <img
-                  src={profileUser.photo_url}
-                  alt={name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(event) => {
-                    event.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : (
-                name[0]?.toUpperCase()
-              )}
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <p
-                className="font-sans"
-                style={{
-                  margin: 0,
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: 'var(--text)',
-                }}
-              >
-                {name}
-              </p>
-
-              {since && (
-                <p
-                  className="font-sans"
-                  style={{ marginTop: 3, fontSize: 13, color: 'var(--mid)' }}
-                >
-                  с memi с {since}
-                </p>
-              )}
-
-              {bio && (
-                <p
-                  className="font-sans"
-                  style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
-                >
-                  {bio}
-                </p>
-              )}
-
-              <p
-                className="font-sans"
-                style={{ marginTop: bio ? 8 : 1, fontSize: 13, color: 'var(--mid)' }}
-              >
-                {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
-              </p>
-            </div>
-          </div>
-
-          {people.length > 0 && (
-            <button
-              type="button"
-              onClick={() => (
-                linkedPerson
-                  ? navigate(`/people/${linkedPerson.id}`)
-                  : setShowLinkSheet(true)
-              )}
-              className="flex items-center gap-2 transition-opacity active:opacity-60"
-              style={{
-                marginBottom: 16,
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: linkedPerson ? 'var(--accent)' : 'var(--soft)',
-                fontSize: 14,
-                fontWeight: 500,
-              }}
-            >
-              <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
-              <span className="font-sans">
-                {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
-              </span>
-            </button>
-          )}
-
+      <PublicProfileContent
+        profileUser={profileUser}
+        moments={moments}
+        publicMomentsTotal={publicMomentsTotal}
+        displayName={friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'}
+        people={people}
+        linkedPerson={linkedPerson}
+        onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}
+        onLinkPersonPress={() => setShowLinkSheet(true)}
+        actionButton={(
           <button
             type="button"
             onClick={isAlreadyFriend ? handleRemoveFriend : handleAddFriend}
@@ -612,164 +802,8 @@ export default function PublicProfile() {
           >
             {friendButtonLabel}
           </button>
-        </div>
-
-        <div
-          className="flex flex-col items-center justify-center"
-          style={{
-            marginTop: 12,
-            backgroundColor: 'var(--moment-surface)',
-            borderRadius: 18,
-            padding: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-          }}
-        >
-          <span
-            className="font-serif"
-            style={{
-              fontSize: 36,
-              fontWeight: 700,
-              lineHeight: 1,
-              color: 'var(--accent)',
-            }}
-          >
-            {totalMoments}
-          </span>
-          <span
-            className="font-sans"
-            style={{ marginTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--mid)' }}
-          >
-            открытых моментов
-          </span>
-        </div>
-
-        {featuredMoment && (
-          <div style={{ marginTop: 20 }}>
-            <h2
-              className="font-sans"
-              style={{
-                margin: 0,
-                marginBottom: 12,
-                fontSize: 16,
-                fontWeight: 700,
-                color: 'var(--text)',
-              }}
-            >
-              Главное воспоминание
-            </h2>
-
-            <FeaturedMomentCard moment={featuredMoment} />
-          </div>
         )}
-
-        {showMomentsSection && (
-          <div style={{ marginTop: 20 }}>
-            <h2
-              className="font-sans"
-              style={{
-                margin: 0,
-                marginBottom: 12,
-                fontSize: 16,
-                fontWeight: 700,
-                color: 'var(--text)',
-              }}
-            >
-              Моменты пользователя
-            </h2>
-
-            {!profileEnabled || listMoments.length === 0 ? (
-              <div
-                style={{
-                  backgroundColor: 'var(--moment-surface)',
-                  borderRadius: 20,
-                  padding: '36px 24px',
-                  textAlign: 'center',
-                  boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-                }}
-              >
-                <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
-                <div
-                  className="font-sans"
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: 'var(--text)',
-                    marginBottom: 6,
-                  }}
-                >
-                  {!profileEnabled ? 'Профиль закрыт' : 'Воспоминания закрыты'}
-                </div>
-                <div
-                  className="font-sans"
-                  style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
-                >
-                  {!profileEnabled ? 'Пока пользователь не показывает публичный профиль.' : 'Пока он не открыл воспоминания для всех'}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {listMoments.map((moment) => (
-                  <div
-                    key={moment.id}
-                    className="flex items-center gap-3"
-                    style={{
-                      backgroundColor: 'var(--card)',
-                      borderRadius: 18,
-                      padding: '12px 13px',
-                      boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        background: moment.photo_url
-                          ? 'none'
-                          : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
-                      }}
-                    >
-                      {moment.photo_url ? (
-                        <img
-                          src={moment.photo_url}
-                          alt={moment.title}
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                      ) : null}
-                    </div>
-
-                    <div className="min-w-0">
-                      <p
-                        className="font-sans"
-                        style={{
-                          margin: 0,
-                          fontSize: 15,
-                          fontWeight: 600,
-                          color: 'var(--text)',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {moment.title || 'Без названия'}
-                      </p>
-                      <p
-                        className="font-sans"
-                        style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
-                      >
-                        {sinceLabel(moment.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      />
 
       {showLinkSheet && profileUser && (
         <LinkPersonSheet

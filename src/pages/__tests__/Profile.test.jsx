@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore.js'
 import Profile from '../Profile.jsx'
@@ -141,6 +141,39 @@ describe('Profile', () => {
     expect(screen.getByText('Публичный профиль')).toBeInTheDocument()
     expect(screen.getByRole('switch', { name: 'Показывать профиль другим' })).toBeInTheDocument()
     expect(screen.getByText('Редактировать')).toBeInTheDocument()
+  })
+
+  it('swipes to the public profile preview and shows only public moments', () => {
+    useAppStore.setState({
+      currentUser: {
+        id: 'u1',
+        name: 'Arslan',
+        created_at: '2024-01-15T00:00:00Z',
+        public_profile_enabled: true,
+        bio: 'Short bio',
+        featured_moment_id: 'm-public',
+      },
+      moments: [
+        { id: 'm-public', title: 'Open Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'public' },
+        { id: 'm-private', title: 'Private Moment', created_at: '2024-02-02', user_id: 'u1', visibility: 'private' },
+      ],
+    })
+
+    renderProfile()
+
+    const swipeContainer = screen.getByTestId('profile-swipe-container')
+    fireEvent.touchStart(swipeContainer, { touches: [{ clientX: 220, clientY: 100 }] })
+    fireEvent.touchMove(swipeContainer, { touches: [{ clientX: 140, clientY: 104 }] })
+    fireEvent.touchEnd(swipeContainer)
+
+    const previewScreen = screen.getByTestId('profile-preview-screen')
+    expect(previewScreen).toHaveAttribute('aria-hidden', 'false')
+    expect(screen.getByTestId('profile-swipe-track')).toHaveStyle({ transform: 'translateX(-50%)' })
+
+    const preview = within(previewScreen)
+    expect(preview.getByText('Short bio')).toBeInTheDocument()
+    expect(preview.getByText('Open Moment')).toBeInTheDocument()
+    expect(preview.queryByText('Private Moment')).not.toBeInTheDocument()
   })
 
   it('shows only public moments in the public profile editor and saves bio', async () => {

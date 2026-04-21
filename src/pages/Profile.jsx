@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
-import { MONTHS_GENITIVE, plural } from '../lib/ruPlural'
+import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
+import { PublicProfileContent } from './PublicProfile'
 
 function uniqueMonths(moments) {
   return new Set(
@@ -208,7 +209,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
               Создать момент
             </p>
             <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 1 }}>
-              Новый — сразу в капсулу
+              Новый, сразу в капсулу
             </p>
           </div>
           <span style={{ color: 'var(--soft)', fontSize: 18 }}>›</span>
@@ -231,7 +232,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
 
         {ownMoments.length === 0 && (
           <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, padding: '20px 0 8px' }}>
-            Пока нет моментов — создай первый выше.
+            Пока нет моментов, создай первый выше.
           </p>
         )}
 
@@ -257,7 +258,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
               }}
             >
               {moment.photo_url && (
-                <img src={moment.photo_url} alt={moment.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               )}
             </div>
             <span
@@ -543,6 +544,45 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   )
 }
 
+const SWIPE_THRESHOLD = 60
+
+function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
+  return (
+    <section
+      className="surface-card rounded-[24px]"
+      style={{ padding: 20, backgroundColor: 'var(--moment-surface)' }}
+    >
+      <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
+        Публичный профиль
+      </p>
+
+      <div className="flex items-start justify-between gap-3" style={{ marginTop: 14 }}>
+        <div className="min-w-0">
+          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
+            Показывать профиль другим
+          </p>
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
+            Другие смогут видеть ваши открытые воспоминания
+          </p>
+        </div>
+
+        <PublicProfileToggle
+          checked={checked}
+          disabled={disabled}
+          onChange={onChange}
+          label="Показывать профиль другим"
+        />
+      </div>
+
+      {error && (
+        <p className="font-sans" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
+          {error}
+        </p>
+      )}
+    </section>
+  )
+}
+
 export default function Profile() {
   const currentUser = useAppStore((state) => state.currentUser)
   const setCurrentUser = useAppStore((state) => state.setCurrentUser)
@@ -557,6 +597,10 @@ export default function Profile() {
   const [showPublicProfileSheet, setShowPublicProfileSheet] = useState(false)
   const [savingPublicVisibility, setSavingPublicVisibility] = useState(false)
   const [publicProfileError, setPublicProfileError] = useState(null)
+  const [activeScreen, setActiveScreen] = useState(0)
+
+  const touchStartRef = useRef(null)
+  const touchCurrentRef = useRef(null)
 
   const ownMoments = useMemo(
     () => moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id),
@@ -575,6 +619,58 @@ export default function Profile() {
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
   const publicProfileBio = currentUser?.bio?.trim() ?? ''
   const featuredPublicMoment = publicMoments.find((moment) => moment.id === currentUser?.featured_moment_id) ?? null
+
+  function resetTouch() {
+    touchStartRef.current = null
+    touchCurrentRef.current = null
+  }
+
+  function goToScreen(nextScreen) {
+    setActiveScreen(Math.max(0, Math.min(1, nextScreen)))
+  }
+
+  function handleTouchStart(event) {
+    const touch = event.touches[0]
+    if (!touch) return
+
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    touchCurrentRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function handleTouchMove(event) {
+    if (!touchStartRef.current) return
+
+    const touch = event.touches[0]
+    if (!touch) return
+
+    touchCurrentRef.current = { x: touch.clientX, y: touch.clientY }
+  }
+
+  function handleTouchEnd() {
+    const start = touchStartRef.current
+    const current = touchCurrentRef.current
+
+    resetTouch()
+
+    if (!start || !current) return
+
+    const deltaX = current.x - start.x
+    const deltaY = current.y - start.y
+
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD || Math.abs(deltaX) <= Math.abs(deltaY)) return
+
+    goToScreen(deltaX < 0 ? 1 : 0)
+  }
+
+  function handleSwipeKeyDown(event) {
+    if (event.key === 'ArrowLeft') {
+      goToScreen(0)
+    }
+
+    if (event.key === 'ArrowRight') {
+      goToScreen(1)
+    }
+  }
 
   async function handleAddToCapsule(slotIndex, moment) {
     addToCapsule(slotIndex, moment)
@@ -615,185 +711,249 @@ export default function Profile() {
     }
   }
 
+  function handlePreviewFallbackClick(event) {
+    const target = event.target
+    if (target instanceof HTMLElement && target.closest('button')) return
+
+    goToScreen(1)
+  }
+
   const name = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
-      <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
-        <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
-          Профиль
-        </span>
-      </div>
-
-      <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
-        <section
-          className="surface-card rounded-[24px]"
-          style={{ padding: 20, marginBottom: 12, backgroundColor: 'var(--moment-surface)' }}
+      <div
+        className="flex-1 overflow-hidden outline-none"
+        style={{ touchAction: 'pan-y' }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={resetTouch}
+        onKeyDown={handleSwipeKeyDown}
+        tabIndex={0}
+        data-testid="profile-swipe-container"
+      >
+        <div
+          className="flex h-full w-[200%] transition-transform duration-200 ease-out"
+          style={{ transform: `translateX(-${activeScreen * 50}%)` }}
+          data-testid="profile-swipe-track"
         >
-          <div className="flex items-center gap-4">
-            <div
-              className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
-              style={{
-                width: 64,
-                height: 64,
-                background: currentUser?.photo_url ? 'transparent' : 'linear-gradient(160deg, #854E2A 0%, #D98B52 58%, #F0C88E 100%)',
-                border: '3px solid rgba(255,255,255,0.8)',
-                color: '#fff',
-                fontSize: 24,
-                fontWeight: 700,
-              }}
-            >
-              {currentUser?.photo_url ? (
-                <img
-                  src={currentUser.photo_url}
-                  alt={name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={(event) => {
-                    event.currentTarget.style.display = 'none'
-                  }}
-                />
-              ) : (
-                name[0]?.toUpperCase() ?? 'M'
-              )}
+          <div
+            className="flex w-1/2 min-w-0 flex-col overflow-hidden"
+            data-testid="profile-main-screen"
+            aria-hidden={activeScreen !== 0}
+          >
+            <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
+              <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
+                Профиль
+              </span>
             </div>
 
-            <div className="min-w-0">
-              <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, margin: 0 }}>
-                {name}
-              </p>
-              {since && (
-                <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
-                  с memi с {since}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2" style={{ marginTop: 18 }}>
-            {[
-              { value: stats.total, label: plural.момент(stats.total) },
-              { value: stats.months, label: plural.месяц(stats.months) },
-              { value: stats.people, label: plural.человек(stats.people) },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="flex flex-col items-center rounded-[14px]"
-                style={{ backgroundColor: 'var(--base)', padding: '12px 8px' }}
+            <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
+              <section
+                className="surface-card rounded-[24px]"
+                style={{ padding: 20, marginBottom: 12, backgroundColor: 'var(--moment-surface)' }}
               >
-                <span className="font-serif" style={{ color: 'var(--accent)', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>
-                  {item.value}
-                </span>
-                <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 4 }}>
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
+                    style={{
+                      width: 64,
+                      height: 64,
+                      background: currentUser?.photo_url ? 'transparent' : 'linear-gradient(160deg, #854E2A 0%, #D98B52 58%, #F0C88E 100%)',
+                      border: '3px solid rgba(255,255,255,0.8)',
+                      color: '#fff',
+                      fontSize: 24,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {currentUser?.photo_url ? (
+                      <img
+                        src={currentUser.photo_url}
+                        alt={name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(event) => {
+                          event.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    ) : (
+                      name[0]?.toUpperCase() ?? 'M'
+                    )}
+                  </div>
 
-        <section
-          className="surface-card rounded-[24px]"
-          style={{ padding: 20, marginBottom: 18, backgroundColor: 'var(--moment-surface)' }}
-        >
-          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
-            Публичный профиль
-          </p>
+                  <div className="min-w-0">
+                    <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, margin: 0 }}>
+                      {name}
+                    </p>
+                    {since && (
+                      <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
+                        с memi с {since}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-          <div className="flex items-start justify-between gap-3" style={{ marginTop: 14 }}>
-            <div className="min-w-0">
-              <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
-                Показывать профиль другим
-              </p>
-              <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
-                Другие смогут видеть ваши открытые воспоминания
-              </p>
-            </div>
+                <div className="grid grid-cols-3 gap-2" style={{ marginTop: 18 }}>
+                  {[
+                    { value: stats.total, label: pluralRu(stats.total, 'момент', 'момента', 'моментов') },
+                    { value: stats.months, label: pluralRu(stats.months, 'месяц', 'месяца', 'месяцев') },
+                    { value: stats.people, label: pluralRu(stats.people, 'человек', 'человека', 'человек') },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex flex-col items-center rounded-[14px]"
+                      style={{ backgroundColor: 'var(--base)', padding: '12px 8px' }}
+                    >
+                      <span className="font-serif" style={{ color: 'var(--accent)', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>
+                        {item.value}
+                      </span>
+                      <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 4 }}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
 
-            <PublicProfileToggle
-              checked={publicProfileEnabled}
-              disabled={savingPublicVisibility}
-              onChange={handleTogglePublicProfile}
-              label="Показывать профиль другим"
-            />
-          </div>
+              <section
+                className="surface-card rounded-[24px]"
+                style={{ padding: 20, marginBottom: 18, backgroundColor: 'var(--moment-surface)' }}
+                onClick={handlePreviewFallbackClick}
+              >
+                <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
+                  Публичный профиль
+                </p>
 
-          {(publicProfileBio || featuredPublicMoment) && (
-            <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--divider)' }}>
-              {publicProfileBio && (
-                <p
-                  className="font-sans"
+                <div className="flex items-start justify-between gap-3" style={{ marginTop: 14 }}>
+                  <div className="min-w-0">
+                    <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
+                      Показывать профиль другим
+                    </p>
+                    <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
+                      Другие смогут видеть ваши открытые воспоминания
+                    </p>
+                  </div>
+
+                  <PublicProfileToggle
+                    checked={publicProfileEnabled}
+                    disabled={savingPublicVisibility}
+                    onChange={handleTogglePublicProfile}
+                    label="Показывать профиль другим"
+                  />
+                </div>
+
+                {(publicProfileBio || featuredPublicMoment) && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--divider)' }}>
+                    {publicProfileBio && (
+                      <p
+                        className="font-sans"
+                        style={{
+                          color: 'var(--mid)',
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {publicProfileBio}
+                      </p>
+                    )}
+
+                    {featuredPublicMoment && (
+                      <p className="font-sans" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, marginTop: publicProfileBio ? 8 : 0 }}>
+                        Главное воспоминание: {featuredPublicMoment.title || 'Без названия'}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {publicProfileError && (
+                  <p className="font-sans" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
+                    {publicProfileError}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPublicProfileError(null)
+                    setShowPublicProfileSheet(true)
+                  }}
+                  className="font-sans transition-opacity active:opacity-60"
                   style={{
-                    color: 'var(--mid)',
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
+                    marginTop: 14,
+                    border: 'none',
+                    background: 'none',
+                    color: 'var(--accent)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    padding: 0,
                   }}
                 >
-                  {publicProfileBio}
-                </p>
-              )}
+                  Редактировать
+                </button>
+              </section>
 
-              {featuredPublicMoment && (
-                <p className="font-sans" style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, marginTop: publicProfileBio ? 8 : 0 }}>
-                  Главное воспоминание: {featuredPublicMoment.title || 'Без названия'}
-                </p>
-              )}
+              <section>
+                <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
+                  <span className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
+                    Капсула
+                  </span>
+                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
+                    · моменты на всю жизнь
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {capsule.map((slot, index) => (
+                    <CapsuleTile
+                      key={index}
+                      slot={slot}
+                      index={index}
+                      onEmpty={() => setPickSlot(index)}
+                      onFilled={() => handleRemoveFromCapsule(index)}
+                    />
+                  ))}
+                </div>
+              </section>
             </div>
-          )}
+          </div>
 
-          {publicProfileError && (
-            <p className="font-sans" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
-              {publicProfileError}
-            </p>
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              setPublicProfileError(null)
-              setShowPublicProfileSheet(true)
-            }}
-            className="font-sans transition-opacity active:opacity-60"
-            style={{
-              marginTop: 14,
-              border: 'none',
-              background: 'none',
-              color: 'var(--accent)',
-              fontSize: 14,
-              fontWeight: 600,
-              padding: 0,
-            }}
+          <div
+            className="flex w-1/2 min-w-0 flex-col overflow-hidden"
+            data-testid="profile-preview-screen"
+            aria-hidden={activeScreen !== 1}
           >
-            Редактировать
-          </button>
-        </section>
+            {activeScreen === 1 && (
+              <>
+                <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
+                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
+                    Публичный профиль
+                  </span>
+                </div>
 
-        <section>
-          <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
-            <span className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
-              Капсула
-            </span>
-            <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
-              · моменты на всю жизнь
-            </span>
+                <PublicProfileContent
+                  profileUser={currentUser}
+                  moments={publicMoments}
+                  publicMomentsTotal={publicMoments.length}
+                  displayName={name}
+                  topContent={(
+                    <PublicPreviewSettingsCard
+                      checked={publicProfileEnabled}
+                      disabled={savingPublicVisibility}
+                      onChange={handleTogglePublicProfile}
+                      error={publicProfileError}
+                    />
+                  )}
+                  contentPaddingBottom={108}
+                />
+              </>
+            )}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {capsule.map((slot, index) => (
-              <CapsuleTile
-                key={index}
-                slot={slot}
-                index={index}
-                onEmpty={() => setPickSlot(index)}
-                onFilled={() => handleRemoveFromCapsule(index)}
-              />
-            ))}
-          </div>
-        </section>
+        </div>
       </div>
 
       <BottomNav active="profile" />
