@@ -940,6 +940,11 @@ export default function Profile() {
                   moments={publicMoments}
                   publicMomentsTotal={publicMoments.length}
                   displayName={name}
+                  statusStat={{
+                    value: publicProfileEnabled ? '✓' : '○',
+                    label: publicProfileEnabled ? 'открыт' : 'скрыт',
+                    valueColor: publicProfileEnabled ? 'var(--deep)' : 'var(--soft)',
+                  }}
                   topContent={(
                     <PublicPreviewSettingsCard
                       checked={publicProfileEnabled}

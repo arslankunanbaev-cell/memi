@@ -188,6 +188,38 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
+function compactSinceLabel(createdAt) {
+  if (!createdAt) return 'сейчас'
+
+  const value = new Intl.DateTimeFormat('ru-RU', {
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(createdAt))
+
+  return value
+    .replace(/\u00A0/g, ' ')
+    .replace(/\s*г\.$/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function TrashIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h16" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M9 3h6" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+      <path
+        d="M18 7l-1 12a2 2 0 0 1-2 1H9a2 2 0 0 1-2-1L6 7"
+        stroke={color}
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M10 11v5M14 11v5" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function FeaturedMomentCard({ moment }) {
   return (
     <div
@@ -260,6 +292,7 @@ export function PublicProfileContent({
   onLinkedPersonPress,
   onLinkPersonPress,
   actionButton = null,
+  statusStat = null,
   topContent = null,
   contentPaddingBottom = 40,
 }) {
@@ -280,6 +313,24 @@ export function PublicProfileContent({
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
     : people.length > 0 && typeof onLinkPersonPress === 'function'
+  const resolvedStatusStat = statusStat ?? (
+    profileEnabled
+      ? { value: '✓', label: 'открыт', valueColor: 'var(--deep)' }
+      : { value: '○', label: 'скрыт', valueColor: 'var(--soft)' }
+  )
+  const stats = [
+    {
+      value: String(totalMoments),
+      label: pluralRu(totalMoments, 'момент', 'момента', 'моментов'),
+      valueColor: 'var(--accent)',
+    },
+    {
+      value: compactSinceLabel(profileUser.created_at),
+      label: 'с нами с',
+      valueColor: 'var(--accent)',
+    },
+    resolvedStatusStat,
+  ]
 
   return (
     <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
@@ -289,45 +340,69 @@ export function PublicProfileContent({
         style={{
           marginTop: topContent ? 0 : 20,
           backgroundColor: 'var(--moment-surface)',
-          borderRadius: 24,
-          padding: '24px 20px',
-          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+          borderRadius: 28,
+          overflow: 'hidden',
+          boxShadow: '0 10px 28px rgba(80,50,30,0.14)',
         }}
       >
-        <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            height: 96,
+            background: `
+              radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
+              linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)
+            `,
+          }}
+        />
+
+        <div style={{ padding: '0 18px 18px' }}>
+          <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
           <div
             className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
             style={{
+              position: 'relative',
               width: 68,
               height: 68,
-              backgroundColor: profileUser.photo_url ? 'transparent' : 'var(--accent)',
+              background: 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 100%)',
               color: '#fff',
               fontSize: 26,
               fontWeight: 700,
-              border: '3px solid rgba(255,255,255,0.8)',
+              border: '4px solid var(--moment-surface)',
+              boxShadow: '0 6px 18px rgba(80,50,30,0.18)',
             }}
           >
+            <span style={{ position: 'relative', zIndex: 1 }}>
+              {name[0]?.toUpperCase()}
+            </span>
+
             {profileUser.photo_url ? (
               <img
                 src={profileUser.photo_url}
                 alt={name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                }}
                 onError={(event) => {
                   event.currentTarget.style.display = 'none'
                 }}
               />
-            ) : (
-              name[0]?.toUpperCase()
-            )}
+            ) : null}
           </div>
 
-          <div className="flex-1 min-w-0">
+          </div>
+
+          <div style={{ marginTop: 14 }}>
             <p
               className="font-sans"
               style={{
                 margin: 0,
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 700,
+                lineHeight: 1.08,
                 color: 'var(--text)',
               }}
             >
@@ -337,7 +412,16 @@ export function PublicProfileContent({
             {since && (
               <p
                 className="font-sans"
-                style={{ marginTop: 3, fontSize: 13, color: 'var(--mid)' }}
+                style={{
+                  marginTop: 8,
+                  paddingLeft: 14,
+                  fontSize: 13,
+                  color: 'var(--mid)',
+                  backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: '0 50%',
+                  backgroundSize: '6px 6px',
+                }}
               >
                 с memi с {since}
               </p>
@@ -346,7 +430,7 @@ export function PublicProfileContent({
             {bio && (
               <p
                 className="font-sans"
-                style={{ marginTop: 8, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
+                style={{ marginTop: 10, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
               >
                 {bio}
               </p>
@@ -354,24 +438,24 @@ export function PublicProfileContent({
 
             <p
               className="font-sans"
-              style={{ marginTop: bio ? 8 : 1, fontSize: 13, color: 'var(--mid)' }}
+              style={{ display: 'none' }}
             >
               {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
             </p>
           </div>
-        </div>
 
         {showLinkControl && (
           <button
             type="button"
             onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
-            className="flex items-center gap-2 transition-opacity active:opacity-60"
+            className="inline-flex items-center gap-2 transition-opacity active:opacity-60"
             style={{
-              marginBottom: 16,
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              color: linkedPerson ? 'var(--accent)' : 'var(--soft)',
+              marginTop: bio ? 12 : 14,
+              backgroundColor: linkedPerson ? 'rgba(217, 139, 82, 0.1)' : 'var(--base)',
+              border: '1px solid rgba(160, 94, 44, 0.12)',
+              borderRadius: 9999,
+              padding: '8px 12px',
+              color: linkedPerson ? 'var(--accent)' : 'var(--mid)',
               fontSize: 14,
               fontWeight: 500,
             }}
@@ -383,37 +467,73 @@ export function PublicProfileContent({
           </button>
         )}
 
-        {actionButton}
-      </div>
+          <div
+            style={{
+              marginTop: 16,
+              backgroundColor: 'var(--base)',
+              borderRadius: 20,
+              overflow: 'hidden',
+              border: '1px solid rgba(160, 94, 44, 0.08)',
+            }}
+          >
+            <div className="grid grid-cols-3">
+              {stats.map((item, index) => {
+                const isLongValue = String(item.value).length > 6
 
-      <div
-        className="flex flex-col items-center justify-center"
-        style={{
-          marginTop: 12,
-          backgroundColor: 'var(--moment-surface)',
-          borderRadius: 18,
-          padding: '20px',
-          textAlign: 'center',
-          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-        }}
-      >
-        <span
-          className="font-serif"
-          style={{
-            fontSize: 36,
-            fontWeight: 700,
-            lineHeight: 1,
-            color: 'var(--accent)',
-          }}
-        >
-          {totalMoments}
-        </span>
-        <span
-          className="font-sans"
-          style={{ marginTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--mid)' }}
-        >
-          открытых моментов
-        </span>
+                return (
+                  <div
+                    key={`${item.label}-${index}`}
+                    className="flex flex-col items-center justify-center"
+                    style={{
+                      minHeight: 90,
+                      padding: '14px 10px 13px',
+                      borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
+                    }}
+                  >
+                    <span
+                      className="font-sans"
+                      style={{
+                        color: item.valueColor ?? 'var(--accent)',
+                        fontSize: isLongValue ? 20 : 30,
+                        fontWeight: 700,
+                        lineHeight: 1.05,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {item.value}
+                    </span>
+                    <span
+                      className="font-sans"
+                      style={{
+                        marginTop: 8,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        lineHeight: 1.25,
+                        color: 'var(--mid)',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {actionButton && (
+            <div
+              className="flex items-center justify-center"
+              style={{
+                marginTop: 14,
+                paddingTop: 14,
+                borderTop: '1px solid var(--divider)',
+              }}
+            >
+              {actionButton}
+            </div>
+          )}
+        </div>
       </div>
 
       {featuredMoment && (
@@ -722,15 +842,11 @@ export default function PublicProfile() {
   const friendButtonLabel = isAlreadyFriend
     ? (removing ? '...' : 'Удалить из друзей')
     : (friendSent ? 'Запрос отправлен' : 'Добавить в друзья')
-  const friendButtonStyles = isAlreadyFriend || friendSent
-    ? {
-        backgroundColor: 'var(--surface)',
-        color: 'var(--mid)',
-      }
-    : {
-        backgroundColor: 'var(--accent)',
-        color: '#fff',
-      }
+  const relationshipStat = isAlreadyFriend
+    ? { value: '✓', label: 'друг', valueColor: 'var(--deep)' }
+    : friendSent
+      ? { value: '…', label: 'запрос', valueColor: 'var(--mid)' }
+      : { value: '+', label: 'добавить', valueColor: 'var(--accent)' }
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
@@ -784,22 +900,23 @@ export default function PublicProfile() {
         linkedPerson={linkedPerson}
         onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}
         onLinkPersonPress={() => setShowLinkSheet(true)}
+        statusStat={relationshipStat}
         actionButton={(
           <button
             type="button"
             onClick={isAlreadyFriend ? handleRemoveFriend : handleAddFriend}
             disabled={removing || friendSent}
-            className="w-full font-sans transition-all duration-150 ease-out active:opacity-70"
+            className="inline-flex items-center justify-center gap-2 font-sans transition-all duration-150 ease-out active:opacity-70"
             style={{
-              borderRadius: 14,
-              padding: '11px',
+              border: 'none',
+              background: 'none',
+              padding: 0,
               fontSize: 14,
               fontWeight: 500,
-              border: '1.5px solid rgba(180,150,120,0.3)',
-              backgroundColor: isAlreadyFriend ? 'transparent' : friendButtonStyles.backgroundColor,
-              color: isAlreadyFriend ? 'var(--mid)' : friendButtonStyles.color,
+              color: isAlreadyFriend ? '#D45757' : (friendSent ? 'var(--mid)' : 'var(--accent)'),
             }}
           >
+            {isAlreadyFriend && <TrashIcon />}
             {friendButtonLabel}
           </button>
         )}
