@@ -422,7 +422,7 @@ export default function Archive() {
           <div
             key={card.label}
             className="surface-card flex flex-col items-center rounded-2xl"
-            style={{ padding: '14px 10px' }}
+            style={{ padding: '14px 10px', backgroundColor: 'var(--moment-surface)' }}
           >
             <span
               className={card.serif ? 'font-serif' : 'font-sans'}
