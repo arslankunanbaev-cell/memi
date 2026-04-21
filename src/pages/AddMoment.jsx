@@ -20,7 +20,7 @@ function SectionLabel({ children }) {
 function FormCard({ children, style = {} }) {
   return (
     <div style={{
-      backgroundColor: 'var(--card)',
+      backgroundColor: 'var(--moment-surface)',
       borderRadius: 18,
       padding: '16px',
       boxShadow: 'var(--shadow-card)',
@@ -79,7 +79,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
             style={{
               width: 56, height: 56, borderRadius: '50%', overflow: 'hidden',
               border: photoPreview ? 'none' : '2px dashed var(--accent)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--card)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--moment-surface)',
             }}
           >
             {photoPreview
@@ -96,7 +96,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           autoFocus
           className="w-full font-sans outline-none"
           style={{
-            backgroundColor: 'var(--card)', borderRadius: 12,
+            backgroundColor: 'var(--moment-surface)', borderRadius: 12,
             padding: '12px 14px', fontSize: 15, color: 'var(--text)',
             border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
             boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
@@ -112,7 +112,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--card)',
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--moment-surface)',
             color: name.trim() && !saving ? '#fff' : 'var(--soft)',
             borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
           }}
@@ -284,7 +284,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
               minHeight: photoPreview ? undefined : 180,
               borderRadius: 20,
               border: photoPreview ? 'none' : '2px dashed var(--accent-light)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--card-alt)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--moment-surface)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
@@ -343,7 +343,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                 className="transition-transform active:scale-90"
                 style={{
                   width: 46, height: 46, borderRadius: 14, fontSize: 24,
-                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--card)',
+                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--moment-surface)',
                   border: 'none',
                   boxShadow: mood === m ? '0 0 0 1.5px var(--accent), var(--shadow-card)' : 'var(--shadow-card)',
                 }}
@@ -393,7 +393,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           {song ? (
             <div
               className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--card)', borderRadius: 16, padding: '12px 14px', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
+              style={{ backgroundColor: 'var(--moment-surface)', borderRadius: 16, padding: '12px 14px', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
             >
               {song.cover ? (
                 <img src={song.cover} alt={song.name} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
@@ -428,7 +428,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
               onClick={() => setShowSongSheet(true)}
               className="w-full font-sans transition-opacity active:opacity-70 flex items-center gap-3"
               style={{
-                backgroundColor: 'var(--card)', borderRadius: 16,
+                backgroundColor: 'var(--moment-surface)', borderRadius: 16,
                 padding: '12px 14px', fontSize: 15, color: 'var(--mid)',
                 border: 'none', textAlign: 'left',
                 boxShadow: '0 2px 12px rgba(80,50,30,0.08)',
@@ -468,7 +468,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                       style={{
                         borderRadius: 9999,
                         padding: '7px 14px 7px 9px',
-                        backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                        backgroundColor: active ? 'var(--accent)' : 'var(--moment-surface)',
                         border: 'none',
                         boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
                       }}
@@ -507,7 +507,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                       style={{
                         borderRadius: 9999,
                         padding: '7px 14px 7px 9px',
-                        backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                        backgroundColor: active ? 'var(--accent)' : 'var(--moment-surface)',
                         border: 'none',
                         boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
                       }}
@@ -538,7 +538,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                   style={{
                     borderRadius: 9999,
                     padding: '7px 14px 7px 9px',
-                    backgroundColor: 'var(--card)',
+                    backgroundColor: 'var(--moment-surface)',
                     border: '1.5px dashed rgba(201,122,58,0.4)',
                     boxShadow: '0 2px 8px rgba(80,50,30,0.06)',
                   }}
@@ -573,7 +573,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
                 className="font-sans font-medium transition-opacity active:opacity-70"
                 style={{
                   padding: '9px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
-                backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
+                backgroundColor: visibility === value ? 'var(--accent)' : 'var(--moment-surface)',
                 color: visibility === value ? '#fff' : 'var(--mid)',
                 boxShadow: visibility === value ? 'none' : 'var(--shadow-card)',
                 }}
