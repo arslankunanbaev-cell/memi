@@ -152,7 +152,7 @@ export default function MomentCard({ moment }) {
     <article
       className="overflow-hidden rounded-[20px] cursor-pointer"
       style={{
-        backgroundColor: '#FFFCF7',
+        backgroundColor: '#FFFDFB',
         boxShadow: 'var(--shadow-card)',
       }}
       onClick={() => navigate(`/moment/${moment.id}`)}
