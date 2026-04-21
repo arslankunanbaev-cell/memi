@@ -238,26 +238,59 @@ const NATIVE_CHECK_VALUE_STYLE = {
   lineHeight: 0.95,
 }
 
+function FriendMenuAction({ label, danger = false, onClick, children, disabled = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex w-full items-center gap-4 rounded-[18px] text-left transition-opacity active:opacity-60 disabled:opacity-60"
+      style={{
+        border: 'none',
+        backgroundColor: danger ? 'rgba(217, 64, 64, 0.07)' : 'var(--base)',
+        marginBottom: 10,
+        padding: '16px 18px',
+      }}
+    >
+      <div
+        className="flex items-center justify-center rounded-[14px]"
+        style={{
+          width: 40,
+          height: 40,
+          backgroundColor: danger ? 'rgba(217, 64, 64, 0.12)' : 'var(--accent-light)',
+          color: danger ? '#D94040' : 'var(--mid)',
+          flexShrink: 0,
+        }}
+      >
+        {children}
+      </div>
+
+      <span
+        className="font-sans"
+        style={{
+          color: danger ? '#D94040' : 'var(--text)',
+          fontSize: 17,
+          fontWeight: 500,
+        }}
+      >
+        {label}
+      </span>
+    </button>
+  )
+}
+
 function FriendActionsSheet({ removing, onRemove, onClose }) {
   return (
-    <BottomSheet onClose={onClose}>
+    <BottomSheet onClose={onClose} title="Друг">
       <div className="px-5 pb-4">
-        <button
-          type="button"
+        <FriendMenuAction
+          danger
           onClick={onRemove}
           disabled={removing}
-          className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-          style={{
-            background: 'none',
-            border: 'none',
-            borderBottom: '0.5px solid var(--surface)',
-          }}
         >
           <TrashIcon color="#D45757" />
-          <span className="font-sans" style={{ fontSize: 15, color: '#D45757', fontWeight: 500 }}>
-            {removing ? 'Удаляем...' : 'Удалить из друзей'}
-          </span>
-        </button>
+          {removing ? 'Удаляем...' : 'Удалить из друзей'}
+        </FriendMenuAction>
 
         <button
           type="button"
@@ -269,7 +302,7 @@ function FriendActionsSheet({ removing, onRemove, onClose }) {
             color: 'var(--mid)',
             fontSize: 15,
             fontWeight: 500,
-            padding: '16px 0 4px',
+            padding: '8px 0 4px',
           }}
         >
           Отмена
