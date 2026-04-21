@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
@@ -545,7 +544,6 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
 }
 
 export default function Profile() {
-  const navigate = useNavigate()
   const currentUser = useAppStore((state) => state.currentUser)
   const setCurrentUser = useAppStore((state) => state.setCurrentUser)
   const moments = useAppStore((state) => state.moments)
@@ -692,23 +690,6 @@ export default function Profile() {
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => navigate('/people')}
-            className="font-sans transition-opacity active:opacity-60"
-            style={{
-              marginTop: 14,
-              border: 'none',
-              background: 'none',
-              color: 'var(--accent)',
-              fontSize: 14,
-              fontWeight: 600,
-              padding: 0,
-            }}
-          >
-            Мои люди
-          </button>
         </section>
 
         <section

@@ -4,12 +4,6 @@ import { MemoryRouter } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore.js'
 import Profile from '../Profile.jsx'
 
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async (orig) => ({
-  ...(await orig()),
-  useNavigate: () => mockNavigate,
-}))
-
 vi.mock('../../lib/api.js', () => ({
   saveMoment: vi.fn().mockResolvedValue({ id: 'm1', title: 'Test' }),
   createPerson: vi.fn(),
@@ -137,10 +131,9 @@ describe('Profile', () => {
     })
   })
 
-  it('navigates to /people from "Мои люди"', () => {
+  it('does not show the "Мои люди" shortcut button', () => {
     renderProfile()
-    fireEvent.click(screen.getByText('Мои люди'))
-    expect(mockNavigate).toHaveBeenCalledWith('/people')
+    expect(screen.queryByText('Мои люди')).not.toBeInTheDocument()
   })
 
   it('shows the public profile settings block', () => {
