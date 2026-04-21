@@ -6,7 +6,9 @@ alter table public.users
   add column if not exists bio text,
   add column if not exists featured_moment_id uuid;
 
-create or replace function public.get_user_public(p_user_id uuid)
+drop function if exists public.get_user_public(uuid);
+
+create function public.get_user_public(p_user_id uuid)
 returns table(
   id uuid,
   name text,
