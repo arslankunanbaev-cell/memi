@@ -51,7 +51,7 @@ function PersonChip({ person }) {
   return (
     <div
       className="surface-card flex items-center gap-2 rounded-[20px]"
-      style={{ padding: '6px 12px 6px 6px' }}
+      style={{ padding: '6px 12px 6px 6px', backgroundColor: 'var(--moment-surface)' }}
     >
       <div
         className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
@@ -82,6 +82,7 @@ function DetailChip({ children, emoji = false }) {
     <div
       className="surface-card inline-flex items-center gap-2 rounded-[20px]"
       style={{
+        backgroundColor: 'var(--moment-surface)',
         color: emoji ? 'var(--text)' : 'var(--mid)',
         fontSize: emoji ? 20 : 14,
         padding: emoji ? '7px 14px' : '7px 14px',
@@ -97,7 +98,7 @@ function MusicCard({ title, artist, cover }) {
     <div
       className="flex items-center gap-3"
       style={{
-        backgroundColor: 'var(--card-alt)',
+        backgroundColor: 'var(--moment-surface)',
         borderRadius: 14,
         padding: '12px 14px',
       }}
@@ -417,7 +418,7 @@ export default function MomentDetail() {
                     : setShowCapsuleSheet(true)
                 )}
                 className="surface-card flex items-center justify-center rounded-[16px] transition-opacity active:opacity-60"
-                style={{ border: 'none', width: 50, height: 50 }}
+                style={{ border: 'none', width: 50, height: 50, backgroundColor: 'var(--moment-surface)' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <rect x="5" y="4" width="14" height="16" rx="2" stroke="var(--accent)" strokeWidth="2" />
@@ -431,7 +432,7 @@ export default function MomentDetail() {
                 aria-label="Поделиться"
                 onClick={handleShare}
                 className="surface-card flex items-center justify-center rounded-[16px] transition-opacity active:opacity-60"
-                style={{ border: 'none', width: 50, height: 50 }}
+                style={{ border: 'none', width: 50, height: 50, backgroundColor: 'var(--moment-surface)' }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                   <circle cx="18" cy="5" r="3" stroke="var(--accent)" strokeWidth="2" />
