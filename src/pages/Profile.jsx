@@ -338,7 +338,7 @@ export default function Profile() {
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
         <section
           className="surface-card rounded-[24px]"
-          style={{ padding: 20, marginBottom: 12 }}
+          style={{ padding: 20, marginBottom: 12, backgroundColor: 'var(--moment-surface)' }}
         >
           <div className="flex items-center gap-4">
             <div

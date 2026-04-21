@@ -48,7 +48,7 @@ function IconPill({ onClick, children, spin = false, ariaLabel }) {
         height: 38,
         border: 'none',
         borderRadius: 12,
-        backgroundColor: 'var(--card)',
+        backgroundColor: 'var(--moment-surface)',
         boxShadow: 'var(--shadow-card)',
         color: 'var(--mid)',
         transform: spin ? 'rotate(180deg)' : 'none',
@@ -133,7 +133,7 @@ function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick 
         }
       }}
       className="surface-card flex w-full cursor-pointer items-center gap-3 rounded-[20px] text-left transition-opacity active:opacity-75"
-      style={{ padding: '14px 16px' }}
+      style={{ padding: '14px 16px', backgroundColor: 'var(--moment-surface)' }}
     >
       <Avatar person={person} />
 
@@ -188,7 +188,7 @@ function RequestRow({ request, onAccept }) {
   return (
     <div
       className="surface-card flex items-center gap-4 rounded-[20px]"
-      style={{ padding: '14px 16px' }}
+      style={{ padding: '14px 16px', backgroundColor: 'var(--moment-surface)' }}
     >
       <Avatar person={request} size={48} />
 

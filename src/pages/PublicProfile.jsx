@@ -429,7 +429,7 @@ export default function PublicProfile() {
         <div
           style={{
             marginTop: 20,
-            backgroundColor: 'var(--card)',
+            backgroundColor: 'var(--moment-surface)',
             borderRadius: 24,
             padding: '24px 20px',
             boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
@@ -542,7 +542,7 @@ export default function PublicProfile() {
           className="flex flex-col items-center justify-center"
           style={{
             marginTop: 12,
-            backgroundColor: 'var(--card)',
+            backgroundColor: 'var(--moment-surface)',
             borderRadius: 18,
             padding: '20px',
             textAlign: 'center',
@@ -585,7 +585,7 @@ export default function PublicProfile() {
           {moments.length === 0 ? (
             <div
               style={{
-                backgroundColor: 'var(--card)',
+                backgroundColor: 'var(--moment-surface)',
                 borderRadius: 20,
                 padding: '36px 24px',
                 textAlign: 'center',
