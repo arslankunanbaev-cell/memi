@@ -139,7 +139,7 @@ function MenuAction({ label, danger = false, onClick, children }) {
       className="flex w-full items-center gap-4 rounded-[18px] text-left transition-opacity active:opacity-60"
       style={{
         border: 'none',
-        backgroundColor: danger ? 'rgba(217, 64, 64, 0.07)' : 'var(--base)',
+        backgroundColor: danger ? 'rgba(217, 64, 64, 0.07)' : 'var(--moment-surface)',
         marginBottom: 8,
         padding: '16px 18px',
       }}

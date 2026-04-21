@@ -53,7 +53,7 @@ function PersonToken({ person, active, onClick }) {
       style={{
         border: 'none',
         borderRadius: 20,
-        backgroundColor: active ? 'var(--accent-pale)' : 'var(--base)',
+        backgroundColor: active ? 'var(--accent-pale)' : 'var(--moment-surface)',
         boxShadow: active ? '0 0 0 1.5px var(--accent), var(--shadow-card)' : 'var(--shadow-card)',
         padding: '8px 14px 8px 8px',
       }}

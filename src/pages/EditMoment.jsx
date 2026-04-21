@@ -59,7 +59,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
             style={{
               width: 56, height: 56, borderRadius: '50%', overflow: 'hidden',
               border: photoPreview ? 'none' : '2px dashed var(--accent)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--surface)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--moment-surface)',
             }}
           >
             {photoPreview
@@ -75,7 +75,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           autoFocus
           className="w-full font-sans outline-none"
           style={{
-            backgroundColor: 'var(--surface)', borderRadius: 10,
+            backgroundColor: 'var(--moment-surface)', borderRadius: 10,
             padding: '11px 14px', fontSize: 15, color: 'var(--text)', border: 'none',
           }}
         />
@@ -87,7 +87,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
           disabled={!name.trim() || saving}
           className="w-full font-sans font-medium transition-opacity active:opacity-70"
           style={{
-            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--moment-surface)',
             color: name.trim() && !saving ? '#fff' : 'var(--soft)',
             borderRadius: 9999, padding: '13px 0', fontSize: 15, border: 'none',
           }}
@@ -278,7 +278,7 @@ export default function EditMoment() {
               minHeight: photoPreview ? undefined : 180,
               borderRadius: 20,
               border: photoPreview ? 'none' : '2px dashed var(--accent-light)',
-              backgroundColor: photoPreview ? 'transparent' : 'var(--card-alt)',
+              backgroundColor: photoPreview ? 'transparent' : 'var(--moment-surface)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
@@ -320,7 +320,7 @@ export default function EditMoment() {
                 className="transition-transform active:scale-90"
                 style={{
                   width: 46, height: 46, borderRadius: 14, fontSize: 24,
-                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--card)',
+                  backgroundColor: mood === m ? 'var(--accent-pale)' : 'var(--moment-surface)',
                   border: 'none',
                   boxShadow: mood === m ? '0 0 0 1.5px var(--accent), var(--shadow-card)' : 'var(--shadow-card)',
                 }}
@@ -378,7 +378,7 @@ export default function EditMoment() {
             maxLength={80}
             className="w-full font-sans outline-none"
             style={{
-              backgroundColor: 'var(--card)', borderRadius: 14,
+              backgroundColor: 'var(--moment-surface)', borderRadius: 14,
               padding: '12px 14px', fontSize: 15, color: 'var(--text)', border: 'none',
               boxShadow: 'var(--shadow-card)',
             }}
@@ -393,7 +393,7 @@ export default function EditMoment() {
           {song ? (
             <div
               className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--card)', borderRadius: 14, padding: '12px 14px', boxShadow: 'var(--shadow-card)' }}
+              style={{ backgroundColor: 'var(--moment-surface)', borderRadius: 14, padding: '12px 14px', boxShadow: 'var(--shadow-card)' }}
             >
               {song.cover ? (
                 <img src={song.cover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
@@ -418,7 +418,7 @@ export default function EditMoment() {
               onClick={() => setShowSongSheet(true)}
               className="w-full font-sans transition-opacity active:opacity-70"
               style={{
-                backgroundColor: 'var(--card)', borderRadius: 14,
+                backgroundColor: 'var(--moment-surface)', borderRadius: 14,
                 padding: '12px 14px', fontSize: 15, color: 'var(--mid)',
                 border: 'none', textAlign: 'left',
                 boxShadow: 'var(--shadow-card)',
@@ -445,7 +445,7 @@ export default function EditMoment() {
                   style={{
                     borderRadius: 9999,
                     padding: '6px 12px 6px 8px',
-                    backgroundColor: active ? 'var(--accent)' : 'var(--card)',
+                    backgroundColor: active ? 'var(--accent)' : 'var(--moment-surface)',
                     border: 'none',
                     boxShadow: active ? 'none' : 'var(--shadow-card)',
                   }}
@@ -472,7 +472,7 @@ export default function EditMoment() {
               style={{
                 borderRadius: 9999,
                 padding: '6px 12px 6px 8px',
-                backgroundColor: 'var(--card)',
+                backgroundColor: 'var(--moment-surface)',
                 border: '1.5px dashed rgba(217,139,82,0.5)',
                 boxShadow: 'var(--shadow-card)',
               }}
@@ -507,7 +507,7 @@ export default function EditMoment() {
                 className="font-sans font-medium transition-opacity active:opacity-70"
                 style={{
                   padding: '8px 18px', borderRadius: 9999, fontSize: 13, border: 'none',
-                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--card)',
+                  backgroundColor: visibility === value ? 'var(--accent)' : 'var(--moment-surface)',
                   color: visibility === value ? '#fff' : 'var(--mid)',
                   boxShadow: visibility === value ? 'none' : 'var(--shadow-card)',
                 }}
