@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { useAppStore } from '../../store/useAppStore.js'
 import PublicProfile from '../PublicProfile.jsx'
 
 const mockNavigate = vi.fn()
 const mockGetUserProfile = vi.fn()
+const mockRemoveFriend = vi.fn()
 
 vi.mock('react-router-dom', async (orig) => ({
   ...(await orig()),
@@ -15,7 +17,7 @@ vi.mock('react-router-dom', async (orig) => ({
 vi.mock('../../lib/api.js', () => ({
   getUserProfile: (...args) => mockGetUserProfile(...args),
   linkPersonToUser: vi.fn(),
-  removeFriend: vi.fn(),
+  removeFriend: (...args) => mockRemoveFriend(...args),
   sendFriendRequest: vi.fn(),
 }))
 
@@ -26,6 +28,7 @@ function renderPublicProfile() {
 describe('PublicProfile', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockRemoveFriend.mockResolvedValue(undefined)
     useAppStore.setState({
       currentUser: { id: 'user-1', name: 'Me' },
       friends: [],
@@ -79,5 +82,45 @@ describe('PublicProfile', () => {
     expect(screen.getAllByText('Главное воспоминание').length).toBeGreaterThan(0)
     expect(screen.getByText('Featured Memory')).toBeInTheDocument()
     expect(screen.getByText('Another Memory')).toBeInTheDocument()
+  })
+
+  it('moves friend removal into the top menu', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+    })
+
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: '',
+        featured_moment_id: null,
+      },
+      moments: [],
+      total: 0,
+    })
+
+    const user = userEvent.setup()
+
+    renderPublicProfile()
+
+    expect(await screen.findByText('Mila')).toBeInTheDocument()
+    expect(screen.queryByText('Удалить из друзей')).not.toBeInTheDocument()
+
+    await user.click(screen.getByLabelText('Открыть меню профиля'))
+
+    expect(screen.getByRole('button', { name: 'Удалить из друзей' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Отмена' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Удалить из друзей' }))
+
+    await waitFor(() => {
+      expect(mockRemoveFriend).toHaveBeenCalledWith('friendship-1')
+    })
+    expect(mockNavigate).toHaveBeenCalledWith(-1)
   })
 })

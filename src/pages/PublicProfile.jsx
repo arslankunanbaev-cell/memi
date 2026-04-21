@@ -220,6 +220,65 @@ function TrashIcon({ color = 'currentColor' }) {
   )
 }
 
+function MoreIcon({ color = '#3D2B1A' }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="6" cy="12" r="1.8" fill={color} />
+      <circle cx="12" cy="12" r="1.8" fill={color} />
+      <circle cx="18" cy="12" r="1.8" fill={color} />
+    </svg>
+  )
+}
+
+const NATIVE_CHECK_VALUE_STYLE = {
+  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontSize: 34,
+  fontWeight: 500,
+  letterSpacing: '-0.04em',
+  lineHeight: 0.95,
+}
+
+function FriendActionsSheet({ removing, onRemove, onClose }) {
+  return (
+    <BottomSheet onClose={onClose}>
+      <div className="px-5 pb-4">
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={removing}
+          className="w-full flex items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: '0.5px solid var(--surface)',
+          }}
+        >
+          <TrashIcon color="#D45757" />
+          <span className="font-sans" style={{ fontSize: 15, color: '#D45757', fontWeight: 500 }}>
+            {removing ? 'Удаляем...' : 'Удалить из друзей'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full font-sans transition-opacity active:opacity-60"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--mid)',
+            fontSize: 15,
+            fontWeight: 500,
+            padding: '16px 0 4px',
+          }}
+        >
+          Отмена
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
 function FeaturedMomentCard({ moment }) {
   return (
     <div
@@ -315,7 +374,7 @@ export function PublicProfileContent({
     : people.length > 0 && typeof onLinkPersonPress === 'function'
   const resolvedStatusStat = statusStat ?? (
     profileEnabled
-      ? { value: '✓', label: 'открыт', valueColor: 'var(--deep)' }
+      ? { value: '✓', label: 'открыт', valueColor: 'var(--deep)', valueStyle: NATIVE_CHECK_VALUE_STYLE }
       : { value: '○', label: 'скрыт', valueColor: 'var(--soft)' }
   )
   const stats = [
@@ -360,7 +419,6 @@ export function PublicProfileContent({
           <div
             className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
             style={{
-              position: 'relative',
               width: 68,
               height: 68,
               background: 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 100%)',
@@ -371,17 +429,11 @@ export function PublicProfileContent({
               boxShadow: '0 6px 18px rgba(80,50,30,0.18)',
             }}
           >
-            <span style={{ position: 'relative', zIndex: 1 }}>
-              {name[0]?.toUpperCase()}
-            </span>
-
             {profileUser.photo_url ? (
               <img
                 src={profileUser.photo_url}
                 alt={name}
                 style={{
-                  position: 'absolute',
-                  inset: 0,
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
@@ -390,7 +442,9 @@ export function PublicProfileContent({
                   event.currentTarget.style.display = 'none'
                 }}
               />
-            ) : null}
+            ) : (
+              <span>{name[0]?.toUpperCase()}</span>
+            )}
           </div>
 
           </div>
@@ -498,6 +552,7 @@ export function PublicProfileContent({
                         fontWeight: 700,
                         lineHeight: 1.05,
                         textAlign: 'center',
+                        ...(item.valueStyle ?? {}),
                       }}
                     >
                       {item.value}
@@ -681,6 +736,7 @@ export default function PublicProfile() {
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
   const [showLinkSheet, setShowLinkSheet] = useState(false)
+  const [showActionsSheet, setShowActionsSheet] = useState(false)
 
   const friendEntry = friends.find((friend) => friend.id === userId)
   const isAlreadyFriend = Boolean(friendEntry)
@@ -729,17 +785,7 @@ export default function PublicProfile() {
   async function handleRemoveFriend() {
     if (!friendEntry?.friendship_id || removing) return
 
-    const targetName = profileUser?.name ?? 'пользователя'
-    const confirmed = await new Promise((resolve) => {
-      if (window.Telegram?.WebApp?.showConfirm) {
-        window.Telegram.WebApp.showConfirm(`Удалить ${targetName} из друзей?`, resolve)
-      } else {
-        resolve(window.confirm(`Удалить ${targetName} из друзей?`))
-      }
-    })
-
-    if (!confirmed) return
-
+    setShowActionsSheet(false)
     setRemoving(true)
 
     try {
@@ -839,11 +885,9 @@ export default function PublicProfile() {
     )
   }
 
-  const friendButtonLabel = isAlreadyFriend
-    ? (removing ? '...' : 'Удалить из друзей')
-    : (friendSent ? 'Запрос отправлен' : 'Добавить в друзья')
+  const friendButtonLabel = friendSent ? 'Запрос отправлен' : 'Добавить в друзья'
   const relationshipStat = isAlreadyFriend
-    ? { value: '✓', label: 'друг', valueColor: 'var(--deep)' }
+    ? { value: '✓', label: 'друг', valueColor: 'var(--deep)', valueStyle: NATIVE_CHECK_VALUE_STYLE }
     : friendSent
       ? { value: '…', label: 'запрос', valueColor: 'var(--mid)' }
       : { value: '+', label: 'добавить', valueColor: 'var(--accent)' }
@@ -887,7 +931,27 @@ export default function PublicProfile() {
             Профиль
           </span>
 
-          <div style={{ width: 60 }} />
+          <div className="flex justify-end" style={{ width: 60 }}>
+            {isAlreadyFriend ? (
+              <button
+                type="button"
+                aria-label="Открыть меню профиля"
+                onClick={() => setShowActionsSheet(true)}
+                disabled={removing}
+                className="flex items-center justify-center transition-opacity active:opacity-60"
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255,255,255,0.85)',
+                  border: '1px solid rgba(160, 94, 44, 0.12)',
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                <MoreIcon />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
@@ -901,11 +965,11 @@ export default function PublicProfile() {
         onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}
         onLinkPersonPress={() => setShowLinkSheet(true)}
         statusStat={relationshipStat}
-        actionButton={(
+        actionButton={!isAlreadyFriend ? (
           <button
             type="button"
-            onClick={isAlreadyFriend ? handleRemoveFriend : handleAddFriend}
-            disabled={removing || friendSent}
+            onClick={handleAddFriend}
+            disabled={friendSent}
             className="inline-flex items-center justify-center gap-2 font-sans transition-all duration-150 ease-out active:opacity-70"
             style={{
               border: 'none',
@@ -913,14 +977,21 @@ export default function PublicProfile() {
               padding: 0,
               fontSize: 14,
               fontWeight: 500,
-              color: isAlreadyFriend ? '#D45757' : (friendSent ? 'var(--mid)' : 'var(--accent)'),
+              color: friendSent ? 'var(--mid)' : 'var(--accent)',
             }}
           >
-            {isAlreadyFriend && <TrashIcon />}
             {friendButtonLabel}
           </button>
-        )}
+        ) : null}
       />
+
+      {showActionsSheet && isAlreadyFriend && (
+        <FriendActionsSheet
+          removing={removing}
+          onRemove={handleRemoveFriend}
+          onClose={() => setShowActionsSheet(false)}
+        />
+      )}
 
       {showLinkSheet && profileUser && (
         <LinkPersonSheet
