@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 
 export default function BottomSheet({ onClose, title, children }) {
-  const sheetRef = useRef(null)
-
   function handleOverlay(event) {
     if (event.target === event.currentTarget) {
       onClose()
@@ -10,9 +8,11 @@ export default function BottomSheet({ onClose, title, children }) {
   }
 
   useEffect(() => {
+    const originalOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
     return () => {
-      document.body.style.overflow = ''
+      document.body.style.overflow = originalOverflow
     }
   }, [])
 
@@ -20,44 +20,55 @@ export default function BottomSheet({ onClose, title, children }) {
     <div
       className="fixed inset-0 z-50 flex flex-col justify-end"
       style={{
-        backgroundColor: 'rgba(23, 20, 14, 0.45)',
-        backdropFilter: 'blur(2px)',
+        backgroundColor: 'rgba(23, 20, 14, 0.34)',
+        backdropFilter: 'blur(8px)',
       }}
       onClick={handleOverlay}
     >
       <div
-        ref={sheetRef}
         className="flex w-full flex-col"
         style={{
-          backgroundColor: 'var(--card)',
-          borderRadius: '28px 28px 0 0',
-          boxShadow: '0 -10px 40px rgba(80, 50, 30, 0.18)',
-          maxHeight: '90dvh',
+          position: 'relative',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--card) 48%, #F6EFE7 100%)',
+          borderRadius: '32px 32px 0 0',
+          borderTop: '1px solid rgba(255,255,255,0.72)',
+          boxShadow: '0 -18px 56px rgba(80, 50, 30, 0.24)',
+          maxHeight: '88dvh',
           overflow: 'hidden',
-          animation: 'slideUp 0.22s ease',
+          animation: 'slideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex justify-center pt-3 pb-1">
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at top center, rgba(255,255,255,0.4), transparent 38%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div className="flex justify-center pt-3 pb-2" style={{ position: 'relative' }}>
           <div
             style={{
-              width: 36,
-              height: 4,
+              width: 44,
+              height: 5,
               borderRadius: 999,
-              backgroundColor: 'var(--accent-light)',
+              background: 'linear-gradient(90deg, rgba(217,139,82,0.34) 0%, rgba(217,139,82,0.72) 50%, rgba(217,139,82,0.34) 100%)',
             }}
           />
         </div>
 
         {title && (
-          <div className="px-5 pb-3 pt-1">
+          <div className="px-5 pb-3 pt-1" style={{ position: 'relative' }}>
             <h3
-              className="font-serif"
+              className="font-sans"
               style={{
                 color: 'var(--text)',
-                fontSize: 28,
+                fontSize: 22,
                 fontWeight: 700,
-                lineHeight: 1.1,
+                lineHeight: 1.15,
               }}
             >
               {title}
@@ -67,7 +78,10 @@ export default function BottomSheet({ onClose, title, children }) {
 
         <div
           className="hide-scrollbar flex-1 overflow-y-auto"
-          style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+          style={{
+            position: 'relative',
+            paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+          }}
         >
           {children}
         </div>
