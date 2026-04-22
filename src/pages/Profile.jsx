@@ -23,6 +23,34 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
+function EditPencilIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M14.5 5.5l4 4"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 16.75V20h3.25L18 9.25 14.75 6 4 16.75Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M13 7.75 16.25 11"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function CapsuleTile({ slot, index, onEmpty, onFilled }) {
   const [showMenu, setShowMenu] = useState(false)
 
@@ -1070,16 +1098,30 @@ export default function Profile() {
 
       {showPublicProfileMenu && (
         <BottomSheet onClose={() => setShowPublicProfileMenu(false)}>
-          <div>
+          <div className="px-4 pb-4 pt-1">
             <button
               type="button"
               onClick={handleOpenPublicProfileEditor}
               data-testid="public-profile-edit-button"
-              className="flex w-full items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
-              style={{ background: 'none', border: 'none' }}
+              className="flex w-full items-center gap-4 rounded-[22px] px-4 py-4 text-left transition-opacity active:opacity-60"
+              style={{
+                border: 'none',
+                backgroundColor: 'var(--moment-surface)',
+                boxShadow: '0 8px 24px rgba(80,50,30,0.08)',
+              }}
             >
-              <span style={{ fontSize: 18 }}>✏️</span>
-              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>
+              <span
+                className="flex items-center justify-center rounded-[14px] flex-shrink-0"
+                style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: 'rgba(217, 139, 82, 0.18)',
+                  color: 'var(--deep)',
+                }}
+              >
+                <EditPencilIcon />
+              </span>
+              <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
                 Редактировать
               </span>
             </button>
