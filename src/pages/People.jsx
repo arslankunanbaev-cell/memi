@@ -27,6 +27,27 @@ function AddIcon() {
   )
 }
 
+function ShareIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M8.75 1.75H12.25V5.25M12 2L7.75 6.25"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6 3H4.5C3.67157 3 3 3.67157 3 4.5V9.5C3 10.3284 3.67157 11 4.5 11H9.5C10.3284 11 11 10.3284 11 9.5V8"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function CameraIcon() {
   return (
     <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
@@ -486,9 +507,11 @@ export default function People() {
     return momentCountMap.get(personId) ?? 0
   }
 
-  function handleInvite() {
+  async function handleInvite() {
     const publicCode = currentUser?.public_code
     if (!publicCode) return
+
+    tgHaptic('light')
 
     const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
     const appName = import.meta.env.VITE_APP_SHORT_NAME ?? 'app'
@@ -497,9 +520,26 @@ export default function People() {
 
     if (window.Telegram?.WebApp?.openTelegramLink) {
       window.Telegram.WebApp.openTelegramLink(shareUrl)
-    } else {
-      navigator.clipboard?.writeText(link).catch(() => {})
+      return
     }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'memi',
+          text: 'Присоединяйся ко мне в memi 🤍',
+          url: link,
+        })
+        return
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          return
+        }
+        console.error('[People] share invite error:', error)
+      }
+    }
+
+    navigator.clipboard?.writeText(link).catch(() => {})
   }
 
   async function handleRefreshFriends() {
@@ -617,8 +657,29 @@ export default function People() {
           </section>
         )}
 
-        <section className="flex flex-col gap-2">
+        <section className="relative flex flex-col gap-2">
           {friendsList.length > 0 && <SectionHeader label="Друзья" count={friendsList.length} />}
+          {friendsList.length > 0 && (
+            <button
+              type="button"
+              aria-label="Пригласить друга"
+              onClick={handleInvite}
+              className="absolute right-0 top-2 inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
+              style={{
+                border: '1px solid rgba(217, 139, 82, 0.18)',
+                borderRadius: 999,
+                backgroundColor: 'rgba(255, 254, 253, 0.92)',
+                boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08)',
+                color: 'var(--accent)',
+                fontSize: 12,
+                fontWeight: 700,
+                padding: '7px 12px',
+              }}
+            >
+              <ShareIcon />
+              Пригласить
+            </button>
+          )}
           {friendsList.map((person, index) => (
             <div
               key={person._fromFriend ? `friend-${person.id}` : person.id}

@@ -6,6 +6,7 @@ import { useAppStore } from '../../store/useAppStore.js'
 import People from '../People.jsx'
 
 const mockNavigate = vi.fn()
+const mockOpenTelegramLink = vi.fn()
 vi.mock('react-router-dom', async (orig) => ({
   ...(await orig()),
   useNavigate: () => mockNavigate,
@@ -30,8 +31,9 @@ function renderPeople() {
 describe('People', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.Telegram = { WebApp: { openTelegramLink: mockOpenTelegramLink } }
     useAppStore.setState({
-      currentUser: { id: 'user-1', name: 'Test' },
+      currentUser: { id: 'user-1', name: 'Test', public_code: 'test-code' },
       people: [],
       moments: [],
       friends: [],
@@ -50,7 +52,7 @@ describe('People', () => {
 
   it('показывает существующих людей', () => {
     useAppStore.setState({
-      currentUser: { id: 'u1', name: 'Test' },
+      currentUser: { id: 'u1', name: 'Test', public_code: 'test-code' },
       people: [{ id: 'p1', name: 'Аня', avatar_color: '#D98B52', photo_url: null }],
       moments: [],
       friends: [],
@@ -65,6 +67,21 @@ describe('People', () => {
     renderPeople()
     fireEvent.click(screen.getByLabelText('Добавить человека'))
     expect(screen.getByText('Как зовут?')).toBeInTheDocument()
+  })
+
+  it('opens invite sharing from the friends header button', () => {
+    useAppStore.setState({
+      currentUser: { id: 'u1', name: 'Test', public_code: 'test-code' },
+      people: [],
+      moments: [],
+      friends: [{ id: 'friend-1', name: 'РђРЅСЏ', photo_url: null }],
+      incomingRequests: [],
+    })
+
+    renderPeople()
+    fireEvent.click(screen.getByRole('button', { name: 'Пригласить друга' }))
+
+    expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('startapp%3Dref_test-code'))
   })
 
   async function openSheetAndType(name) {
