@@ -7,6 +7,15 @@ import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 import { PublicProfileContent } from './PublicProfile'
 
+function uniqueMonths(moments) {
+  return new Set(
+    moments.map((moment) => {
+      const date = new Date(moment.created_at)
+      return `${date.getFullYear()}-${date.getMonth()}`
+    }),
+  ).size
+}
+
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
 
@@ -700,6 +709,7 @@ export default function Profile() {
   const currentUser = useAppStore((state) => state.currentUser)
   const setCurrentUser = useAppStore((state) => state.setCurrentUser)
   const moments = useAppStore((state) => state.moments)
+  const friends = useAppStore((state) => state.friends) ?? []
   const capsule = useAppStore((state) => state.capsule)
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
@@ -721,7 +731,13 @@ export default function Profile() {
   )
 
   const totalMoments = ownMoments.length
-  const momentCountLabel = pluralRu(totalMoments, 'момент', 'момента', 'моментов')
+  const totalMonths = uniqueMonths(ownMoments)
+  const totalFriends = friends.length
+  const profileStats = [
+    { value: totalMoments, label: pluralRu(totalMoments, 'момент', 'момента', 'моментов') },
+    { value: totalMonths, label: pluralRu(totalMonths, 'месяц', 'месяца', 'месяцев') },
+    { value: totalFriends, label: pluralRu(totalFriends, 'друг', 'друга', 'друзей') },
+  ]
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
 
   async function handleAddToCapsule(slotIndex, moment) {
@@ -764,6 +780,7 @@ export default function Profile() {
   }
 
   const name = currentUser?.name || '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c'
+  const since = sinceLabel(currentUser?.created_at)
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
@@ -782,105 +799,150 @@ export default function Profile() {
 
             <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
               <section
-                className="surface-card rounded-[24px]"
-                style={{ padding: 20, marginBottom: 12, backgroundColor: 'var(--moment-surface)' }}
+                style={{
+                  marginBottom: 12,
+                  backgroundColor: 'var(--moment-surface)',
+                  borderRadius: 28,
+                  overflow: 'hidden',
+                  boxShadow: '0 10px 28px rgba(80,50,30,0.14)',
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
-                    style={{
-                      width: 64,
-                      height: 64,
-                      background: currentUser?.photo_url ? 'transparent' : 'linear-gradient(160deg, #854E2A 0%, #D98B52 58%, #F0C88E 100%)',
-                      border: '3px solid rgba(255,255,255,0.8)',
-                      color: '#fff',
-                      fontSize: 24,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {currentUser?.photo_url ? (
-                      <img
-                        src={currentUser.photo_url}
-                        alt={name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(event) => {
-                          event.currentTarget.style.display = 'none'
+                <div
+                  style={{
+                    height: 96,
+                    background: `
+                      radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
+                      linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)
+                    `,
+                  }}
+                />
+
+                <div style={{ padding: '0 18px 18px' }}>
+                  <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
+                    <div
+                      className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
+                      style={{
+                        width: 68,
+                        height: 68,
+                        background: currentUser?.photo_url
+                          ? 'transparent'
+                          : 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 100%)',
+                        border: '4px solid var(--moment-surface)',
+                        color: '#fff',
+                        fontSize: 26,
+                        fontWeight: 700,
+                        boxShadow: '0 6px 18px rgba(80,50,30,0.18)',
+                      }}
+                    >
+                      {currentUser?.photo_url ? (
+                        <img
+                          src={currentUser.photo_url}
+                          alt={name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      ) : (
+                        name[0]?.toUpperCase() ?? 'M'
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 14 }}>
+                    <p
+                      className="font-sans truncate"
+                      style={{
+                        color: 'var(--text)',
+                        fontSize: 22,
+                        fontWeight: 700,
+                        lineHeight: 1.08,
+                        margin: 0,
+                      }}
+                    >
+                      {name}
+                    </p>
+
+                    {since && (
+                      <p
+                        className="font-sans"
+                        style={{
+                          marginTop: 8,
+                          paddingLeft: 14,
+                          fontSize: 13,
+                          color: 'var(--mid)',
+                          backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: '0 50%',
+                          backgroundSize: '6px 6px',
                         }}
-                      />
-                    ) : (
-                      name[0]?.toUpperCase() ?? 'M'
+                      >
+                        с memi с {since}
+                      </p>
                     )}
                   </div>
 
-                  <div className="min-w-0">
-                    <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, margin: 0 }}>
-                      {name}
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 18,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
-                    borderRadius: 22,
-                    padding: '18px 18px 16px',
-                    border: '1px solid rgba(160, 94, 44, 0.08)',
-                  }}
-                >
                   <div
-                    aria-hidden="true"
                     style={{
-                      position: 'absolute',
-                      top: -28,
-                      right: -18,
-                      width: 104,
-                      height: 104,
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
+                      marginTop: 16,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
+                      borderRadius: 22,
+                      border: '1px solid rgba(160, 94, 44, 0.08)',
                     }}
-                  />
-
-                  <div style={{ position: 'relative' }}>
-                    <p
-                      className="font-sans"
+                  >
+                    <div
+                      aria-hidden="true"
                       style={{
-                        margin: 0,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        letterSpacing: '0.02em',
-                        color: 'var(--mid)',
+                        position: 'absolute',
+                        top: -28,
+                        right: -18,
+                        width: 104,
+                        height: 104,
+                        borderRadius: '50%',
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
                       }}
-                    >
-                      Моменты
-                    </p>
+                    />
 
-                    <div className="flex items-end gap-3" style={{ marginTop: 10 }}>
-                      <span
-                        className="font-sans"
-                        style={{
-                          color: 'var(--accent)',
-                          fontSize: 42,
-                          fontWeight: 700,
-                          lineHeight: 0.9,
-                        }}
-                      >
-                        {totalMoments}
-                      </span>
-                      <span
-                        className="font-sans"
-                        style={{
-                          paddingBottom: 4,
-                          fontSize: 17,
-                          fontWeight: 600,
-                          lineHeight: 1.1,
-                          color: 'var(--deep)',
-                        }}
-                      >
-                        {momentCountLabel}
-                      </span>
+                    <div className="grid grid-cols-3" style={{ position: 'relative' }}>
+                      {profileStats.map((item, index) => (
+                        <div
+                          key={item.label}
+                          className="flex flex-col items-center justify-center"
+                          style={{
+                            minHeight: 94,
+                            padding: '16px 10px 14px',
+                            borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
+                          }}
+                        >
+                          <span
+                            className="font-sans"
+                            style={{
+                              color: 'var(--accent)',
+                              fontSize: 32,
+                              fontWeight: 700,
+                              lineHeight: 0.95,
+                              textAlign: 'center',
+                            }}
+                          >
+                            {item.value}
+                          </span>
+                          <span
+                            className="font-sans"
+                            style={{
+                              marginTop: 8,
+                              fontSize: 12,
+                              fontWeight: 500,
+                              lineHeight: 1.2,
+                              color: 'var(--deep)',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {item.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
