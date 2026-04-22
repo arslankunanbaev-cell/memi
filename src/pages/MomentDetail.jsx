@@ -265,7 +265,7 @@ export default function MomentDetail() {
         <div
           style={{
             position: 'relative',
-            height: 328,
+            height: 353,
             overflow: 'hidden',
             background: moment.photo_url ? 'none' : 'linear-gradient(175deg, #5A3070 0%, #B04820 20%, #E07828 45%, #F0A840 70%, #F8D880 100%)',
           }}
