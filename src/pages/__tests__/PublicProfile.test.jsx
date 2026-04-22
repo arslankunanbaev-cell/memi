@@ -85,6 +85,68 @@ describe('PublicProfile', () => {
     expect(screen.getByText('Another Memory')).toBeInTheDocument()
   })
 
+  it('opens the featured memory card from a friend profile', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: '',
+        featured_moment_id: 'm1',
+      },
+      moments: [
+        { id: 'm1', title: 'Featured Memory', created_at: '2024-02-01T00:00:00Z', photo_url: null },
+      ],
+      total: 1,
+    })
+
+    const user = userEvent.setup()
+
+    renderPublicProfile()
+
+    await screen.findByText('Featured Memory')
+    await user.click(screen.getByRole('button', { name: /Featured Memory/i }))
+
+    expect(mockNavigate).toHaveBeenCalledWith('/moment/m1', {
+      state: {
+        previewMoment: expect.objectContaining({ id: 'm1', title: 'Featured Memory' }),
+        forceFetch: true,
+      },
+    })
+  })
+
+  it('opens a public memory from the moments list', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: '',
+        featured_moment_id: null,
+      },
+      moments: [
+        { id: 'm2', title: 'Another Memory', created_at: '2024-03-01T00:00:00Z', photo_url: null },
+      ],
+      total: 1,
+    })
+
+    const user = userEvent.setup()
+
+    renderPublicProfile()
+
+    await screen.findByText('Another Memory')
+    await user.click(screen.getByRole('button', { name: /Another Memory/i }))
+
+    expect(mockNavigate).toHaveBeenCalledWith('/moment/m2', {
+      state: {
+        previewMoment: expect.objectContaining({ id: 'm2', title: 'Another Memory' }),
+        forceFetch: true,
+      },
+    })
+  })
+
   it('moves friend removal into the top menu', async () => {
     useAppStore.setState({
       currentUser: { id: 'user-1', name: 'Me' },

@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
-import { deleteCapsuleSlot, deleteMoment, saveCapsuleSlot } from '../lib/api'
+import { deleteCapsuleSlot, deleteMoment, getMomentDetails, saveCapsuleSlot } from '../lib/api'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
@@ -164,6 +164,7 @@ function MenuAction({ label, danger = false, onClick, children }) {
 
 export default function MomentDetail() {
   const { id } = useParams()
+  const location = useLocation()
   const navigate = useNavigate()
   const moments = useAppStore((state) => state.moments)
   const friends = useAppStore((state) => state.friends)
@@ -172,15 +173,71 @@ export default function MomentDetail() {
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
   const removeMoment = useAppStore((state) => state.removeMoment)
-  const moment = moments.find((entry) => entry.id === id)
+  const storeMoment = moments.find((entry) => entry.id === id)
+  const routePreviewMoment = location.state?.previewMoment?.id === id
+    ? location.state.previewMoment
+    : null
 
   const capsuleSlotIndex = capsule.findIndex((slot) => slot?.id === id)
   const [showMenu, setShowMenu] = useState(false)
   const [showCapsuleSheet, setShowCapsuleSheet] = useState(false)
+  const [remoteMoment, setRemoteMoment] = useState(routePreviewMoment)
+  const [loadingMoment, setLoadingMoment] = useState(false)
+
+  const shouldFetchRemoteMoment = !storeMoment
+    || location.state?.forceFetch === true
+    || storeMoment?.isFriendFeed === true
+  const moment = remoteMoment ?? storeMoment ?? routePreviewMoment
 
   const isOwn = !moment?.isShared && moment?.user_id === currentUser?.id
 
+  useEffect(() => {
+    let isActive = true
+
+    setRemoteMoment(routePreviewMoment)
+
+    if (!id || !shouldFetchRemoteMoment) {
+      setLoadingMoment(false)
+      return () => {
+        isActive = false
+      }
+    }
+
+    setLoadingMoment(true)
+
+    async function loadMoment() {
+      try {
+        const nextMoment = await getMomentDetails(id)
+        if (isActive && nextMoment) {
+          setRemoteMoment(nextMoment)
+        }
+      } catch (error) {
+        console.error('[MomentDetail] load error:', error)
+      } finally {
+        if (isActive) {
+          setLoadingMoment(false)
+        }
+      }
+    }
+
+    loadMoment()
+
+    return () => {
+      isActive = false
+    }
+  }, [id, routePreviewMoment, shouldFetchRemoteMoment])
+
   if (!moment) {
+    if (loadingMoment) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--base)' }}>
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>
+            Загрузка момента...
+          </p>
+        </div>
+      )
+    }
+
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--base)' }}>
         <span style={{ fontSize: 36 }}>🌀</span>

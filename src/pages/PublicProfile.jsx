@@ -313,23 +313,39 @@ function FriendActionsSheet({ removing, onRemove, onClose }) {
   )
 }
 
-function FeaturedMomentCard({ moment }) {
+function FeaturedMomentCard({ moment, onClick }) {
+  const CardTag = onClick ? 'button' : 'div'
+
   return (
-    <div
-      style={{
-        backgroundColor: 'var(--moment-surface)',
-        borderRadius: 20,
-        overflow: 'hidden',
-        boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-      }}
+    <CardTag
+      {...(onClick
+        ? {
+            type: 'button',
+            onClick,
+            className: 'w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]',
+            style: {
+              border: 'none',
+              padding: 0,
+              background: 'none',
+            },
+          }
+        : {})}
     >
       <div
         style={{
-          position: 'relative',
-          aspectRatio: '4 / 3',
-          background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
+          backgroundColor: 'var(--moment-surface)',
+          borderRadius: 20,
+          overflow: 'hidden',
+          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
         }}
       >
+        <div
+          style={{
+            position: 'relative',
+            aspectRatio: '4 / 3',
+            background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
+          }}
+        >
         {moment.photo_url && (
           <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
@@ -353,9 +369,10 @@ function FeaturedMomentCard({ moment }) {
             Главное воспоминание
           </div>
         </div>
-      </div>
 
-      <div style={{ padding: '14px 16px 16px' }}>
+        </div>
+
+        <div style={{ padding: '14px 16px 16px' }}>
         <p
           className="font-sans"
           style={{
@@ -367,11 +384,12 @@ function FeaturedMomentCard({ moment }) {
         >
           {moment.title || 'Без названия'}
         </p>
-        <p className="font-sans" style={{ marginTop: 4, fontSize: 12, color: 'var(--mid)' }}>
-          {sinceLabel(moment.created_at)}
-        </p>
+          <p className="font-sans" style={{ marginTop: 4, fontSize: 12, color: 'var(--mid)' }}>
+            {sinceLabel(moment.created_at)}
+          </p>
+        </div>
       </div>
-    </div>
+    </CardTag>
   )
 }
 
@@ -475,6 +493,7 @@ export function PublicProfileContent({
   contentPaddingBottom = 40,
   sharedMoments = [],
   showSharedMomentsSection = false,
+  onMomentPress,
   onSharedMomentPress,
 }) {
   if (!profileUser) return null
@@ -498,6 +517,7 @@ export function PublicProfileContent({
     { value: totalFriends, label: pluralRu(totalFriends, 'друг', 'друга', 'друзей') },
   ]
   const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
+  const momentsAreClickable = typeof onMomentPress === 'function'
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
     : people.length > 0 && typeof onLinkPersonPress === 'function'
@@ -725,7 +745,10 @@ export function PublicProfileContent({
             Главное воспоминание
           </h2>
 
-          <FeaturedMomentCard moment={featuredMoment} />
+          <FeaturedMomentCard
+            moment={featuredMoment}
+            onClick={momentsAreClickable ? () => onMomentPress(featuredMoment) : undefined}
+          />
         </div>
       )}
 
@@ -775,17 +798,35 @@ export function PublicProfileContent({
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {listMoments.map((moment) => (
-                <div
-                  key={moment.id}
-                  className="flex items-center gap-3"
-                  style={{
-                    backgroundColor: 'var(--card)',
-                    borderRadius: 18,
-                    padding: '12px 13px',
-                    boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-                  }}
-                >
+              {listMoments.map((moment) => {
+                const MomentRowTag = momentsAreClickable ? 'button' : 'div'
+
+                return (
+                  <MomentRowTag
+                    key={moment.id}
+                    {...(momentsAreClickable
+                      ? {
+                          type: 'button',
+                          onClick: () => onMomentPress(moment),
+                          className: 'flex w-full items-center gap-3 text-left transition-transform duration-150 ease-out active:scale-[0.99]',
+                          style: {
+                            border: 'none',
+                            backgroundColor: 'var(--card)',
+                            borderRadius: 18,
+                            padding: '12px 13px',
+                            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                          },
+                        }
+                      : {
+                          className: 'flex items-center gap-3',
+                          style: {
+                            backgroundColor: 'var(--card)',
+                            borderRadius: 18,
+                            padding: '12px 13px',
+                            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                          },
+                        })}
+                  >
                   <div
                     style={{
                       width: 48,
@@ -829,8 +870,9 @@ export function PublicProfileContent({
                       {sinceLabel(moment.created_at)}
                     </p>
                   </div>
-                </div>
-              ))}
+                  </MomentRowTag>
+                )
+              })}
             </div>
           )}
         </div>
@@ -951,6 +993,17 @@ export default function PublicProfile() {
         index === list.findIndex((entry) => entry.id === moment.id)
       ))
   }, [appMoments, currentUser?.id, userId])
+
+  function handleOpenMoment(moment) {
+    if (!moment?.id) return
+
+    navigate(`/moment/${moment.id}`, {
+      state: {
+        previewMoment: moment,
+        forceFetch: true,
+      },
+    })
+  }
 
   useEffect(() => {
     if (currentUser?.id && currentUser.id === userId) {
@@ -1198,6 +1251,7 @@ export default function PublicProfile() {
         ) : null}
         sharedMoments={sharedMoments}
         showSharedMomentsSection={isAlreadyFriend || sharedMoments.length > 0}
+        onMomentPress={handleOpenMoment}
         onSharedMomentPress={(moment) => navigate(`/moment/${moment.id}`)}
       />
 

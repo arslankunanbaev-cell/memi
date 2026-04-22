@@ -219,6 +219,24 @@ export async function updateMoment(id, payload) {
   return normalizeMomentMedia(data)
 }
 
+export async function getMomentDetails(momentId) {
+  if (!momentId) return null
+
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('moments')
+    .select(`
+      *,
+      people:moment_people(person:people(id, name, avatar_color, photo_url, linked_user_id)),
+      participants:moment_participants(user:users(id, name, photo_url))
+    `)
+    .eq('id', momentId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ? normalizeMomentRecord(data) : null
+}
+
 export async function deleteMoment(id) {
   const sb = assertSupabase()
   const { error } = await sb.from('moments').delete().eq('id', id)
