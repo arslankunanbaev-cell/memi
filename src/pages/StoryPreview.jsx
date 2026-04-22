@@ -16,7 +16,6 @@ const COLOR = {
   cardAlt: '#F3ECE3',
   accent: '#D98B52',
   accentLight: '#E9D2BC',
-  deep: '#A05E2C',
   text: '#17140E',
   mid: '#8A7A6A',
   darkBg: '#17140E',
@@ -36,20 +35,20 @@ function trimToWidth(ctx, text, maxWidth) {
   if (ctx.measureText(text).width <= maxWidth) return text
 
   let value = text.trim()
-  while (value.length > 0 && ctx.measureText(`${value}…`).width > maxWidth) {
+  while (value.length > 0 && ctx.measureText(`${value}...`).width > maxWidth) {
     value = value.slice(0, -1)
   }
 
-  return value ? `${value}…` : ''
+  return value ? `${value}...` : ''
 }
 
 function forceEllipsis(ctx, text, maxWidth) {
   let value = text.trim()
-  while (value.length > 0 && ctx.measureText(`${value}…`).width > maxWidth) {
+  while (value.length > 0 && ctx.measureText(`${value}...`).width > maxWidth) {
     value = value.slice(0, -1)
   }
 
-  return value ? `${value}…` : '…'
+  return value ? `${value}...` : '...'
 }
 
 function wrapText(ctx, text, maxWidth, maxLines = 3) {
@@ -165,7 +164,7 @@ async function drawPhoto(ctx, moment, x, y, width, height, radius, dark = false,
       ctx.restore()
       return
     } catch {
-      // Fallback gradient below.
+      // Gradient fallback below.
     }
   }
 
@@ -303,16 +302,95 @@ function drawTopBadge(ctx, text, x, y, theme) {
   ctx.fillText(text, x - width + paddingX, y + 22)
 }
 
+function getMomentPeopleNames(moment) {
+  return [...new Set([
+    ...(moment.people ?? []).map((person) => person?.name?.trim()),
+    ...(moment.taggedFriends ?? []).map((friend) => friend?.name?.trim()),
+  ].filter(Boolean))]
+}
+
+function drawMetaText(ctx, text, x, y, maxWidth, theme) {
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = theme.color
+  ctx.font = theme.font
+  const lines = wrapText(ctx, text, maxWidth, theme.maxLines ?? 2)
+  return drawTextBlock(ctx, lines, x, y, theme.lineHeight)
+}
+
+function drawMoodChip(ctx, x, y, mood, theme) {
+  const paddingX = theme.paddingX ?? 16
+  const height = theme.height ?? 46
+
+  ctx.font = theme.font
+  const width = ctx.measureText(mood).width + paddingX * 2
+  fillRoundRect(ctx, x, y, width, height, height / 2, theme.background)
+  ctx.fillStyle = theme.color
+  ctx.textBaseline = 'middle'
+  ctx.fillText(mood, x + paddingX, y + height / 2)
+
+  return height
+}
+
+function drawPeopleBlock(ctx, x, y, maxWidth, peopleNames, theme) {
+  if (peopleNames.length === 0) return y
+  return drawMetaText(ctx, `С кем: ${peopleNames.join(', ')}`, x, y, maxWidth, theme)
+}
+
+async function drawPolaroidPhotoFrame(ctx, moment, frame) {
+  const {
+    x,
+    y,
+    width,
+    height,
+    rotation = -0.028,
+    photoInsetX = 22,
+    photoInsetTop = 20,
+    photoBottomPad = 88,
+  } = frame
+
+  const photoWidth = width - photoInsetX * 2
+  const photoHeight = height - photoInsetTop - photoBottomPad
+
+  ctx.save()
+  ctx.translate(x + width / 2, y + height / 2)
+  ctx.rotate(rotation)
+
+  ctx.save()
+  ctx.shadowColor = 'rgba(59, 35, 18, 0.18)'
+  ctx.shadowBlur = 28
+  ctx.shadowOffsetY = 14
+  ctx.fillStyle = '#FFFFFF'
+  ctx.fillRect(-width / 2, -height / 2, width, height)
+  ctx.restore()
+
+  ctx.strokeStyle = 'rgba(23,20,14,0.06)'
+  ctx.lineWidth = 2
+  ctx.strokeRect(-width / 2 + 1, -height / 2 + 1, width - 2, height - 2)
+
+  await drawPhoto(
+    ctx,
+    moment,
+    -width / 2 + photoInsetX,
+    -height / 2 + photoInsetTop,
+    photoWidth,
+    photoHeight,
+    0,
+  )
+
+  ctx.restore()
+}
+
 async function drawPolaroid(canvas, moment) {
   const width = 1080
   const height = 1920
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
+  const peopleNames = getMomentPeopleNames(moment)
 
   drawBackground(ctx, 'polaroid', width, height)
 
-  const card = { x: 88, y: 188, width: 904, height: 1200, radius: 38 }
+  const card = { x: 88, y: 172, width: 904, height: 1324, radius: 38 }
 
   ctx.save()
   ctx.shadowColor = 'rgba(98, 64, 34, 0.16)'
@@ -322,7 +400,7 @@ async function drawPolaroid(canvas, moment) {
   ctx.restore()
 
   ctx.textBaseline = 'top'
-  ctx.fillStyle = COLOR.deep
+  ctx.fillStyle = COLOR.text
   ctx.font = '600 44px "Cormorant Garamond", Georgia, serif'
   ctx.fillText('memi', card.x + 38, card.y + 34)
 
@@ -331,14 +409,15 @@ async function drawPolaroid(canvas, moment) {
   const dateText = formatStoryDate(moment.created_at)
   ctx.fillText(dateText, card.x + card.width - 38 - ctx.measureText(dateText).width, card.y + 42)
 
-  const photoX = card.x + 34
-  const photoY = card.y + 86
-  const photoWidth = card.width - 68
-  const photoHeight = 592
-  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 24)
+  await drawPolaroidPhotoFrame(ctx, moment, {
+    x: card.x + 56,
+    y: card.y + 100,
+    width: card.width - 112,
+    height: 718,
+  })
 
   const contentX = card.x + 42
-  let y = photoY + photoHeight + 50
+  let y = card.y + 872
 
   ctx.fillStyle = COLOR.text
   ctx.font = '700 72px "Cormorant Garamond", Georgia, serif'
@@ -366,10 +445,30 @@ async function drawPolaroid(canvas, moment) {
     y += songHeight
   }
 
-  const footerText = moment.location || null
-  if (footerText) {
-    y += 26
-    drawLocationRow(ctx, contentX, y, card.width - 84, footerText, COLOR.mid)
+  if (peopleNames.length > 0) {
+    y += 20
+    y = drawPeopleBlock(ctx, contentX, y, card.width - 84, peopleNames, {
+      color: COLOR.mid,
+      font: '500 28px Inter, sans-serif',
+      lineHeight: 38,
+      maxLines: 2,
+    })
+  }
+
+  if (moment.mood) {
+    y += 18
+    y += drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 28px Inter, sans-serif',
+      color: COLOR.text,
+      background: '#F6EFE6',
+      paddingX: 18,
+      height: 50,
+    })
+  }
+
+  if (moment.location) {
+    y += 20
+    drawLocationRow(ctx, contentX, y, card.width - 84, moment.location, COLOR.mid)
   }
 }
 
@@ -379,10 +478,11 @@ async function drawMinimal(canvas, moment) {
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
+  const peopleNames = getMomentPeopleNames(moment)
 
   drawBackground(ctx, 'minimal', width, height)
 
-  const card = { x: 88, y: 174, width: 904, height: 1130, radius: 40 }
+  const card = { x: 88, y: 164, width: 904, height: 1262, radius: 40 }
 
   ctx.save()
   ctx.shadowColor = 'rgba(98, 64, 34, 0.16)'
@@ -394,7 +494,7 @@ async function drawMinimal(canvas, moment) {
   await drawPhoto(ctx, moment, card.x, card.y, card.width, 604, card.radius, false, true)
 
   ctx.textBaseline = 'top'
-  ctx.fillStyle = '#FFFFFF'
+  ctx.fillStyle = COLOR.text
   ctx.font = '600 42px "Cormorant Garamond", Georgia, serif'
   ctx.fillText('memi', card.x + 42, card.y + 34)
 
@@ -404,7 +504,7 @@ async function drawMinimal(canvas, moment) {
   })
 
   const contentX = card.x + 48
-  let y = card.y + 654
+  let y = card.y + 690
 
   ctx.fillStyle = COLOR.text
   ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
@@ -432,10 +532,30 @@ async function drawMinimal(canvas, moment) {
     y += songHeight
   }
 
-  const footerText = moment.location || null
-  if (footerText) {
-    y += 24
-    drawLocationRow(ctx, contentX, y, card.width - 96, footerText, COLOR.mid)
+  if (peopleNames.length > 0) {
+    y += 18
+    y = drawPeopleBlock(ctx, contentX, y, card.width - 96, peopleNames, {
+      color: COLOR.mid,
+      font: '500 27px Inter, sans-serif',
+      lineHeight: 37,
+      maxLines: 2,
+    })
+  }
+
+  if (moment.mood) {
+    y += 18
+    y += drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 28px Inter, sans-serif',
+      color: COLOR.text,
+      background: '#F5EBDD',
+      paddingX: 18,
+      height: 50,
+    })
+  }
+
+  if (moment.location) {
+    y += 20
+    drawLocationRow(ctx, contentX, y, card.width - 96, moment.location, COLOR.mid)
   }
 }
 
@@ -445,10 +565,11 @@ async function drawDark(canvas, moment) {
   canvas.width = width
   canvas.height = height
   const ctx = canvas.getContext('2d')
+  const peopleNames = getMomentPeopleNames(moment)
 
   drawBackground(ctx, 'dark', width, height)
 
-  const card = { x: 88, y: 174, width: 904, height: 1138, radius: 40 }
+  const card = { x: 88, y: 164, width: 904, height: 1268, radius: 40 }
 
   ctx.save()
   ctx.shadowColor = 'rgba(0, 0, 0, 0.32)'
@@ -470,7 +591,7 @@ async function drawDark(canvas, moment) {
   })
 
   const contentX = card.x + 46
-  let y = card.y + 646
+  let y = card.y + 686
 
   ctx.fillStyle = '#FFF4E6'
   ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
@@ -498,10 +619,30 @@ async function drawDark(canvas, moment) {
     y += songHeight
   }
 
-  const footerText = moment.location || null
-  if (footerText) {
-    y += 26
-    drawLocationRow(ctx, contentX, y, card.width - 92, footerText, 'rgba(245, 235, 221, 0.65)')
+  if (peopleNames.length > 0) {
+    y += 20
+    y = drawPeopleBlock(ctx, contentX, y, card.width - 92, peopleNames, {
+      color: 'rgba(245, 235, 221, 0.68)',
+      font: '500 27px Inter, sans-serif',
+      lineHeight: 37,
+      maxLines: 2,
+    })
+  }
+
+  if (moment.mood) {
+    y += 18
+    y += drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 28px Inter, sans-serif',
+      color: '#FFF4E6',
+      background: 'rgba(255, 244, 230, 0.1)',
+      paddingX: 18,
+      height: 50,
+    })
+  }
+
+  if (moment.location) {
+    y += 22
+    drawLocationRow(ctx, contentX, y, card.width - 92, moment.location, 'rgba(245, 235, 221, 0.65)')
   }
 }
 
