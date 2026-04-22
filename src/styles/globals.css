@@ -141,6 +141,30 @@
     line-height: 1.5;
   }
 
+  .stats-panel-surface {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%);
+    border: 1px solid rgba(160, 94, 44, 0.08);
+    border-radius: 22px;
+  }
+
+  .stats-panel-surface::before {
+    content: '';
+    position: absolute;
+    top: -28px;
+    right: -18px;
+    width: 104px;
+    height: 104px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%);
+    pointer-events: none;
+  }
+
+  .stats-panel-surface > * {
+    position: relative;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.18s ease both;
   }

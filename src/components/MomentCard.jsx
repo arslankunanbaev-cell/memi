@@ -37,11 +37,9 @@ function Avatar({ person, name, photoUrl, fallbackColor }) {
 function MusicBlock({ title, artist, cover }) {
   return (
     <div
-      className="flex items-center gap-3"
+      className="stats-panel-surface flex items-center gap-3"
       style={{
         marginTop: 12,
-        backgroundColor: 'var(--card-alt)',
-        borderRadius: 14,
         padding: '12px 14px',
       }}
     >

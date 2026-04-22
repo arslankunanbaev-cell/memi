@@ -392,8 +392,8 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           <SectionLabel>Трек</SectionLabel>
           {song ? (
             <div
-              className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--moment-surface)', borderRadius: 16, padding: '12px 14px', boxShadow: '0 2px 12px rgba(80,50,30,0.08)' }}
+              className="stats-panel-surface flex items-center gap-3"
+              style={{ padding: '12px 14px' }}
             >
               {song.cover ? (
                 <img src={song.cover} alt={song.name} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />

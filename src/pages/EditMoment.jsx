@@ -113,7 +113,6 @@ export default function EditMoment() {
   const allPeople       = useAppStore((s) => s.people)
   const moments         = useAppStore((s) => s.moments)
   const updateMomentStore = useAppStore((s) => s.updateMoment)
-  const addPerson       = useAppStore((s) => s.addPerson)
 
   const moment = moments.find((m) => m.id === id)
 
@@ -392,8 +391,8 @@ export default function EditMoment() {
           </p>
           {song ? (
             <div
-              className="flex items-center gap-3"
-              style={{ backgroundColor: 'var(--moment-surface)', borderRadius: 14, padding: '12px 14px', boxShadow: 'var(--shadow-card)' }}
+              className="stats-panel-surface flex items-center gap-3"
+              style={{ padding: '12px 14px' }}
             >
               {song.cover ? (
                 <img src={song.cover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />

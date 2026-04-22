@@ -96,12 +96,8 @@ function DetailChip({ children, emoji = false }) {
 function MusicCard({ title, artist, cover }) {
   return (
     <div
-      className="flex items-center gap-3"
-      style={{
-        backgroundColor: 'var(--moment-surface)',
-        borderRadius: 14,
-        padding: '12px 14px',
-      }}
+      className="stats-panel-surface flex items-center gap-3"
+      style={{ padding: '12px 14px' }}
     >
       {cover ? (
         <img src={cover} alt={title} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
