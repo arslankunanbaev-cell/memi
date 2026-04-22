@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { canShareFiles, createCanvasFile, getCardFilename, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
@@ -788,26 +789,50 @@ export default function StoryPreview() {
     setTemplate(nextTemplate)
   }
 
-  function handleDownload() {
+  async function shareCardFile(file) {
+    await navigator.share({
+      files: [file],
+    })
+  }
+
+  async function createCardFile() {
+    return createCanvasFile(canvasRef.current, getCardFilename(id))
+  }
+
+  async function handleDownload() {
     if (!canvasRef.current) return
     tgHaptic('medium')
 
-    const link = document.createElement('a')
-    link.download = `memi-${id?.slice(0, 8) ?? 'moment'}.jpg`
-    link.href = canvasRef.current.toDataURL('image/jpeg', 0.92)
-    link.click()
-  }
+    const file = await createCardFile()
+    if (!file) return
 
-  async function createShareFile() {
-    if (!canvasRef.current) return null
+    try {
+      if (shouldUseShareFallback(window.Telegram?.WebApp) && canShareFiles([file])) {
+        await shareCardFile(file)
+        return
+      }
 
-    const blob = await new Promise((resolve) => {
-      canvasRef.current.toBlob(resolve, 'image/jpeg', 0.92)
-    })
+      triggerBrowserDownload(file)
+    } catch (downloadError) {
+      if (downloadError?.name === 'AbortError') {
+        return
+      }
 
-    if (!blob) return null
+      console.error('[StoryPreview] download error:', downloadError)
 
-    return new File([blob], 'memi-moment.jpg', { type: 'image/jpeg' })
+      try {
+        if (canShareFiles([file])) {
+          await shareCardFile(file)
+          return
+        }
+      } catch (shareFallbackError) {
+        if (shareFallbackError?.name === 'AbortError') {
+          return
+        }
+
+        console.error('[StoryPreview] download fallback error:', shareFallbackError)
+      }
+    }
   }
 
   async function handleShare() {
@@ -815,13 +840,10 @@ export default function StoryPreview() {
     tgHaptic('light')
 
     try {
-      const file = await createShareFile()
+      const file = await createCardFile()
 
-      if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: moment?.title ?? 'Мой момент',
-        })
+      if (file && canShareFiles([file])) {
+        await shareCardFile(file)
         return
       }
     } catch (shareError) {
