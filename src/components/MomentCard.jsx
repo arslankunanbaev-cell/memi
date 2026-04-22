@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
@@ -35,6 +36,8 @@ function Avatar({ person, name, photoUrl, fallbackColor }) {
 }
 
 function MusicBlock({ title, artist, cover }) {
+  const safeCover = proxifyCoverUrl(cover)
+
   return (
     <div
       className="stats-panel-surface flex items-center gap-3"
@@ -43,9 +46,9 @@ function MusicBlock({ title, artist, cover }) {
         padding: '12px 14px',
       }}
     >
-      {cover ? (
+      {safeCover ? (
         <img
-          src={cover}
+          src={safeCover}
           alt={title}
           style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
         />

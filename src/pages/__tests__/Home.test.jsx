@@ -22,7 +22,7 @@ describe('Home', () => {
   })
 
   it('показывает обложку трека в карточке момента на главной', () => {
-    const songCover = 'https://cdn.example.com/song-cover.jpg'
+    const songCover = 'https://i.scdn.co/image/ab67616d0000b2731234567890abcdef12345678'
 
     useAppStore.setState({
       moments: [
@@ -42,7 +42,7 @@ describe('Home', () => {
 
     const cover = screen.getByAltText('Я найду тебя через века')
     expect(cover).toBeInTheDocument()
-    expect(cover).toHaveAttribute('src', songCover)
+    expect(cover).toHaveAttribute('src', `/api/image-proxy?url=${encodeURIComponent(songCover)}`)
   })
 
   it('показывает автора у момента друга в ленте', () => {

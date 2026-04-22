@@ -1,3 +1,5 @@
+import { proxifyCoverUrl } from './imageProxy'
+
 /**
  * musicCovers.js
  * Enriches track results with album art.
@@ -120,6 +122,10 @@ export async function enrichWithCover(track, artist) {
       ? { url: deezer.value, source: 'deezer' }
       : null)
     ?? { url: null, source: 'fallback' }
+
+  if (result.url) {
+    result.url = proxifyCoverUrl(result.url)
+  }
 
   console.log('[covers]', track, '-', artist, '→', result.source, result.url ? '✓' : '✗')
   coverCache.set(cacheKey, result)

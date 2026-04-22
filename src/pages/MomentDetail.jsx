@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, deleteMoment, saveCapsuleSlot } from '../lib/api'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
 
@@ -94,13 +95,15 @@ function DetailChip({ children, emoji = false }) {
 }
 
 function MusicCard({ title, artist, cover }) {
+  const safeCover = proxifyCoverUrl(cover)
+
   return (
     <div
       className="stats-panel-surface flex items-center gap-3"
       style={{ padding: '12px 14px' }}
     >
-      {cover ? (
-        <img src={cover} alt={title} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
+      {safeCover ? (
+        <img src={safeCover} alt={title} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
       ) : (
         <div
           className="flex items-center justify-center"

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { updateMoment as updateMomentApi, createPerson, uploadPhoto } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
@@ -149,6 +150,7 @@ export default function EditMoment() {
   const [saving, setSaving]         = useState(false)
   const [error, setError]           = useState(null)
   const [showAddPerson, setShowAddPerson] = useState(false)
+  const songCover = proxifyCoverUrl(song?.cover ?? null)
 
   if (!moment) {
     return (
@@ -399,8 +401,8 @@ export default function EditMoment() {
               className="stats-panel-surface flex items-center gap-3"
               style={{ padding: '12px 14px' }}
             >
-              {song.cover ? (
-                <img src={song.cover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
+              {songCover ? (
+                <img src={songCover} alt={song.name} style={{ width: 34, height: 34, borderRadius: 6, objectFit: 'cover', flexShrink: 0 }} />
               ) : (
                 <span style={{ fontSize: 22 }}>🎵</span>
               )}

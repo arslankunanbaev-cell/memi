@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import BottomSheet from './BottomSheet'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
 import { enrichWithCover, enrichTracksWithCovers, artistColor } from '../lib/musicCovers'
@@ -42,6 +43,7 @@ function TrackRow({ track, onAdd }) {
   }, [track.name, track.artist, track.cover])
 
   const showImg = cover && !imgError
+  const safeCover = proxifyCoverUrl(cover)
 
   return (
     <button
@@ -61,7 +63,7 @@ function TrackRow({ track, onAdd }) {
         />
       ) : showImg ? (
         <img
-          src={cover}
+          src={safeCover}
           alt={track.name}
           onError={() => setImgError(true)}
           style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}

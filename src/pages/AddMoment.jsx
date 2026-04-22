@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { tgHaptic } from '../lib/telegram'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { saveMoment, createPerson, addMomentParticipants } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
@@ -163,6 +164,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
+  const songCover = proxifyCoverUrl(song?.cover ?? null)
 
   const [visibility, setVisibility] = useState('private')
   const [taggedFriends, setTaggedFriends] = useState([])
@@ -404,8 +406,8 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
               className="stats-panel-surface flex items-center gap-3"
               style={{ padding: '12px 14px' }}
             >
-              {song.cover ? (
-                <img src={song.cover} alt={song.name} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+              {songCover ? (
+                <img src={songCover} alt={song.name} style={{ width: 38, height: 38, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
               ) : (
                 <div style={{
                   width: 38, height: 38, borderRadius: 8, flexShrink: 0,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
@@ -247,9 +248,11 @@ async function drawSongChip(ctx, x, y, width, moment, theme) {
   const coverSize = 86
   fillRoundRect(ctx, x, y, width, chipHeight, 30, theme.songBg)
 
-  if (moment.song_cover) {
+  const songCover = proxifyCoverUrl(moment.song_cover)
+
+  if (songCover) {
     try {
-      await drawPhoto(ctx, { photo_url: moment.song_cover }, coverX, coverY, coverSize, coverSize, 22, theme.dark)
+      await drawPhoto(ctx, { photo_url: songCover }, coverX, coverY, coverSize, coverSize, 22, theme.dark)
     } catch {
       fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 22, theme.songIconBg)
     }

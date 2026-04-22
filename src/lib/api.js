@@ -1,3 +1,4 @@
+import { normalizeMomentMedia } from './imageProxy'
 import { assertSupabase } from './supabase'
 
 // Signed URL lifetime: 10 years in seconds.
@@ -25,12 +26,12 @@ export function normalizeMomentRecord(moment, overrides = {}) {
   const people = extractMomentPeople(moment)
   const taggedFriends = extractMomentTaggedFriends(moment, people)
 
-  return {
+  return normalizeMomentMedia({
     ...moment,
     ...overrides,
     people,
     taggedFriends,
-  }
+  })
 }
 
 export function mergeMomentCollections(...collections) {
@@ -41,7 +42,7 @@ export function mergeMomentCollections(...collections) {
     for (const moment of collection ?? []) {
       if (!moment?.id || seen.has(moment.id)) continue
       seen.add(moment.id)
-      merged.push(moment)
+      merged.push(normalizeMomentMedia(moment))
     }
   }
 
@@ -207,7 +208,7 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     if (linkError) throw linkError
   }
 
-  return moment
+  return normalizeMomentMedia(moment)
 }
 
 export async function updateMoment(id, payload) {
@@ -215,7 +216,7 @@ export async function updateMoment(id, payload) {
   const { data, error } = await sb
     .from('moments').update(payload).eq('id', id).select().single()
   if (error) throw error
-  return data
+  return normalizeMomentMedia(data)
 }
 
 export async function deleteMoment(id) {
@@ -295,7 +296,7 @@ export async function getMomentsByPerson(userId, personId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (momError) throw momError
-  return moments ?? []
+  return (moments ?? []).map((moment) => normalizeMomentMedia(moment))
 }
 
 // ── Friends ───────────────────────────────────────────────────────────────────
@@ -413,7 +414,7 @@ export async function getFriendsFeedMoments(friendIds) {
 
   if (error) throw error
 
-  return (data ?? []).map((moment) => ({
+  return (data ?? []).map((moment) => normalizeMomentMedia({
     ...moment,
     isFriendFeed: true,
   }))
@@ -450,7 +451,13 @@ export async function getUserProfile(userId) {
       }),
     ).size
     const friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
-    return { user, moments, total, monthCount, friendCount }
+    return {
+      user,
+      moments: moments.map((moment) => normalizeMomentMedia(moment)),
+      total,
+      monthCount,
+      friendCount,
+    }
   } catch {
     return { user: null, moments: [], total: 0, monthCount: 0, friendCount: 0 }
   }
@@ -466,7 +473,7 @@ export async function getPublicMoments(userId) {
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
     if (error) return []
-    return data ?? []
+    return (data ?? []).map((moment) => normalizeMomentMedia(moment))
   } catch {
     return []
   }
@@ -484,10 +491,10 @@ export async function getCapsule(userId) {
   if (error) throw error
   return (data ?? []).map((row) => ({
     slotIndex: row.slot_index,
-    moment: {
+    moment: normalizeMomentMedia({
       ...row.moment,
       people: (row.moment?.people ?? []).map((mp) => mp.person),
-    },
+    }),
   }))
 }
 
@@ -564,5 +571,5 @@ export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
     .eq('user_id', currentUserId)
     .order('created_at', { ascending: false })
   if (momErr) throw momErr
-  return moments ?? []
+  return (moments ?? []).map((moment) => normalizeMomentMedia(moment))
 }
