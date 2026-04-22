@@ -1,4 +1,5 @@
 import { normalizeMomentMedia, normalizePhotoEntity } from './imageProxy'
+import { compareMomentsByAddedAt, compareMomentsByDisplayAt, getMomentDisplayAt } from './momentTime'
 import { assertSupabase } from './supabase'
 
 // Signed URL lifetime: 10 years in seconds.
@@ -46,7 +47,16 @@ export function mergeMomentCollections(...collections) {
     }
   }
 
-  return merged.sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+  return merged.sort(compareMomentsByAddedAt)
+}
+
+function isMissingMomentAtColumn(error) {
+  const details = [error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return details.includes('moment_at') && (details.includes('column') || details.includes('schema cache'))
 }
 
 // ── Helper: upload a photo and return { photo_url, photo_path } ───────────────
@@ -194,11 +204,25 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     photo_path = result.photo_path
   }
 
-  const { data: moment, error: momentError } = await sb
+  let { data: moment, error: momentError } = await sb
     .from('moments')
     .insert({ user_id: userId, ...fields, photo_url, photo_path })
     .select()
     .single()
+
+  if (momentError && isMissingMomentAtColumn(momentError) && fields?.moment_at) {
+    const legacyFields = {
+      ...fields,
+      created_at: fields.moment_at,
+    }
+    delete legacyFields.moment_at
+
+    ;({ data: moment, error: momentError } = await sb
+      .from('moments')
+      .insert({ user_id: userId, ...legacyFields, photo_url, photo_path })
+      .select()
+      .single())
+  }
 
   if (momentError) throw momentError
 
@@ -314,7 +338,9 @@ export async function getMomentsByPerson(userId, personId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (momError) throw momError
-  return (moments ?? []).map((moment) => normalizeMomentMedia(moment))
+  return (moments ?? [])
+    .map((moment) => normalizeMomentMedia(moment))
+    .sort(compareMomentsByDisplayAt)
 }
 
 // ── Friends ───────────────────────────────────────────────────────────────────
@@ -446,7 +472,7 @@ export async function getUserProfile(userId) {
     const [userResult, momentsResult, requesterCountResult, receiverCountResult] = await Promise.all([
       sb.rpc('get_user_public', { p_user_id: userId }),
       sb.from('moments')
-        .select('id, title, photo_url, created_at, visibility', { count: 'exact' })
+        .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
         .eq('user_id', userId)
         .eq('visibility', 'public')
         .order('created_at', { ascending: false }),
@@ -460,18 +486,19 @@ export async function getUserProfile(userId) {
         .eq('receiver_id', userId),
     ])
     const user = userResult.data?.[0] ?? null
-    const moments = momentsResult.data ?? []
+    const moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
+    const sortedMoments = [...moments].sort(compareMomentsByDisplayAt)
     const total = momentsResult.count ?? 0
     const monthCount = new Set(
-      moments.map((moment) => {
-        const date = new Date(moment.created_at)
+      sortedMoments.map((moment) => {
+        const date = new Date(getMomentDisplayAt(moment))
         return `${date.getFullYear()}-${date.getMonth()}`
       }),
     ).size
     const friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
     return {
       user: normalizePhotoEntity(user),
-      moments: moments.map((moment) => normalizeMomentMedia(moment)),
+      moments: sortedMoments,
       total,
       monthCount,
       friendCount,
@@ -486,12 +513,14 @@ export async function getPublicMoments(userId) {
   try {
     const { data, error } = await sb
       .from('moments')
-      .select('id, title, photo_url, created_at, visibility')
+      .select('id, title, photo_url, created_at, moment_at, visibility')
       .eq('user_id', userId)
       .eq('visibility', 'public')
       .order('created_at', { ascending: false })
     if (error) return []
-    return (data ?? []).map((moment) => normalizeMomentMedia(moment))
+    return (data ?? [])
+      .map((moment) => normalizeMomentMedia(moment))
+      .sort(compareMomentsByDisplayAt)
   } catch {
     return []
   }
@@ -584,10 +613,12 @@ export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
   const momentIds = [...new Set(links.map((l) => l.moment_id))]
   const { data: moments, error: momErr } = await sb
     .from('moments')
-    .select('id, title, photo_url, created_at')
+    .select('id, title, photo_url, created_at, moment_at')
     .in('id', momentIds)
     .eq('user_id', currentUserId)
     .order('created_at', { ascending: false })
   if (momErr) throw momErr
-  return (moments ?? []).map((moment) => normalizeMomentMedia(moment))
+  return (moments ?? [])
+    .map((moment) => normalizeMomentMedia(moment))
+    .sort(compareMomentsByDisplayAt)
 }

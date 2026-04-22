@@ -7,6 +7,7 @@ import {
   removeFriend,
   sendFriendRequest,
 } from '../lib/api'
+import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 
@@ -191,7 +192,7 @@ function sinceLabel(createdAt) {
 function uniqueMonths(moments) {
   return new Set(
     (moments ?? []).map((moment) => {
-      const date = new Date(moment.created_at)
+      const date = new Date(getMomentDisplayAt(moment))
       return `${date.getFullYear()}-${date.getMonth()}`
     }),
   ).size
@@ -385,7 +386,7 @@ function FeaturedMomentCard({ moment, onClick }) {
           {moment.title || 'Без названия'}
         </p>
           <p className="font-sans" style={{ marginTop: 4, fontSize: 12, color: 'var(--mid)' }}>
-            {sinceLabel(moment.created_at)}
+            {sinceLabel(getMomentDisplayAt(moment))}
           </p>
         </div>
       </div>
@@ -471,7 +472,7 @@ function SharedMomentRow({ moment, sourceLabel, onClick }) {
             color: 'var(--mid)',
           }}
         >
-          {sinceLabel(moment.created_at)}
+          {sinceLabel(getMomentDisplayAt(moment))}
         </p>
       </div>
     </button>
@@ -867,7 +868,7 @@ export function PublicProfileContent({
                       className="font-sans"
                       style={{ marginTop: 3, fontSize: 12, color: 'var(--mid)' }}
                     >
-                      {sinceLabel(moment.created_at)}
+                      {sinceLabel(getMomentDisplayAt(moment))}
                     </p>
                   </div>
                   </MomentRowTag>
@@ -988,7 +989,7 @@ export default function PublicProfile() {
 
         return hasLinkedPerson || hasTaggedFriend || isSharedByFriend
       })
-      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+      .sort(compareMomentsByDisplayAt)
       .filter((moment, index, list) => (
         index === list.findIndex((entry) => entry.id === moment.id)
       ))

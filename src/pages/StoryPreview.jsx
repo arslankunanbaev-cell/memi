@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { canShareFiles, createCanvasFile, getCardFilename, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { proxifyCoverUrl } from '../lib/imageProxy'
+import { getMomentDisplayAt } from '../lib/momentTime'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
@@ -26,6 +27,8 @@ const COLOR = {
 }
 
 function formatStoryDate(iso) {
+  if (!iso) return ''
+
   const date = new Date(iso)
   const weekday = date.toLocaleDateString('ru-RU', { weekday: 'short' }).replace('.', '')
   const dayMonth = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
@@ -408,7 +411,7 @@ async function drawPolaroid(canvas, moment) {
 
   drawBackground(ctx, 'polaroid', width, height)
 
-  const dateText = formatStoryDate(moment.created_at)
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
   drawCanvasHeader(ctx, {
     logoX: 84,
     logoY: 82,
@@ -500,7 +503,7 @@ async function drawMinimal(canvas, moment) {
   const photoY = 164
   const photoWidth = 936
   const photoHeight = 826
-  const dateText = formatStoryDate(moment.created_at)
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
 
   drawCanvasHeader(ctx, {
     logoX: 72,
@@ -580,7 +583,7 @@ async function drawDark(canvas, moment) {
 
   drawBackground(ctx, 'dark', width, height)
 
-  const dateText = formatStoryDate(moment.created_at)
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
   const photoHeight = 842
   await drawPhoto(ctx, moment, 0, 0, width, photoHeight, 0, true)
 

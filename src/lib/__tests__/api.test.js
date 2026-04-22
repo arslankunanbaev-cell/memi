@@ -163,6 +163,35 @@ describe('saveMoment', () => {
     expect(result.id).toBe('moment-1')
   })
 
+  it('falls back to legacy created_at when moment_at is unavailable', async () => {
+    const savedMoment = { id: 'moment-legacy', created_at: '2026-04-20T12:00:00Z' }
+    mockInsert.mockReturnValue({ select: () => ({ single: mockSingle }) })
+    mockSingle
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: "Could not find the 'moment_at' column of 'moments' in the schema cache" },
+      })
+      .mockResolvedValueOnce({ data: savedMoment, error: null })
+
+    const result = await saveMoment({
+      userId: 'user-1',
+      fields: {
+        ...fields,
+        created_at: '2026-04-23T09:30:00Z',
+        moment_at: '2026-04-20T12:00:00Z',
+      },
+      photoFile: null,
+      peopleIds: [],
+    })
+
+    expect(result.id).toBe('moment-legacy')
+    expect(mockInsert).toHaveBeenCalledTimes(2)
+    expect(mockInsert.mock.calls[1][0]).toMatchObject({
+      created_at: '2026-04-20T12:00:00Z',
+    })
+    expect(mockInsert.mock.calls[1][0].moment_at).toBeUndefined()
+  })
+
   it('загружает фото и прикрепляет URL к моменту', async () => {
     const savedMoment = { id: 'moment-2', photo_url: 'https://cdn.example.com/photo.jpg' }
     mockUpload.mockResolvedValue({ error: null })

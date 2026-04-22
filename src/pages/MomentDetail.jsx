@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, deleteMoment, getMomentDetails, saveCapsuleSlot } from '../lib/api'
 import { proxifyCoverUrl } from '../lib/imageProxy'
+import { getMomentDisplayAt } from '../lib/momentTime'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
 
@@ -188,6 +189,7 @@ export default function MomentDetail() {
     || location.state?.forceFetch === true
     || storeMoment?.isFriendFeed === true
   const moment = remoteMoment ?? storeMoment ?? routePreviewMoment
+  const momentDisplayAt = getMomentDisplayAt(moment)
 
   const isOwn = !moment?.isShared && moment?.user_id === currentUser?.id
 
@@ -380,7 +382,7 @@ export default function MomentDetail() {
 
         <div className="px-4" style={{ paddingTop: 20 }}>
           <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
-            {formatFull(moment.created_at)}
+            {formatFull(momentDisplayAt)}
           </p>
 
           {moment.description && (

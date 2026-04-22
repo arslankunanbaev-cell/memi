@@ -200,6 +200,10 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       if (!currentUser) throw new Error('currentUser не загружен.')
       if (!currentUser.id) throw new Error(`currentUser.id отсутствует: ${JSON.stringify(currentUser)}`)
 
+      const now = new Date()
+      const [y, m, d] = momentDate.split('-').map(Number)
+      const momentAt = new Date(y, m - 1, d, now.getHours(), now.getMinutes()).toISOString()
+
       const fields = {
         title: title.trim(),
         description: body.trim() || null,
@@ -209,11 +213,8 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
-        created_at: (() => {
-          const now = new Date()
-          const [y, m, d] = momentDate.split('-').map(Number)
-          return new Date(y, m - 1, d, now.getHours(), now.getMinutes()).toISOString()
-        })(),
+        created_at: now.toISOString(),
+        moment_at: momentAt,
       }
       if (location.trim()) addRecentLocation(location.trim())
 

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import { deletePerson, updatePerson, uploadPhoto } from '../lib/api'
+import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { assertSupabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
@@ -19,7 +20,7 @@ function yearsKnown(metYear) {
 function uniqueMonths(moments) {
   return new Set(
     moments.map((moment) => {
-      const date = new Date(moment.created_at)
+      const date = new Date(getMomentDisplayAt(moment))
       return `${date.getFullYear()}-${date.getMonth()}`
     }),
   ).size
@@ -225,7 +226,7 @@ function PersonMomentCard({ moment, featured = false, onClick }) {
         }}
       />
 
-      {moment.created_at && (
+      {getMomentDisplayAt(moment) && (
         <div style={{ position: 'absolute', top: 12, left: 12 }}>
           <span
             className="font-sans"
@@ -240,7 +241,7 @@ function PersonMomentCard({ moment, featured = false, onClick }) {
               padding: '5px 10px',
             }}
           >
-            {formatMomentDate(moment.created_at)}
+            {formatMomentDate(getMomentDisplayAt(moment))}
           </span>
         </div>
       )}
@@ -627,9 +628,12 @@ export default function PersonDetail() {
     )
   }
 
-  const personMoments = moments.filter((moment) => (
-    (moment.people ?? []).some((entry) => entry.id === id)
-  ))
+  const personMoments = moments
+    .filter((moment) => (
+      (moment.people ?? []).some((entry) => entry.id === id)
+    ))
+    .slice()
+    .sort(compareMomentsByDisplayAt)
   const known = yearsKnown(person.met_year)
   const momentCount = personMoments.length
   const statItems = [

@@ -3,6 +3,7 @@ import { pluralRu } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import FAB from '../components/FAB'
 import MomentCard from '../components/MomentCard'
+import { getMomentAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 
@@ -38,7 +39,7 @@ function groupByDay(moments) {
   const groups = new Map()
 
   for (const moment of moments) {
-    const date = new Date(moment.created_at)
+    const date = new Date(getMomentAddedAt(moment))
     date.setHours(0, 0, 0, 0)
 
     const key = date.toISOString()
@@ -51,7 +52,7 @@ function groupByDay(moments) {
   }
 
   return Array.from(groups.values()).map((items) => ({
-    label: dayLabel(items[0].created_at),
+    label: dayLabel(getMomentAddedAt(items[0])),
     items,
   }))
 }

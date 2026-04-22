@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import { proxifyCoverUrl } from '../lib/imageProxy'
+import { getMomentDisplayAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
+  if (!iso) return ''
+
   return new Date(iso).toLocaleTimeString('ru-RU', {
     hour: '2-digit',
     minute: '2-digit',
@@ -226,7 +229,7 @@ export default function MomentCard({ moment }) {
               fontWeight: 600,
             }}
           >
-            {formatTime(moment.created_at)}
+            {formatTime(getMomentDisplayAt(moment))}
           </div>
         </div>
       </div>

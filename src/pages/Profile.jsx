@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { deleteCapsuleSlot, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
+import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
@@ -10,7 +11,7 @@ import { PublicProfileContent } from './PublicProfile'
 function uniqueMonths(moments) {
   return new Set(
     moments.map((moment) => {
-      const date = new Date(moment.created_at)
+      const date = new Date(getMomentDisplayAt(moment))
       return `${date.getFullYear()}-${date.getMonth()}`
     }),
   ).size
@@ -210,7 +211,10 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
 function PickMomentSheet({ onClose, onPick, onCreateNew }) {
   const moments = useAppStore((state) => state.moments)
   const currentUser = useAppStore((state) => state.currentUser)
-  const ownMoments = moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id)
+  const ownMoments = moments
+    .filter((moment) => !moment.isShared && moment.user_id === currentUser?.id)
+    .slice()
+    .sort(compareMomentsByDisplayAt)
 
   return (
     <BottomSheet onClose={onClose} title="В капсулу">
@@ -583,7 +587,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
                         {moment.title || 'Без названия'}
                       </p>
                       <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 2 }}>
-                        {sinceLabel(moment.created_at)}
+                        {sinceLabel(getMomentDisplayAt(moment))}
                       </p>
                     </div>
 
@@ -742,7 +746,10 @@ export default function Profile() {
   const [activeScreen, setActiveScreen] = useState(0)
 
   const ownMoments = useMemo(
-    () => moments.filter((moment) => !moment.isShared && moment.user_id === currentUser?.id),
+    () => moments
+      .filter((moment) => !moment.isShared && moment.user_id === currentUser?.id)
+      .slice()
+      .sort(compareMomentsByDisplayAt),
     [moments, currentUser?.id],
   )
   const publicMoments = useMemo(

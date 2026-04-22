@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
@@ -228,7 +229,7 @@ export default function Archive() {
   )
 
   const monthKeys = useMemo(() => {
-    const keys = [...new Set(moments.map((moment) => monthKey(moment.created_at)))]
+    const keys = [...new Set(moments.map((moment) => monthKey(getMomentDisplayAt(moment))))]
     keys.sort((left, right) => right.localeCompare(left))
 
     if (keys.length === 0) {
@@ -245,7 +246,7 @@ export default function Archive() {
   const resolvedActiveMonth = monthKeys.includes(activeMonth) ? activeMonth : monthKeys[0]
 
   const monthMoments = useMemo(() => {
-    let list = moments.filter((moment) => monthKey(moment.created_at) === resolvedActiveMonth)
+    let list = moments.filter((moment) => monthKey(getMomentDisplayAt(moment)) === resolvedActiveMonth)
 
     if (filterPeople.length > 0) {
       list = list.filter((moment) =>
@@ -253,7 +254,7 @@ export default function Archive() {
       )
     }
 
-    return list
+    return list.slice().sort(compareMomentsByDisplayAt)
   }, [moments, resolvedActiveMonth, filterPeople])
 
   const stats = useMemo(() => ({
