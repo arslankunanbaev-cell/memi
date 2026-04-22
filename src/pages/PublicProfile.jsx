@@ -188,7 +188,7 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
-function compactSinceLabel(createdAt) {
+function _compactSinceLabel(createdAt) {
   if (!createdAt) return 'сейчас'
 
   const value = new Intl.DateTimeFormat('ru-RU', {
@@ -228,14 +228,6 @@ function MoreIcon({ color = '#3D2B1A' }) {
       <circle cx="18" cy="12" r="1.8" fill={color} />
     </svg>
   )
-}
-
-const NATIVE_CHECK_VALUE_STYLE = {
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontSize: 34,
-  fontWeight: 500,
-  letterSpacing: '-0.04em',
-  lineHeight: 0.95,
 }
 
 function FriendMenuAction({ label, danger = false, onClick, children, disabled = false }) {
@@ -469,7 +461,6 @@ export function PublicProfileContent({
   onLinkedPersonPress,
   onLinkPersonPress,
   actionButton = null,
-  statusStat = null,
   topContent = null,
   contentPaddingBottom = 40,
   sharedMoments = [],
@@ -479,7 +470,7 @@ export function PublicProfileContent({
   if (!profileUser) return null
 
   const name = displayName || linkedPerson?.name || profileUser.name || 'Пользователь'
-  const since = sinceLabel(profileUser.created_at)
+  const since = null
   const profileEnabled = profileUser.public_profile_enabled === true
   const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
   const featuredMoment = profileEnabled
@@ -489,28 +480,11 @@ export function PublicProfileContent({
     ? moments.filter((moment) => moment.id !== featuredMoment.id)
     : moments
   const totalMoments = profileEnabled ? (publicMomentsTotal ?? moments.length) : 0
+  const momentCountLabel = pluralRu(totalMoments, 'момент', 'момента', 'моментов')
   const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
     : people.length > 0 && typeof onLinkPersonPress === 'function'
-  const resolvedStatusStat = statusStat ?? (
-    profileEnabled
-      ? { value: '✓', label: 'открыт', valueColor: 'var(--deep)', valueStyle: NATIVE_CHECK_VALUE_STYLE }
-      : { value: '○', label: 'скрыт', valueColor: 'var(--soft)' }
-  )
-  const stats = [
-    {
-      value: String(totalMoments),
-      label: pluralRu(totalMoments, 'момент', 'момента', 'моментов'),
-      valueColor: 'var(--accent)',
-    },
-    {
-      value: compactSinceLabel(profileUser.created_at),
-      label: 'с нами с',
-      valueColor: 'var(--accent)',
-    },
-    resolvedStatusStat,
-  ]
 
   return (
     <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
@@ -645,55 +619,66 @@ export function PublicProfileContent({
           <div
             style={{
               marginTop: 16,
-              backgroundColor: 'var(--base)',
-              borderRadius: 20,
+              position: 'relative',
               overflow: 'hidden',
+              background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
+              borderRadius: 22,
+              padding: '18px 18px 16px',
               border: '1px solid rgba(160, 94, 44, 0.08)',
             }}
           >
-            <div className="grid grid-cols-3">
-              {stats.map((item, index) => {
-                const isLongValue = String(item.value).length > 6
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: -28,
+                right: -18,
+                width: 104,
+                height: 104,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
+              }}
+            />
 
-                return (
-                  <div
-                    key={`${item.label}-${index}`}
-                    className="flex flex-col items-center justify-center"
-                    style={{
-                      minHeight: 90,
-                      padding: '14px 10px 13px',
-                      borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
-                    }}
-                  >
-                    <span
-                      className="font-sans"
-                      style={{
-                        color: item.valueColor ?? 'var(--accent)',
-                        fontSize: isLongValue ? 20 : 30,
-                        fontWeight: 700,
-                        lineHeight: 1.05,
-                        textAlign: 'center',
-                        ...(item.valueStyle ?? {}),
-                      }}
-                    >
-                      {item.value}
-                    </span>
-                    <span
-                      className="font-sans"
-                      style={{
-                        marginTop: 8,
-                        fontSize: 11,
-                        fontWeight: 500,
-                        lineHeight: 1.25,
-                        color: 'var(--mid)',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                )
-              })}
+            <div style={{ position: 'relative' }}>
+              <p
+                className="font-sans"
+                style={{
+                  margin: 0,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  letterSpacing: '0.02em',
+                  color: 'var(--mid)',
+                }}
+              >
+                Моменты
+              </p>
+
+              <div className="flex items-end gap-3" style={{ marginTop: 10 }}>
+                <span
+                  className="font-sans"
+                  style={{
+                    color: 'var(--accent)',
+                    fontSize: 42,
+                    fontWeight: 700,
+                    lineHeight: 0.9,
+                  }}
+                >
+                  {totalMoments}
+                </span>
+                <span
+                  className="font-sans"
+                  style={{
+                    paddingBottom: 4,
+                    fontSize: 17,
+                    fontWeight: 600,
+                    lineHeight: 1.1,
+                    color: 'var(--deep)',
+                  }}
+                >
+                  {momentCountLabel}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -1096,11 +1081,6 @@ export default function PublicProfile() {
   }
 
   const friendButtonLabel = friendSent ? 'Запрос отправлен' : 'Добавить в друзья'
-  const relationshipStat = isAlreadyFriend
-    ? { value: '✓', label: 'друг', valueColor: 'var(--deep)', valueStyle: NATIVE_CHECK_VALUE_STYLE }
-    : friendSent
-      ? { value: '…', label: 'запрос', valueColor: 'var(--mid)' }
-      : { value: '+', label: 'добавить', valueColor: 'var(--accent)' }
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
@@ -1174,7 +1154,6 @@ export default function PublicProfile() {
         linkedPerson={linkedPerson}
         onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}
         onLinkPersonPress={() => setShowLinkSheet(true)}
-        statusStat={relationshipStat}
         actionButton={!isAlreadyFriend ? (
           <button
             type="button"
