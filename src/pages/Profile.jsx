@@ -7,15 +7,6 @@ import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 import { PublicProfileContent } from './PublicProfile'
 
-function uniqueMonths(moments) {
-  return new Set(
-    moments.map((moment) => {
-      const date = new Date(moment.created_at)
-      return `${date.getFullYear()}-${date.getMonth()}`
-    }),
-  ).size
-}
-
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
 
@@ -709,7 +700,6 @@ export default function Profile() {
   const currentUser = useAppStore((state) => state.currentUser)
   const setCurrentUser = useAppStore((state) => state.setCurrentUser)
   const moments = useAppStore((state) => state.moments)
-  const people = useAppStore((state) => state.people)
   const capsule = useAppStore((state) => state.capsule)
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
@@ -730,11 +720,8 @@ export default function Profile() {
     [ownMoments],
   )
 
-  const stats = useMemo(() => ({
-    total: ownMoments.length,
-    months: uniqueMonths(ownMoments),
-    people: people.length,
-  }), [ownMoments, people])
+  const totalMoments = ownMoments.length
+  const momentCountLabel = pluralRu(totalMoments, 'момент', 'момента', 'моментов')
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
 
   async function handleAddToCapsule(slotIndex, moment) {
@@ -777,7 +764,6 @@ export default function Profile() {
   }
 
   const name = currentUser?.name || '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c'
-  const since = sinceLabel(currentUser?.created_at)
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
@@ -830,33 +816,73 @@ export default function Profile() {
                     <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 20, fontWeight: 700, margin: 0 }}>
                       {name}
                     </p>
-                    {since && (
-                      <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 3 }}>
-                        с memi с {since}
-                      </p>
-                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2" style={{ marginTop: 18 }}>
-                  {[
-                    { value: stats.total, label: pluralRu(stats.total, 'момент', 'момента', 'моментов') },
-                    { value: stats.months, label: pluralRu(stats.months, 'месяц', 'месяца', 'месяцев') },
-                    { value: stats.people, label: pluralRu(stats.people, 'человек', 'человека', 'человек') },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex flex-col items-center rounded-[14px]"
-                      style={{ backgroundColor: 'var(--base)', padding: '12px 8px' }}
+                <div
+                  style={{
+                    marginTop: 18,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
+                    borderRadius: 22,
+                    padding: '18px 18px 16px',
+                    border: '1px solid rgba(160, 94, 44, 0.08)',
+                  }}
+                >
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: 'absolute',
+                      top: -28,
+                      right: -18,
+                      width: 104,
+                      height: 104,
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
+                    }}
+                  />
+
+                  <div style={{ position: 'relative' }}>
+                    <p
+                      className="font-sans"
+                      style={{
+                        margin: 0,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        letterSpacing: '0.02em',
+                        color: 'var(--mid)',
+                      }}
                     >
-                      <span className="font-serif" style={{ color: 'var(--accent)', fontSize: 24, fontWeight: 700, lineHeight: 1 }}>
-                        {item.value}
+                      Моменты
+                    </p>
+
+                    <div className="flex items-end gap-3" style={{ marginTop: 10 }}>
+                      <span
+                        className="font-sans"
+                        style={{
+                          color: 'var(--accent)',
+                          fontSize: 42,
+                          fontWeight: 700,
+                          lineHeight: 0.9,
+                        }}
+                      >
+                        {totalMoments}
                       </span>
-                      <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 4 }}>
-                        {item.label}
+                      <span
+                        className="font-sans"
+                        style={{
+                          paddingBottom: 4,
+                          fontSize: 17,
+                          fontWeight: 600,
+                          lineHeight: 1.1,
+                          color: 'var(--deep)',
+                        }}
+                      >
+                        {momentCountLabel}
                       </span>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </section>
 
@@ -924,11 +950,6 @@ export default function Profile() {
               moments={publicMoments}
               publicMomentsTotal={publicMoments.length}
               displayName={name}
-              statusStat={{
-                value: publicProfileEnabled ? '✓' : '○',
-                label: publicProfileEnabled ? 'открыт' : 'скрыт',
-                valueColor: publicProfileEnabled ? 'var(--deep)' : 'var(--soft)',
-              }}
               topContent={(
                 <PublicPreviewSettingsCard
                   checked={publicProfileEnabled}
