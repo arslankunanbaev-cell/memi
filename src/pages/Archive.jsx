@@ -1,27 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import { useAppStore } from '../store/useAppStore'
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
-const STOP_WORDS = new Set(['в', 'на', 'и', 'с', 'а', 'но', 'или', 'что', 'как', 'это', 'я', 'ты', 'он', 'она', 'мы', 'вы', 'они', 'не', 'по', 'за', 'до', 'из', 'от', 'у', 'к', 'со', 'для', 'про'])
-
-function topWord(moments) {
-  const freq = {}
-
-  for (const moment of moments) {
-    for (const rawWord of (moment.title ?? '').toLowerCase().split(/\s+/)) {
-      const word = rawWord.replace(/[^\p{L}\p{N}-]/gu, '')
-      if (word.length > 2 && !STOP_WORDS.has(word)) {
-        freq[word] = (freq[word] ?? 0) + 1
-      }
-    }
-  }
-
-  return Object.entries(freq).sort((left, right) => right[1] - left[1])[0]?.[0] ?? '—'
-}
-
 function monthKey(iso) {
   const date = new Date(iso)
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -259,15 +242,10 @@ export default function Archive() {
   const [activeMonth, setActiveMonth] = useState(monthKeys[0])
   const [showFilter, setShowFilter] = useState(false)
   const [filterPeople, setFilterPeople] = useState([])
-
-  useEffect(() => {
-    if (!monthKeys.includes(activeMonth)) {
-      setActiveMonth(monthKeys[0])
-    }
-  }, [activeMonth, monthKeys])
+  const resolvedActiveMonth = monthKeys.includes(activeMonth) ? activeMonth : monthKeys[0]
 
   const monthMoments = useMemo(() => {
-    let list = moments.filter((moment) => monthKey(moment.created_at) === activeMonth)
+    let list = moments.filter((moment) => monthKey(moment.created_at) === resolvedActiveMonth)
 
     if (filterPeople.length > 0) {
       list = list.filter((moment) =>
@@ -276,12 +254,11 @@ export default function Archive() {
     }
 
     return list
-  }, [moments, activeMonth, filterPeople])
+  }, [moments, resolvedActiveMonth, filterPeople])
 
   const stats = useMemo(() => ({
     count: monthMoments.length,
     people: uniquePeopleCount(monthMoments),
-    word: topWord(monthMoments),
   }), [monthMoments])
 
   return (
@@ -302,7 +279,7 @@ export default function Archive() {
         <div className="flex items-center justify-between gap-3">
           <div className="hide-scrollbar flex items-center gap-2 overflow-x-auto">
             {monthKeys.map((key) => {
-              const active = key === activeMonth
+              const active = key === resolvedActiveMonth
 
               return (
                 <button
@@ -413,33 +390,72 @@ export default function Archive() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 px-4" style={{ paddingBottom: 20 }}>
-        {[
-          { label: 'Моментов', value: stats.count, serif: false },
-          { label: 'Людей', value: stats.people, serif: false },
-          { label: 'Слово', value: stats.word, serif: true },
-        ].map((card) => (
+      <div className="px-4" style={{ paddingBottom: 20 }}>
+        <div
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
+            borderRadius: 22,
+            border: '1px solid rgba(160, 94, 44, 0.08)',
+          }}
+        >
           <div
-            key={card.label}
-            className="surface-card flex flex-col items-center rounded-2xl"
-            style={{ padding: '14px 10px', backgroundColor: 'var(--moment-surface)' }}
-          >
-            <span
-              className={card.serif ? 'font-serif' : 'font-sans'}
-              style={{
-                color: 'var(--accent)',
-                fontSize: card.serif ? 22 : 28,
-                fontWeight: 700,
-                lineHeight: 1.05,
-              }}
-            >
-              {card.value}
-            </span>
-            <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, fontWeight: 500, marginTop: 4 }}>
-              {card.label}
-            </span>
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -28,
+              right: -18,
+              width: 104,
+              height: 104,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
+            }}
+          />
+
+          <div className="grid grid-cols-2" style={{ position: 'relative' }}>
+            {[
+              { label: 'Моментов', value: stats.count },
+              { label: 'Людей', value: stats.people },
+            ].map((card, index) => (
+              <div
+                key={card.label}
+                className="flex flex-col items-center justify-center"
+                style={{
+                  minHeight: 94,
+                  padding: '16px 10px 14px',
+                  borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
+                }}
+              >
+                <span
+                  className="font-sans"
+                  style={{
+                    color: 'var(--accent)',
+                    fontSize: 32,
+                    fontWeight: 700,
+                    lineHeight: 0.95,
+                    textAlign: 'center',
+                  }}
+                >
+                  {card.value}
+                </span>
+                <span
+                  className="font-sans"
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    lineHeight: 1.2,
+                    color: 'var(--deep)',
+                    textAlign: 'center',
+                  }}
+                >
+                  {card.label}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
