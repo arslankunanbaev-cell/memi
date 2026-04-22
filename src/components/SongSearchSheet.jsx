@@ -27,6 +27,8 @@ function TrackRow({ track, onAdd }) {
   const [imgError, setImgError] = useState(false)
 
   useEffect(() => {
+    setImgError(false)
+
     if (track.cover) {
       setCover(track.cover)
       setLoading(false)

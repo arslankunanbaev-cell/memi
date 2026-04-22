@@ -9,6 +9,7 @@ import { proxifyCoverUrl } from './imageProxy'
  */
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? ''
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 
 // ── In-memory cover cache (persists for app lifetime) ─────────────────────────
 const coverCache = new Map()
@@ -58,7 +59,15 @@ async function fetchSpotifyCover(track, artist) {
   })
   const json = await safeFetch(
     `${SUPABASE_URL}/functions/v1/spotify-cover?${params}`,
-    { timeout: 6000 }
+    {
+      timeout: 6000,
+      headers: SUPABASE_ANON_KEY
+        ? {
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            apikey: SUPABASE_ANON_KEY,
+          }
+        : undefined,
+    }
   )
   return json?.url ?? null
 }
