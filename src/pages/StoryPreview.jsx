@@ -434,7 +434,7 @@ async function drawPolaroid(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 20
+    y += 28
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -518,7 +518,7 @@ async function drawMinimal(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 20
+    y += 28
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -612,7 +612,7 @@ async function drawDark(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 20
+    y += 28
     ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
