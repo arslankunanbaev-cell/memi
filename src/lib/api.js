@@ -1,4 +1,4 @@
-import { normalizeMomentMedia } from './imageProxy'
+import { normalizeMomentMedia, normalizePhotoEntity } from './imageProxy'
 import { assertSupabase } from './supabase'
 
 // Signed URL lifetime: 10 years in seconds.
@@ -114,7 +114,7 @@ export async function saveUser(tgUser) {
       existing.name      = newName
       existing.photo_url = newPhotoUrl
     }
-    return { user: existing, isNew: false }
+    return { user: normalizePhotoEntity(existing), isNew: false }
   }
 
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
@@ -125,7 +125,7 @@ export async function saveUser(tgUser) {
     .single()
 
   if (insertError) throw insertError
-  return { user: newUser, isNew: true }
+  return { user: normalizePhotoEntity(newUser), isNew: true }
 }
 
 export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId } = {}) {
@@ -144,7 +144,7 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
     .single()
 
   if (error) throw error
-  return data
+  return normalizePhotoEntity(data)
 }
 
 // Cross-user lookup by public_code via SECURITY DEFINER RPC (never exposes telegram_id).
@@ -153,7 +153,7 @@ export async function getUserByPublicCode(publicCode) {
   const { data, error } = await sb
     .rpc('find_user_by_public_code', { p_code: publicCode })
   if (error) throw error
-  return data?.[0] ?? null
+  return normalizePhotoEntity(data?.[0] ?? null)
 }
 
 // Backward compat: resolve old ref_<telegram_id> deep links safely.
@@ -163,7 +163,7 @@ export async function findUserByTelegramIdSafe(telegramId) {
   const { data, error } = await sb
     .rpc('find_user_by_telegram_id_safe', { p_telegram_id: telegramId })
   if (error) throw error
-  return data?.[0] ?? null
+  return normalizePhotoEntity(data?.[0] ?? null)
 }
 
 // ── Moments ───────────────────────────────────────────────────────────────────
@@ -232,7 +232,7 @@ export async function getPeople(userId) {
   const { data, error } = await sb
     .from('people').select('*').eq('user_id', userId).order('created_at')
   if (error) throw error
-  return data
+  return (data ?? []).map((person) => normalizePhotoEntity(person))
 }
 
 export async function createPerson({ userId, name, avatarColor, photoFile }) {
@@ -249,7 +249,7 @@ export async function createPerson({ userId, name, avatarColor, photoFile }) {
     .insert({ user_id: userId, name, avatar_color: avatarColor, photo_url, photo_path })
     .select().single()
   if (error) throw error
-  return data
+  return normalizePhotoEntity(data)
 }
 
 export async function updatePerson(personId, { name, photoUrl, photoPath, metYear }) {
@@ -262,7 +262,7 @@ export async function updatePerson(personId, { name, photoUrl, photoPath, metYea
   const { data, error } = await sb
     .from('people').update(payload).eq('id', personId).select().single()
   if (error) throw error
-  return data
+  return normalizePhotoEntity(data)
 }
 
 export async function deletePerson(personId) {
@@ -276,7 +276,7 @@ export async function getPersonById(personId) {
   const { data, error } = await sb
     .from('people').select('*').eq('id', personId).single()
   if (error) throw error
-  return data
+  return normalizePhotoEntity(data)
 }
 
 export async function getMomentsByPerson(userId, personId) {
@@ -345,8 +345,8 @@ export async function getFriendships(userId) {
   const byId = Object.fromEntries((users ?? []).map((u) => [u.id, u]))
   return rows.map((f) => ({
     ...f,
-    requester: byId[f.requester_id] ?? null,
-    receiver:  byId[f.receiver_id]  ?? null,
+    requester: normalizePhotoEntity(byId[f.requester_id] ?? null),
+    receiver:  normalizePhotoEntity(byId[f.receiver_id]  ?? null),
   }))
 }
 
@@ -452,7 +452,7 @@ export async function getUserProfile(userId) {
     ).size
     const friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
     return {
-      user,
+      user: normalizePhotoEntity(user),
       moments: moments.map((moment) => normalizeMomentMedia(moment)),
       total,
       monthCount,
@@ -529,7 +529,7 @@ export async function linkPersonToUser(personId, linkedUserId) {
     .select()
     .single()
   if (error) throw error
-  return data
+  return normalizePhotoEntity(data)
 }
 
 export async function getUserMomentsStats(userId) {

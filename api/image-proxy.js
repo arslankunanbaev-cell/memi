@@ -1,8 +1,20 @@
-const ALLOWED_HOST_SUFFIXES = ['.scdn.co', '.mzstatic.com', '.dzcdn.net']
+const ALLOWED_HOST_SUFFIXES = [
+  '.scdn.co',
+  '.spotifycdn.com',
+  '.mzstatic.com',
+  '.dzcdn.net',
+  '.supabase.co',
+  '.telegram.org',
+  '.telegram-cdn.org',
+]
+const ALLOWED_HOSTS = ['t.me']
 
 function isAllowedHost(hostname = '') {
   const normalizedHost = hostname.toLowerCase()
-  return ALLOWED_HOST_SUFFIXES.some((suffix) => normalizedHost === suffix.slice(1) || normalizedHost.endsWith(suffix))
+  return (
+    ALLOWED_HOSTS.includes(normalizedHost) ||
+    ALLOWED_HOST_SUFFIXES.some((suffix) => normalizedHost === suffix.slice(1) || normalizedHost.endsWith(suffix))
+  )
 }
 
 function errorResponse(message, status) {
@@ -46,7 +58,7 @@ export default async function handler(request) {
   try {
     upstreamResponse = await fetch(upstreamUrl.toString(), {
       headers: {
-        Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        Accept: 'image/jpeg,image/png,image/apng,image/svg+xml,image/*;q=0.8,*/*;q=0.5',
       },
       redirect: 'follow',
     })

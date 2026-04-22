@@ -133,7 +133,7 @@ describe('moment helpers', () => {
     })
 
     expect(moment.people).toHaveLength(1)
-    expect(moment.taggedFriends).toEqual([{ id: 'user-3', name: 'Мила' }])
+    expect(moment.taggedFriends).toEqual([{ id: 'user-3', name: 'Мила', photo_url: null }])
   })
 
   it('merges feed collections without duplicate moments and keeps newest first', () => {
