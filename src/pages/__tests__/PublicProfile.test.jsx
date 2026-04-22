@@ -33,6 +33,7 @@ describe('PublicProfile', () => {
       currentUser: { id: 'user-1', name: 'Me' },
       friends: [],
       people: [],
+      moments: [],
     })
   })
 
@@ -122,5 +123,53 @@ describe('PublicProfile', () => {
       expect(mockRemoveFriend).toHaveBeenCalledWith('friendship-1')
     })
     expect(mockNavigate).toHaveBeenCalledWith(-1)
+  })
+
+  it('shows shared memories at the bottom of a friend profile', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+      moments: [
+        {
+          id: 'own-shared',
+          title: 'Наше лето',
+          created_at: '2024-04-01T00:00:00Z',
+          user_id: 'user-1',
+          photo_url: null,
+          people: [{ id: 'p1', name: 'Mila', linked_user_id: 'user-2', photo_url: null }],
+          taggedFriends: [],
+        },
+        {
+          id: 'friend-shared',
+          title: 'Общий концерт',
+          created_at: '2024-05-01T00:00:00Z',
+          user_id: 'user-2',
+          isShared: true,
+          photo_url: null,
+          people: [],
+          taggedFriends: [],
+        },
+      ],
+    })
+
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: '',
+        featured_moment_id: null,
+      },
+      moments: [],
+      total: 0,
+    })
+
+    renderPublicProfile()
+
+    expect(await screen.findByText('Ваши общие воспоминания')).toBeInTheDocument()
+    expect(screen.getByText('Наше лето')).toBeInTheDocument()
+    expect(screen.getByText('Общий концерт')).toBeInTheDocument()
   })
 })

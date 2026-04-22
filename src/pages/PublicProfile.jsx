@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import {
@@ -374,6 +374,91 @@ function FeaturedMomentCard({ moment }) {
   )
 }
 
+function SharedMomentRow({ moment, sourceLabel, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 text-left transition-opacity active:opacity-70"
+      style={{
+        border: 'none',
+        backgroundColor: 'var(--base)',
+        borderRadius: 18,
+        padding: '12px 13px',
+      }}
+    >
+      <div
+        style={{
+          width: 52,
+          height: 52,
+          borderRadius: 14,
+          overflow: 'hidden',
+          flexShrink: 0,
+          background: moment.photo_url
+            ? 'none'
+            : 'linear-gradient(135deg, #E8D5C0, #C8A880)',
+        }}
+      >
+        {moment.photo_url ? (
+          <img
+            src={moment.photo_url}
+            alt={moment.title || 'Момент'}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : null}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <p
+            className="font-sans"
+            style={{
+              margin: 0,
+              fontSize: 15,
+              fontWeight: 600,
+              lineHeight: 1.35,
+              color: 'var(--text)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {moment.title || 'Без названия'}
+          </p>
+
+          {sourceLabel && (
+            <span
+              className="font-sans"
+              style={{
+                flexShrink: 0,
+                borderRadius: 999,
+                backgroundColor: 'rgba(217, 139, 82, 0.12)',
+                color: 'var(--deep)',
+                fontSize: 11,
+                fontWeight: 600,
+                padding: '4px 9px',
+              }}
+            >
+              {sourceLabel}
+            </span>
+          )}
+        </div>
+
+        <p
+          className="font-sans"
+          style={{
+            marginTop: 4,
+            fontSize: 12,
+            color: 'var(--mid)',
+          }}
+        >
+          {sinceLabel(moment.created_at)}
+        </p>
+      </div>
+    </button>
+  )
+}
+
 export function PublicProfileContent({
   profileUser,
   moments = [],
@@ -387,6 +472,9 @@ export function PublicProfileContent({
   statusStat = null,
   topContent = null,
   contentPaddingBottom = 40,
+  sharedMoments = [],
+  showSharedMomentsSection = false,
+  onSharedMomentPress,
 }) {
   if (!profileUser) return null
 
@@ -749,6 +837,75 @@ export function PublicProfileContent({
           )}
         </div>
       )}
+
+      {showSharedMomentsSection && (
+        <div style={{ marginTop: 20 }}>
+          <h2
+            className="font-sans"
+            style={{
+              margin: 0,
+              marginBottom: 12,
+              fontSize: 16,
+              fontWeight: 700,
+              color: 'var(--text)',
+            }}
+          >
+            Ваши общие воспоминания
+          </h2>
+
+          <div
+            style={{
+              backgroundColor: 'var(--moment-surface)',
+              borderRadius: 20,
+              padding: 14,
+              boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+            }}
+          >
+            {sharedMoments.length === 0 ? (
+              <div
+                style={{
+                  padding: '10px 6px 8px',
+                  textAlign: 'center',
+                }}
+              >
+                <p
+                  className="font-sans"
+                  style={{
+                    margin: 0,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: 'var(--text)',
+                  }}
+                >
+                  Пока нет общих воспоминаний
+                </p>
+                <p
+                  className="font-sans"
+                  style={{
+                    marginTop: 6,
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    color: 'var(--mid)',
+                  }}
+                >
+                  Когда вы отмечаете друг друга в моментах, они появятся здесь.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {sharedMoments.map((moment) => (
+                  <SharedMomentRow
+                    key={moment.id}
+                    moment={moment}
+                    sourceLabel={moment.user_id === profileUser.id ? 'у друга' : 'у тебя'}
+                    onClick={() => onSharedMomentPress?.(moment)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -760,6 +917,7 @@ export default function PublicProfile() {
   const friends = useAppStore((s) => s.friends)
   const setFriends = useAppStore((s) => s.setFriends)
   const people = useAppStore((s) => s.people) ?? []
+  const appMoments = useAppStore((s) => s.moments)
   const updatePerson = useAppStore((s) => s.updatePerson)
 
   const [profileUser, setProfileUser] = useState(null)
@@ -774,6 +932,25 @@ export default function PublicProfile() {
   const friendEntry = friends.find((friend) => friend.id === userId)
   const isAlreadyFriend = Boolean(friendEntry)
   const linkedPerson = people.find((person) => person.linked_user_id === userId) ?? null
+  const sharedMoments = useMemo(() => {
+    if (!currentUser?.id || !userId) return []
+
+    return (appMoments ?? [])
+      .filter((moment) => {
+        const isOwnMoment = !moment.isShared && moment.user_id === currentUser.id
+        const hasLinkedPerson = isOwnMoment
+          && (moment.people ?? []).some((person) => person.linked_user_id === userId)
+        const hasTaggedFriend = isOwnMoment
+          && (moment.taggedFriends ?? []).some((friend) => friend.id === userId)
+        const isSharedByFriend = Boolean(moment.isShared) && moment.user_id === userId
+
+        return hasLinkedPerson || hasTaggedFriend || isSharedByFriend
+      })
+      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+      .filter((moment, index, list) => (
+        index === list.findIndex((entry) => entry.id === moment.id)
+      ))
+  }, [appMoments, currentUser?.id, userId])
 
   useEffect(() => {
     if (currentUser?.id && currentUser.id === userId) {
@@ -1016,6 +1193,9 @@ export default function PublicProfile() {
             {friendButtonLabel}
           </button>
         ) : null}
+        sharedMoments={sharedMoments}
+        showSharedMomentsSection={isAlreadyFriend || sharedMoments.length > 0}
+        onSharedMomentPress={(moment) => navigate(`/moment/${moment.id}`)}
       />
 
       {showActionsSheet && isAlreadyFriend && (
