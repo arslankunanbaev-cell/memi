@@ -165,6 +165,8 @@ describe('Profile', () => {
     const previewScreen = screen.getByTestId('profile-preview-screen')
     expect(previewScreen).toBeInTheDocument()
     expect(screen.getByRole('switch')).toBeInTheDocument()
+    expect(screen.getByTestId('public-profile-more-button')).toBeInTheDocument()
+    expect(screen.queryByTestId('public-profile-edit-button')).not.toBeInTheDocument()
 
     const preview = within(previewScreen)
     expect(preview.getByText('Short bio')).toBeInTheDocument()
@@ -183,6 +185,7 @@ describe('Profile', () => {
 
     renderProfile()
     fireEvent.click(screen.getByTestId('profile-public-entry'))
+    fireEvent.click(screen.getByTestId('public-profile-more-button'))
     fireEvent.click(screen.getByTestId('public-profile-edit-button'))
 
     expect(screen.getByText('Open Moment')).toBeInTheDocument()

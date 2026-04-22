@@ -344,6 +344,16 @@ function BackArrowIcon({ color = 'currentColor' }) {
   )
 }
 
+function MoreIcon({ color = '#3D2B1A' }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="6" cy="12" r="1.8" fill={color} />
+      <circle cx="12" cy="12" r="1.8" fill={color} />
+      <circle cx="18" cy="12" r="1.8" fill={color} />
+    </svg>
+  )
+}
+
 function PublicProfileIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -640,7 +650,7 @@ function PublicProfileEntryCard({ onOpen }) {
   )
 }
 
-function PublicPreviewSettingsCard({ checked, disabled, onChange, onEdit, error }) {
+function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
   return (
     <section
       className="surface-card rounded-[24px]"
@@ -682,23 +692,6 @@ function PublicPreviewSettingsCard({ checked, disabled, onChange, onEdit, error 
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={onEdit}
-        data-testid="public-profile-edit-button"
-        className="font-sans transition-opacity active:opacity-60"
-        style={{
-          marginTop: 12,
-          padding: 0,
-          border: 'none',
-          background: 'none',
-          color: 'var(--accent)',
-          fontSize: 14,
-          fontWeight: 600,
-        }}
-      >
-        Редактировать
-      </button>
     </section>
   )
 }
@@ -714,6 +707,7 @@ export default function Profile() {
 
   const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
+  const [showPublicProfileMenu, setShowPublicProfileMenu] = useState(false)
   const [showPublicProfileSheet, setShowPublicProfileSheet] = useState(false)
   const [savingPublicVisibility, setSavingPublicVisibility] = useState(false)
   const [publicProfileError, setPublicProfileError] = useState(null)
@@ -742,6 +736,12 @@ export default function Profile() {
     friends: totalFriends,
   }
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
+
+  function handleOpenPublicProfileEditor() {
+    setPublicProfileError(null)
+    setShowPublicProfileMenu(false)
+    setShowPublicProfileSheet(true)
+  }
 
   async function handleAddToCapsule(slotIndex, moment) {
     addToCapsule(slotIndex, moment)
@@ -1006,7 +1006,25 @@ export default function Profile() {
                   Публичный профиль
                 </span>
 
-                <div style={{ width: 60 }} />
+                <div className="flex justify-end" style={{ width: 60 }}>
+                  <button
+                    type="button"
+                    aria-label="Открыть меню публичного профиля"
+                    onClick={() => setShowPublicProfileMenu(true)}
+                    className="flex items-center justify-center transition-opacity active:opacity-60"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(255,255,255,0.85)',
+                      border: '1px solid rgba(160, 94, 44, 0.12)',
+                      backdropFilter: 'blur(8px)',
+                    }}
+                    data-testid="public-profile-more-button"
+                  >
+                    <MoreIcon />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1021,10 +1039,6 @@ export default function Profile() {
                   checked={publicProfileEnabled}
                   disabled={savingPublicVisibility}
                   onChange={handleTogglePublicProfile}
-                  onEdit={() => {
-                    setPublicProfileError(null)
-                    setShowPublicProfileSheet(true)
-                  }}
                   error={publicProfileError}
                 />
               )}
@@ -1052,6 +1066,25 @@ export default function Profile() {
             setAddMomentSlot(null)
           }}
         />
+      )}
+
+      {showPublicProfileMenu && (
+        <BottomSheet onClose={() => setShowPublicProfileMenu(false)}>
+          <div>
+            <button
+              type="button"
+              onClick={handleOpenPublicProfileEditor}
+              data-testid="public-profile-edit-button"
+              className="flex w-full items-center gap-3 px-5 py-4 transition-opacity active:opacity-60"
+              style={{ background: 'none', border: 'none' }}
+            >
+              <span style={{ fontSize: 18 }}>✏️</span>
+              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)' }}>
+                Редактировать
+              </span>
+            </button>
+          </div>
+        </BottomSheet>
       )}
 
       {showPublicProfileSheet && (
