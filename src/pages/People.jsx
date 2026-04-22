@@ -123,7 +123,11 @@ function StatusBadge({ label }) {
   )
 }
 
-function SectionHeader({ label, count }) {
+function SectionHeader({ label, count, compact = false }) {
+  if (label === 'Друзья' && !compact) {
+    return null
+  }
+
   return (
     <p
       className="font-sans font-semibold"
@@ -131,13 +135,41 @@ function SectionHeader({ label, count }) {
         color: 'var(--soft)',
         fontSize: 12,
         letterSpacing: '0.14em',
-        marginBottom: 10,
-        marginTop: 8,
+        marginBottom: compact ? 0 : 10,
+        marginTop: compact ? 0 : 8,
         textTransform: 'uppercase',
       }}
     >
       {label}{count != null ? ` · ${count}` : ''}
     </p>
+  )
+}
+
+function FriendsHeader({ count, onInvite }) {
+  return (
+    <div className="flex items-center justify-between gap-3" style={{ marginTop: 8, marginBottom: 10 }}>
+      <SectionHeader label="Друзья" count={count} compact />
+
+      <button
+        type="button"
+        aria-label="Пригласить друга"
+        onClick={onInvite}
+        className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
+        style={{
+          border: '1px solid rgba(217, 139, 82, 0.18)',
+          borderRadius: 999,
+          backgroundColor: 'rgba(255, 254, 253, 0.92)',
+          boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08)',
+          color: 'var(--accent)',
+          fontSize: 12,
+          fontWeight: 700,
+          padding: '7px 12px',
+        }}
+      >
+        <ShareIcon />
+        Пригласить
+      </button>
+    </div>
   )
 }
 
@@ -657,15 +689,17 @@ export default function People() {
           </section>
         )}
 
-        <section className="relative flex flex-col gap-2">
+        <section className="flex flex-col gap-2">
+          {friendsList.length > 0 && <FriendsHeader count={friendsList.length} onInvite={handleInvite} />}
           {friendsList.length > 0 && <SectionHeader label="Друзья" count={friendsList.length} />}
           {friendsList.length > 0 && (
             <button
               type="button"
               aria-label="Пригласить друга"
               onClick={handleInvite}
-              className="absolute right-0 top-2 inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
+              className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
               style={{
+                display: 'none',
                 border: '1px solid rgba(217, 139, 82, 0.18)',
                 borderRadius: 999,
                 backgroundColor: 'rgba(255, 254, 253, 0.92)',
