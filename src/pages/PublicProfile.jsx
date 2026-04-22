@@ -284,12 +284,12 @@ function FriendActionsSheet({ removing, onRemove, onClose }) {
     <BottomSheet onClose={onClose} title="Друг">
       <div className="px-5 pb-4">
         <FriendMenuAction
+          label={removing ? 'Удаляем...' : 'Удалить из друзей'}
           danger
           onClick={onRemove}
           disabled={removing}
         >
           <TrashIcon color="#D45757" />
-          {removing ? 'Удаляем...' : 'Удалить из друзей'}
         </FriendMenuAction>
 
         <button
