@@ -302,6 +302,17 @@ function drawTopBadge(ctx, text, x, y, theme) {
   ctx.fillText(text, x - width + paddingX, y + 22)
 }
 
+function drawCanvasHeader(ctx, { logoX, logoY, dateX, dateY, dateText, dark = false }) {
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = dark ? '#FFF3E4' : COLOR.text
+  ctx.font = '600 48px "Cormorant Garamond", Georgia, serif'
+  ctx.fillText('memi', logoX, logoY)
+
+  ctx.fillStyle = dark ? 'rgba(245, 235, 221, 0.68)' : COLOR.mid
+  ctx.font = '600 24px Inter, sans-serif'
+  ctx.fillText(dateText, dateX - ctx.measureText(dateText).width, dateY)
+}
+
 function getMomentPeopleNames(moment) {
   return [...new Set([
     ...(moment.people ?? []).map((person) => person?.name?.trim()),
@@ -390,51 +401,46 @@ async function drawPolaroid(canvas, moment) {
 
   drawBackground(ctx, 'polaroid', width, height)
 
-  const card = { x: 88, y: 172, width: 904, height: 1324, radius: 38 }
-
-  ctx.save()
-  ctx.shadowColor = 'rgba(98, 64, 34, 0.16)'
-  ctx.shadowBlur = 56
-  ctx.shadowOffsetY = 22
-  fillRoundRect(ctx, card.x, card.y, card.width, card.height, card.radius, COLOR.card)
-  ctx.restore()
-
-  ctx.textBaseline = 'top'
-  ctx.fillStyle = COLOR.text
-  ctx.font = '600 44px "Cormorant Garamond", Georgia, serif'
-  ctx.fillText('memi', card.x + 38, card.y + 34)
-
-  ctx.fillStyle = COLOR.mid
-  ctx.font = '600 24px Inter, sans-serif'
   const dateText = formatStoryDate(moment.created_at)
-  ctx.fillText(dateText, card.x + card.width - 38 - ctx.measureText(dateText).width, card.y + 42)
-
-  await drawPolaroidPhotoFrame(ctx, moment, {
-    x: card.x + 56,
-    y: card.y + 100,
-    width: card.width - 112,
-    height: 718,
+  drawCanvasHeader(ctx, {
+    logoX: 84,
+    logoY: 82,
+    dateX: 996,
+    dateY: 94,
+    dateText,
   })
 
-  const contentX = card.x + 42
-  let y = card.y + 872
+  await drawPolaroidPhotoFrame(ctx, moment, {
+    x: 108,
+    y: 178,
+    width: 864,
+    height: 830,
+    rotation: -0.018,
+    photoInsetX: 18,
+    photoInsetTop: 18,
+    photoBottomPad: 110,
+  })
+
+  const contentX = 98
+  const contentWidth = width - contentX * 2
+  let y = 1096
 
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 72px "Cormorant Garamond", Georgia, serif'
-  const titleLines = wrapText(ctx, moment.title || 'Момент', card.width - 84, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 74)
+  ctx.font = '700 84px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 12
+    y += 16
     ctx.fillStyle = COLOR.mid
-    ctx.font = '500 36px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, card.width - 84, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 48)
+    ctx.font = '500 34px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 46)
   }
 
   if (moment.song_title) {
-    y += 24
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(468, card.width - 84), moment, {
+    y += 28
+    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(520, contentWidth), moment, {
       dark: false,
       songBg: COLOR.cardAlt,
       songIconBg: COLOR.accentLight,
@@ -447,7 +453,7 @@ async function drawPolaroid(canvas, moment) {
 
   if (peopleNames.length > 0) {
     y += 20
-    y = drawPeopleBlock(ctx, contentX, y, card.width - 84, peopleNames, {
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
       font: '500 28px Inter, sans-serif',
       lineHeight: 38,
@@ -468,7 +474,7 @@ async function drawPolaroid(canvas, moment) {
 
   if (moment.location) {
     y += 20
-    drawLocationRow(ctx, contentX, y, card.width - 84, moment.location, COLOR.mid)
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
 
@@ -482,46 +488,42 @@ async function drawMinimal(canvas, moment) {
 
   drawBackground(ctx, 'minimal', width, height)
 
-  const card = { x: 88, y: 164, width: 904, height: 1262, radius: 40 }
+  const photoX = 72
+  const photoY = 164
+  const photoWidth = 936
+  const photoHeight = 826
+  const dateText = formatStoryDate(moment.created_at)
 
-  ctx.save()
-  ctx.shadowColor = 'rgba(98, 64, 34, 0.16)'
-  ctx.shadowBlur = 56
-  ctx.shadowOffsetY = 22
-  fillRoundRect(ctx, card.x, card.y, card.width, card.height, card.radius, '#FFFEFD')
-  ctx.restore()
-
-  await drawPhoto(ctx, moment, card.x, card.y, card.width, 604, card.radius, false, true)
-
-  ctx.textBaseline = 'top'
-  ctx.fillStyle = COLOR.text
-  ctx.font = '600 42px "Cormorant Garamond", Georgia, serif'
-  ctx.fillText('memi', card.x + 42, card.y + 34)
-
-  drawTopBadge(ctx, formatStoryDate(moment.created_at), card.x + card.width - 34, card.y + 28, {
-    badgeBg: 'rgba(50, 24, 11, 0.48)',
-    badgeText: '#FFF7EA',
+  drawCanvasHeader(ctx, {
+    logoX: 72,
+    logoY: 76,
+    dateX: 1008,
+    dateY: 88,
+    dateText,
   })
 
-  const contentX = card.x + 48
-  let y = card.y + 690
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 46)
+
+  const contentX = 72
+  const contentWidth = width - contentX * 2
+  let y = photoY + photoHeight + 96
 
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
-  const titleLines = wrapText(ctx, moment.title || 'Момент', card.width - 96, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 76)
+  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 12
+    y += 16
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 34px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, card.width - 96, 2)
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
     y = drawTextBlock(ctx, descriptionLines, contentX, y, 46)
   }
 
   if (moment.song_title) {
-    y += 24
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(448, card.width - 96), moment, {
+    y += 28
+    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(540, contentWidth), moment, {
       dark: false,
       songBg: '#F7ECDC',
       songIconBg: COLOR.accent,
@@ -534,7 +536,7 @@ async function drawMinimal(canvas, moment) {
 
   if (peopleNames.length > 0) {
     y += 18
-    y = drawPeopleBlock(ctx, contentX, y, card.width - 96, peopleNames, {
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
       font: '500 27px Inter, sans-serif',
       lineHeight: 37,
@@ -555,7 +557,7 @@ async function drawMinimal(canvas, moment) {
 
   if (moment.location) {
     y += 20
-    drawLocationRow(ctx, contentX, y, card.width - 96, moment.location, COLOR.mid)
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
 
@@ -569,46 +571,52 @@ async function drawDark(canvas, moment) {
 
   drawBackground(ctx, 'dark', width, height)
 
-  const card = { x: 88, y: 164, width: 904, height: 1268, radius: 40 }
+  const dateText = formatStoryDate(moment.created_at)
+  const photoHeight = 842
+  await drawPhoto(ctx, moment, 0, 0, width, photoHeight, 0, true)
 
-  ctx.save()
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.32)'
-  ctx.shadowBlur = 56
-  ctx.shadowOffsetY = 22
-  fillRoundRect(ctx, card.x, card.y, card.width, card.height, card.radius, COLOR.darkCard)
-  ctx.restore()
+  const photoFade = ctx.createLinearGradient(0, 560, 0, 1040)
+  photoFade.addColorStop(0, 'rgba(23,20,14,0)')
+  photoFade.addColorStop(0.62, 'rgba(23,20,14,0.68)')
+  photoFade.addColorStop(1, 'rgba(23,20,14,1)')
+  ctx.fillStyle = photoFade
+  ctx.fillRect(0, 0, width, 1100)
 
-  await drawPhoto(ctx, moment, card.x, card.y, card.width, 598, card.radius, true, true)
+  const topShade = ctx.createLinearGradient(0, 0, 0, 220)
+  topShade.addColorStop(0, 'rgba(23,20,14,0.5)')
+  topShade.addColorStop(1, 'rgba(23,20,14,0)')
+  ctx.fillStyle = topShade
+  ctx.fillRect(0, 0, width, 220)
 
-  ctx.textBaseline = 'top'
-  ctx.fillStyle = '#FFF3E4'
-  ctx.font = '600 42px "Cormorant Garamond", Georgia, serif'
-  ctx.fillText('memi', card.x + 42, card.y + 34)
-
-  drawTopBadge(ctx, formatStoryDate(moment.created_at), card.x + card.width - 34, card.y + 28, {
-    badgeBg: 'rgba(255, 239, 221, 0.12)',
-    badgeText: '#F8EBDD',
+  drawCanvasHeader(ctx, {
+    logoX: 84,
+    logoY: 82,
+    dateX: 996,
+    dateY: 94,
+    dateText,
+    dark: true,
   })
 
-  const contentX = card.x + 46
-  let y = card.y + 686
+  const contentX = 84
+  const contentWidth = width - contentX * 2
+  let y = photoHeight + 108
 
   ctx.fillStyle = '#FFF4E6'
-  ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
-  const titleLines = wrapText(ctx, moment.title || 'Момент', card.width - 92, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 76)
+  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 12
+    y += 16
     ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
     ctx.font = '500 34px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, card.width - 92, 2)
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
     y = drawTextBlock(ctx, descriptionLines, contentX, y, 46)
   }
 
   if (moment.song_title) {
-    y += 24
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(468, card.width - 92), moment, {
+    y += 28
+    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(540, contentWidth), moment, {
       dark: true,
       songBg: COLOR.darkCardAlt,
       songIconBg: 'rgba(217,139,82,0.16)',
@@ -621,7 +629,7 @@ async function drawDark(canvas, moment) {
 
   if (peopleNames.length > 0) {
     y += 20
-    y = drawPeopleBlock(ctx, contentX, y, card.width - 92, peopleNames, {
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: 'rgba(245, 235, 221, 0.68)',
       font: '500 27px Inter, sans-serif',
       lineHeight: 37,
@@ -642,7 +650,7 @@ async function drawDark(canvas, moment) {
 
   if (moment.location) {
     y += 22
-    drawLocationRow(ctx, contentX, y, card.width - 92, moment.location, 'rgba(245, 235, 221, 0.65)')
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, 'rgba(245, 235, 221, 0.65)')
   }
 }
 
