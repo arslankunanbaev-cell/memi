@@ -9,6 +9,11 @@ import { tgHaptic } from '../lib/telegram'
 
 const MOODS = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
+const VISIBILITY_OPTIONS = [
+  { value: 'private', label: 'Только я' },
+  { value: 'friends', label: 'Друзья' },
+  { value: 'public', label: 'Открыто' },
+]
 
 function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
   const [name, setName]     = useState('')
@@ -499,7 +504,7 @@ export default function EditMoment() {
             Видимость
           </p>
           <div className="flex gap-2">
-            {[{ value: 'private', label: 'Только я' }, { value: 'public', label: 'Открыто' }].map(({ value, label }) => (
+            {VISIBILITY_OPTIONS.map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setVisibility(value)}

@@ -8,6 +8,11 @@ import BottomSheet from '../components/BottomSheet'
 
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
+const VISIBILITY_OPTIONS = [
+  { value: 'private', label: '🔒 Только я' },
+  { value: 'friends', label: '👥 Друзья' },
+  { value: 'public', label: '🌐 Открыто' },
+]
 
 function SectionLabel({ children }) {
   return (
@@ -225,7 +230,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         }
       }
 
-      const full = { ...saved, people: people.filter((p) => selectedPeople.includes(p.id)) }
+      const full = {
+        ...saved,
+        people: people.filter((p) => selectedPeople.includes(p.id)),
+        taggedFriends: friends.filter((friend) => taggedFriends.includes(friend.id)),
+      }
       addMoment(full)
 
       if (afterSave) {
@@ -566,7 +575,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         <div>
           <SectionLabel>Видимость</SectionLabel>
           <div className="flex gap-2">
-            {[{ value: 'private', label: '🔒 Только я' }, { value: 'public', label: '🌐 Открыто' }].map(({ value, label }) => (
+            {VISIBILITY_OPTIONS.map(({ value, label }) => (
               <button
                 key={value}
                 onClick={() => setVisibility(value)}

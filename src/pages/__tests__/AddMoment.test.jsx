@@ -16,6 +16,7 @@ const mockSaveMoment = vi.fn()
 vi.mock('../../lib/api.js', () => ({
   saveMoment:    (...args) => mockSaveMoment(...args),
   createPerson:  vi.fn(),
+  addMomentParticipants: vi.fn(),
 }))
 
 // ── Хелпер ───────────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ describe('AddMoment', () => {
     useAppStore.setState({
       currentUser: { id: 'user-uuid-1', name: 'Test User' },
       people: [],
+      friends: [],
       moments: [],
     })
   })
@@ -143,6 +145,11 @@ describe('AddMoment', () => {
     renderAddMoment()
     expect(screen.getByText('Аня')).toBeInTheDocument()
     expect(screen.getByText('Вася')).toBeInTheDocument()
+  })
+
+  it('показывает режим видимости "Друзья"', () => {
+    renderAddMoment()
+    expect(screen.getByText(/Друзья/i)).toBeInTheDocument()
   })
 
   it('кнопка "Отмена" вызывает onClose', () => {

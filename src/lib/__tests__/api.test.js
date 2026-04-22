@@ -43,7 +43,13 @@ vi.mock('../supabase.js', () => ({
   }),
 }))
 
-import { saveUser, saveMoment, getPeople, createPerson, getMoments } from '../api.js'
+import {
+  saveUser,
+  saveMoment,
+  createPerson,
+  normalizeMomentRecord,
+  mergeMomentCollections,
+} from '../api.js'
 
 // ── saveUser ──────────────────────────────────────────────────────────────────
 
@@ -94,7 +100,6 @@ describe('saveUser', () => {
 
   it('использует "Пользователь" если имя пустое', async () => {
     mockMaybeSingle.mockResolvedValue({ data: null, error: null })
-    const inserted = vi.fn()
     mockInsert.mockReturnValue({
       select: () => ({
         single: () => Promise.resolve({ data: { id: 'uuid-4', name: 'Пользователь' }, error: null }),
@@ -107,6 +112,41 @@ describe('saveUser', () => {
 })
 
 // ── saveMoment ─────────────────────────────────────────────────────────────────
+
+describe('moment helpers', () => {
+  it('normalizes linked people and tagged friends without duplicates', () => {
+    const moment = normalizeMomentRecord({
+      id: 'm-1',
+      people: [
+        {
+          person: {
+            id: 'p-1',
+            name: 'Аня',
+            linked_user_id: 'user-2',
+          },
+        },
+      ],
+      participants: [
+        { user: { id: 'user-2', name: 'Аня' } },
+        { user: { id: 'user-3', name: 'Мила' } },
+      ],
+    })
+
+    expect(moment.people).toHaveLength(1)
+    expect(moment.taggedFriends).toEqual([{ id: 'user-3', name: 'Мила' }])
+  })
+
+  it('merges feed collections without duplicate moments and keeps newest first', () => {
+    const merged = mergeMomentCollections(
+      [{ id: 'm-1', created_at: '2026-04-01T10:00:00Z', title: 'Own' }],
+      [{ id: 'm-2', created_at: '2026-04-03T10:00:00Z', title: 'Shared' }],
+      [{ id: 'm-2', created_at: '2026-04-03T10:00:00Z', title: 'Friend feed duplicate' }],
+    )
+
+    expect(merged.map((moment) => moment.id)).toEqual(['m-2', 'm-1'])
+    expect(merged[0].title).toBe('Shared')
+  })
+})
 
 describe('saveMoment', () => {
   beforeEach(() => vi.clearAllMocks())

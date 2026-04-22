@@ -44,4 +44,24 @@ describe('Home', () => {
     expect(cover).toBeInTheDocument()
     expect(cover).toHaveAttribute('src', songCover)
   })
+
+  it('показывает автора у момента друга в ленте', () => {
+    useAppStore.setState({
+      friends: [{ id: 'u2', name: 'Mila', photo_url: null }],
+      moments: [
+        {
+          id: 'm2',
+          user_id: 'u2',
+          title: 'Утро в городе',
+          created_at: '2026-04-11T08:15:00Z',
+          visibility: 'friends',
+        },
+      ],
+    })
+
+    renderHome()
+
+    expect(screen.getByText('Mila')).toBeInTheDocument()
+    expect(screen.getByText('Утро в городе')).toBeInTheDocument()
+  })
 })

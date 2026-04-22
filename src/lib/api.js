@@ -3,6 +3,51 @@ import { assertSupabase } from './supabase'
 // Signed URL lifetime: 10 years in seconds.
 const SIGNED_URL_TTL = 315_360_000
 
+function extractMomentPeople(moment) {
+  return (moment.people ?? [])
+    .map((entry) => entry?.person ?? entry)
+    .filter(Boolean)
+}
+
+function extractMomentTaggedFriends(moment, people) {
+  const linkedUserIds = new Set(
+    people
+      .map((person) => person?.linked_user_id)
+      .filter(Boolean),
+  )
+
+  return (moment.participants ?? [])
+    .map((entry) => entry?.user ?? entry)
+    .filter((user) => user && !linkedUserIds.has(user.id))
+}
+
+export function normalizeMomentRecord(moment, overrides = {}) {
+  const people = extractMomentPeople(moment)
+  const taggedFriends = extractMomentTaggedFriends(moment, people)
+
+  return {
+    ...moment,
+    ...overrides,
+    people,
+    taggedFriends,
+  }
+}
+
+export function mergeMomentCollections(...collections) {
+  const seen = new Set()
+  const merged = []
+
+  for (const collection of collections) {
+    for (const moment of collection ?? []) {
+      if (!moment?.id || seen.has(moment.id)) continue
+      seen.add(moment.id)
+      merged.push(moment)
+    }
+  }
+
+  return merged.sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+}
+
 // ── Helper: upload a photo and return { photo_url, photo_path } ───────────────
 // Strategy:
 //   1. Upload file to storage (UUID-based path, so bucket paths are unguessable).
@@ -134,14 +179,7 @@ export async function getMoments(userId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data.map((m) => {
-    const people = (m.people ?? []).map((mp) => mp.person)
-    const linkedUserIds = new Set(people.map((p) => p.linked_user_id).filter(Boolean))
-    const taggedFriends = (m.participants ?? [])
-      .map((mp) => mp.user)
-      .filter((u) => u && !linkedUserIds.has(u.id))
-    return { ...m, people, taggedFriends }
-  })
+  return (data ?? []).map((moment) => normalizeMomentRecord(moment))
 }
 
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
@@ -351,14 +389,33 @@ export async function getSharedMoments(userId) {
   const momentIds = links.map((r) => r.moment_id)
   const { data, error } = await sb
     .from('moments')
-    .select(`*, people:moment_people(person:people(id, name, avatar_color, photo_url))`)
+    .select(`
+      *,
+      people:moment_people(person:people(id, name, avatar_color, photo_url, linked_user_id)),
+      participants:moment_participants(user:users(id, name, photo_url))
+    `)
     .in('id', momentIds)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []).map((m) => ({
-    ...m,
-    people: (m.people ?? []).map((mp) => mp.person),
-    isShared: true,
+  return (data ?? []).map((moment) => normalizeMomentRecord(moment, { isShared: true }))
+}
+
+export async function getFriendsFeedMoments(friendIds) {
+  if (!friendIds?.length) return []
+
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('moments')
+    .select('*')
+    .in('user_id', friendIds)
+    .in('visibility', ['friends', 'public'])
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? []).map((moment) => ({
+    ...moment,
+    isFriendFeed: true,
   }))
 }
 
