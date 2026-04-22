@@ -218,67 +218,67 @@ function drawLocationRow(ctx, x, y, maxWidth, text, color) {
 
   ctx.save()
   ctx.strokeStyle = color
-  ctx.lineWidth = 3.4
+  ctx.lineWidth = 3.8
   ctx.lineCap = 'round'
   ctx.beginPath()
-  ctx.moveTo(x + 12, y + 4)
-  ctx.bezierCurveTo(x + 2.5, y + 4, x + 2.5, y + 19, x + 12, y + 26)
-  ctx.bezierCurveTo(x + 21.5, y + 19, x + 21.5, y + 4, x + 12, y + 4)
+  ctx.moveTo(x + 13, y + 5)
+  ctx.bezierCurveTo(x + 2.5, y + 5, x + 2.5, y + 21, x + 13, y + 29)
+  ctx.bezierCurveTo(x + 23.5, y + 21, x + 23.5, y + 5, x + 13, y + 5)
   ctx.stroke()
 
   ctx.beginPath()
-  ctx.arc(x + 12, y + 13, 2.8, 0, Math.PI * 2)
+  ctx.arc(x + 13, y + 15, 3.2, 0, Math.PI * 2)
   ctx.fillStyle = color
   ctx.fill()
   ctx.restore()
 
   ctx.fillStyle = color
-  ctx.font = '500 32px Inter, sans-serif'
+  ctx.font = '500 36px Inter, sans-serif'
   ctx.textBaseline = 'top'
-  ctx.fillText(trimToWidth(ctx, text, maxWidth - 38), x + 38, y - 3)
+  ctx.fillText(trimToWidth(ctx, text, maxWidth - 44), x + 44, y - 2)
 }
 
 async function drawSongChip(ctx, x, y, width, moment, theme) {
   if (!moment.song_title) return 0
 
-  const chipHeight = 112
+  const chipHeight = 128
   const coverX = x + 18
-  const coverY = y + 19
-  const coverSize = 74
-  fillRoundRect(ctx, x, y, width, chipHeight, 28, theme.songBg)
+  const coverY = y + 21
+  const coverSize = 86
+  fillRoundRect(ctx, x, y, width, chipHeight, 30, theme.songBg)
 
   if (moment.song_cover) {
     try {
-      await drawPhoto(ctx, { photo_url: moment.song_cover }, coverX, coverY, coverSize, coverSize, 20, theme.dark)
+      await drawPhoto(ctx, { photo_url: moment.song_cover }, coverX, coverY, coverSize, coverSize, 22, theme.dark)
     } catch {
-      fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 20, theme.songIconBg)
+      fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 22, theme.songIconBg)
     }
   } else {
-    fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 20, theme.songIconBg)
+    fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 22, theme.songIconBg)
     ctx.strokeStyle = theme.songIconStroke
-    ctx.lineWidth = 4.6
+    ctx.lineWidth = 5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.beginPath()
-    ctx.moveTo(coverX + 35, coverY + 20)
-    ctx.lineTo(coverX + 35, coverY + 55)
-    ctx.lineTo(coverX + 54, coverY + 49)
+    ctx.moveTo(coverX + 40, coverY + 22)
+    ctx.lineTo(coverX + 40, coverY + 62)
+    ctx.lineTo(coverX + 62, coverY + 55)
     ctx.stroke()
     ctx.beginPath()
-    ctx.arc(coverX + 27, coverY + 55, 6.8, 0, Math.PI * 2)
-    ctx.arc(coverX + 54, coverY + 49, 6.8, 0, Math.PI * 2)
+    ctx.arc(coverX + 31, coverY + 62, 7.4, 0, Math.PI * 2)
+    ctx.arc(coverX + 62, coverY + 55, 7.4, 0, Math.PI * 2)
     ctx.stroke()
   }
 
   ctx.textBaseline = 'top'
   ctx.fillStyle = theme.songTitle
-  ctx.font = '700 32px Inter, sans-serif'
-  ctx.fillText(trimToWidth(ctx, moment.song_title, width - 132), x + 112, y + 23)
+  ctx.font = '700 36px Inter, sans-serif'
+  ctx.fillText(trimToWidth(ctx, moment.song_title, width - 148), x + 122, y + 24)
 
   if (moment.song_artist) {
     ctx.fillStyle = theme.songSubtitle
-    ctx.font = '500 28px Inter, sans-serif'
-    ctx.fillText(trimToWidth(ctx, moment.song_artist, width - 132), x + 112, y + 63)
+    ctx.font = '500 31px Inter, sans-serif'
+    ctx.fillText(trimToWidth(ctx, moment.song_artist, width - 148), x + 122, y + 72)
   }
 
   return chipHeight
@@ -336,7 +336,7 @@ function drawMoodChip(ctx, x, y, mood, theme) {
   const height = theme.height ?? 58
 
   ctx.font = theme.font
-  const width = ctx.measureText(mood).width + paddingX * 2
+  const width = Math.max(theme.minWidth ?? 0, ctx.measureText(mood).width + paddingX * 2)
   fillRoundRect(ctx, x, y, width, height, height / 2, theme.background)
   ctx.fillStyle = theme.color
   ctx.textBaseline = 'middle'
@@ -436,14 +436,14 @@ async function drawPolaroid(canvas, moment) {
   if (moment.description) {
     y += 16
     ctx.fillStyle = COLOR.mid
-    ctx.font = '500 38px Inter, sans-serif'
+    ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 50)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
   }
 
   if (moment.song_title) {
     y += 28
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(520, contentWidth), moment, {
+    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: COLOR.cardAlt,
       songIconBg: COLOR.accentLight,
@@ -458,8 +458,8 @@ async function drawPolaroid(canvas, moment) {
     y += 20
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
-      font: '500 32px Inter, sans-serif',
-      lineHeight: 42,
+      font: '500 36px Inter, sans-serif',
+      lineHeight: 46,
       maxLines: 2,
     })
   }
@@ -467,11 +467,12 @@ async function drawPolaroid(canvas, moment) {
   if (moment.mood) {
     y += 18
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 30px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: COLOR.text,
       background: '#F6EFE6',
-      paddingX: 22,
-      height: 58,
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
@@ -519,14 +520,14 @@ async function drawMinimal(canvas, moment) {
   if (moment.description) {
     y += 16
     ctx.fillStyle = COLOR.mid
-    ctx.font = '500 38px Inter, sans-serif'
+    ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 50)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
   }
 
   if (moment.song_title) {
     y += 28
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(540, contentWidth), moment, {
+    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: '#F7ECDC',
       songIconBg: COLOR.accent,
@@ -541,8 +542,8 @@ async function drawMinimal(canvas, moment) {
     y += 18
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
-      font: '500 31px Inter, sans-serif',
-      lineHeight: 41,
+      font: '500 35px Inter, sans-serif',
+      lineHeight: 45,
       maxLines: 2,
     })
   }
@@ -550,11 +551,12 @@ async function drawMinimal(canvas, moment) {
   if (moment.mood) {
     y += 18
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 30px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: COLOR.text,
       background: '#F5EBDD',
-      paddingX: 22,
-      height: 58,
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
@@ -612,14 +614,14 @@ async function drawDark(canvas, moment) {
   if (moment.description) {
     y += 16
     ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
-    ctx.font = '500 38px Inter, sans-serif'
+    ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 50)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
   }
 
   if (moment.song_title) {
     y += 28
-    const songHeight = await drawSongChip(ctx, contentX, y, Math.min(540, contentWidth), moment, {
+    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: true,
       songBg: COLOR.darkCardAlt,
       songIconBg: 'rgba(217,139,82,0.16)',
@@ -634,8 +636,8 @@ async function drawDark(canvas, moment) {
     y += 20
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: 'rgba(245, 235, 221, 0.68)',
-      font: '500 31px Inter, sans-serif',
-      lineHeight: 41,
+      font: '500 35px Inter, sans-serif',
+      lineHeight: 45,
       maxLines: 2,
     })
   }
@@ -643,11 +645,12 @@ async function drawDark(canvas, moment) {
   if (moment.mood) {
     y += 18
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 30px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: '#FFF4E6',
       background: 'rgba(255, 244, 230, 0.1)',
-      paddingX: 22,
-      height: 58,
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
