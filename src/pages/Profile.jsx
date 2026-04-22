@@ -738,6 +738,11 @@ export default function Profile() {
     { value: totalMonths, label: pluralRu(totalMonths, 'месяц', 'месяца', 'месяцев') },
     { value: totalFriends, label: pluralRu(totalFriends, 'друг', 'друга', 'друзей') },
   ]
+  const publicProfileStats = {
+    moments: publicMoments.length,
+    months: uniqueMonths(publicMoments),
+    friends: totalFriends,
+  }
   const publicProfileEnabled = currentUser?.public_profile_enabled === true
 
   async function handleAddToCapsule(slotIndex, moment) {
@@ -1011,6 +1016,7 @@ export default function Profile() {
               profileUser={currentUser}
               moments={publicMoments}
               publicMomentsTotal={publicMoments.length}
+              stats={publicProfileStats}
               displayName={name}
               topContent={(
                 <PublicPreviewSettingsCard

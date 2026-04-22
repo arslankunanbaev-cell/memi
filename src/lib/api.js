@@ -367,20 +367,35 @@ export async function getSharedMoments(userId) {
 export async function getUserProfile(userId) {
   const sb = assertSupabase()
   try {
-    const [userResult, momentsResult] = await Promise.all([
+    const [userResult, momentsResult, requesterCountResult, receiverCountResult] = await Promise.all([
       sb.rpc('get_user_public', { p_user_id: userId }),
       sb.from('moments')
         .select('id, title, photo_url, created_at, visibility', { count: 'exact' })
         .eq('user_id', userId)
         .eq('visibility', 'public')
         .order('created_at', { ascending: false }),
+      sb.from('friendships')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'accepted')
+        .eq('requester_id', userId),
+      sb.from('friendships')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'accepted')
+        .eq('receiver_id', userId),
     ])
-    const user    = userResult.data?.[0] ?? null
-    const moments = momentsResult.data  ?? []
-    const total   = momentsResult.count ?? 0
-    return { user, moments, total }
+    const user = userResult.data?.[0] ?? null
+    const moments = momentsResult.data ?? []
+    const total = momentsResult.count ?? 0
+    const monthCount = new Set(
+      moments.map((moment) => {
+        const date = new Date(moment.created_at)
+        return `${date.getFullYear()}-${date.getMonth()}`
+      }),
+    ).size
+    const friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
+    return { user, moments, total, monthCount, friendCount }
   } catch {
-    return { user: null, moments: [], total: 0 }
+    return { user: null, moments: [], total: 0, monthCount: 0, friendCount: 0 }
   }
 }
 

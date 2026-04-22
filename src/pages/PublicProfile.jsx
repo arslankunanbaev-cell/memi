@@ -188,6 +188,15 @@ function sinceLabel(createdAt) {
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
 }
 
+function uniqueMonths(moments) {
+  return new Set(
+    (moments ?? []).map((moment) => {
+      const date = new Date(moment.created_at)
+      return `${date.getFullYear()}-${date.getMonth()}`
+    }),
+  ).size
+}
+
 function _compactSinceLabel(createdAt) {
   if (!createdAt) return 'сейчас'
 
@@ -455,6 +464,7 @@ export function PublicProfileContent({
   profileUser,
   moments = [],
   publicMomentsTotal,
+  stats = null,
   displayName,
   people = [],
   linkedPerson = null,
@@ -479,8 +489,14 @@ export function PublicProfileContent({
   const listMoments = featuredMoment
     ? moments.filter((moment) => moment.id !== featuredMoment.id)
     : moments
-  const totalMoments = profileEnabled ? (publicMomentsTotal ?? moments.length) : 0
-  const momentCountLabel = pluralRu(totalMoments, 'момент', 'момента', 'моментов')
+  const totalMoments = profileEnabled ? (stats?.moments ?? publicMomentsTotal ?? moments.length) : 0
+  const totalMonths = profileEnabled ? (stats?.months ?? uniqueMonths(moments)) : 0
+  const totalFriends = profileEnabled ? (stats?.friends ?? 0) : 0
+  const statItems = [
+    { value: totalMoments, label: pluralRu(totalMoments, 'момент', 'момента', 'моментов') },
+    { value: totalMonths, label: pluralRu(totalMonths, 'месяц', 'месяца', 'месяцев') },
+    { value: totalFriends, label: pluralRu(totalFriends, 'друг', 'друга', 'друзей') },
+  ]
   const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
@@ -623,7 +639,6 @@ export function PublicProfileContent({
               overflow: 'hidden',
               background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
               borderRadius: 22,
-              padding: '18px 18px 16px',
               border: '1px solid rgba(160, 94, 44, 0.08)',
             }}
           >
@@ -639,46 +654,44 @@ export function PublicProfileContent({
                 background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
               }}
             />
-
-            <div style={{ position: 'relative' }}>
-              <p
-                className="font-sans"
-                style={{
-                  margin: 0,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: '0.02em',
-                  color: 'var(--mid)',
-                }}
-              >
-                Моменты
-              </p>
-
-              <div className="flex items-end gap-3" style={{ marginTop: 10 }}>
-                <span
-                  className="font-sans"
+            <div className="grid grid-cols-3" style={{ position: 'relative' }}>
+              {statItems.map((item, index) => (
+                <div
+                  key={item.label}
+                  className="flex flex-col items-center justify-center"
                   style={{
-                    color: 'var(--accent)',
-                    fontSize: 42,
-                    fontWeight: 700,
-                    lineHeight: 0.9,
+                    minHeight: 94,
+                    padding: '16px 10px 14px',
+                    borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
                   }}
                 >
-                  {totalMoments}
-                </span>
-                <span
-                  className="font-sans"
-                  style={{
-                    paddingBottom: 4,
-                    fontSize: 17,
-                    fontWeight: 600,
-                    lineHeight: 1.1,
-                    color: 'var(--deep)',
-                  }}
-                >
-                  {momentCountLabel}
-                </span>
-              </div>
+                  <span
+                    className="font-sans"
+                    style={{
+                      color: 'var(--accent)',
+                      fontSize: 32,
+                      fontWeight: 700,
+                      lineHeight: 0.95,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {item.value}
+                  </span>
+                  <span
+                    className="font-sans"
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      lineHeight: 1.2,
+                      color: 'var(--deep)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -908,6 +921,8 @@ export default function PublicProfile() {
   const [profileUser, setProfileUser] = useState(null)
   const [moments, setMoments] = useState([])
   const [publicMomentsTotal, setPublicMomentsTotal] = useState(0)
+  const [publicMonthsCount, setPublicMonthsCount] = useState(0)
+  const [publicFriendsCount, setPublicFriendsCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -947,15 +962,19 @@ export default function PublicProfile() {
       setLoading(true)
 
       try {
-        const { user, moments: publicMoments, total } = await getUserProfile(userId)
+        const { user, moments: publicMoments, total, monthCount, friendCount } = await getUserProfile(userId)
 
         setProfileUser(user)
         setMoments(publicMoments)
         setPublicMomentsTotal(total ?? 0)
+        setPublicMonthsCount(monthCount ?? uniqueMonths(publicMoments))
+        setPublicFriendsCount(friendCount ?? 0)
       } catch {
         setProfileUser(null)
         setMoments([])
         setPublicMomentsTotal(0)
+        setPublicMonthsCount(0)
+        setPublicFriendsCount(0)
       } finally {
         setLoading(false)
       }
@@ -1149,6 +1168,11 @@ export default function PublicProfile() {
         profileUser={profileUser}
         moments={moments}
         publicMomentsTotal={publicMomentsTotal}
+        stats={{
+          moments: publicMomentsTotal,
+          months: publicMonthsCount,
+          friends: publicFriendsCount,
+        }}
         displayName={friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'}
         people={people}
         linkedPerson={linkedPerson}
