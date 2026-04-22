@@ -443,14 +443,12 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
             placeholder="Пара слов о себе"
             rows={2}
             maxLength={140}
-            className="w-full resize-none font-sans outline-none"
+            className="w-full resize-none profile-bio-copy outline-none"
             style={{
               backgroundColor: 'var(--base)',
               borderRadius: 16,
               border: 'none',
               color: 'var(--text)',
-              fontSize: 14,
-              lineHeight: 1.5,
               padding: '14px 16px',
               boxShadow: 'inset 0 0 0 1px rgba(160, 94, 44, 0.08)',
             }}

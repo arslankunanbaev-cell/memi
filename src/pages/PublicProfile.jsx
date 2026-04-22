@@ -594,8 +594,8 @@ export function PublicProfileContent({
 
             {bio && (
               <p
-                className="font-sans"
-                style={{ marginTop: 10, fontSize: 14, lineHeight: 1.5, color: 'var(--text)' }}
+                className="profile-bio-copy"
+                style={{ marginTop: 10, color: 'var(--text)' }}
               >
                 {bio}
               </p>
