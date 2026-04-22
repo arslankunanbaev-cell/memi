@@ -190,7 +190,9 @@ export async function getMoments(userId) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []).map((moment) => normalizeMomentRecord(moment))
+  return (data ?? [])
+    .map((moment) => normalizeMomentRecord(moment))
+    .sort(compareMomentsByAddedAt)
 }
 
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
@@ -442,7 +444,9 @@ export async function getSharedMoments(userId) {
     .in('id', momentIds)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []).map((moment) => normalizeMomentRecord(moment, { isShared: true }))
+  return (data ?? [])
+    .map((moment) => normalizeMomentRecord(moment, { isShared: true }))
+    .sort(compareMomentsByAddedAt)
 }
 
 export async function getFriendsFeedMoments(friendIds) {
@@ -458,10 +462,12 @@ export async function getFriendsFeedMoments(friendIds) {
 
   if (error) throw error
 
-  return (data ?? []).map((moment) => normalizeMomentMedia({
-    ...moment,
-    isFriendFeed: true,
-  }))
+  return (data ?? [])
+    .map((moment) => normalizeMomentMedia({
+      ...moment,
+      isFriendFeed: true,
+    }))
+    .sort(compareMomentsByAddedAt)
 }
 
 // ── Public profiles ───────────────────────────────────────────────────────────
