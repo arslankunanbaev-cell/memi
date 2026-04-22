@@ -137,6 +137,7 @@
   .profile-bio-copy {
     font-family: var(--font-serif);
     font-size: 16px;
+    font-weight: 600;
     line-height: 1.5;
   }
 
