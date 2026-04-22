@@ -434,7 +434,7 @@ async function drawPolaroid(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 16
+    y += 20
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -442,7 +442,7 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 28
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: COLOR.cardAlt,
@@ -455,7 +455,7 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 20
+    y += 24
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
       font: '500 36px Inter, sans-serif',
@@ -465,7 +465,7 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (moment.mood) {
-    y += 18
+    y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
       font: '600 34px Inter, sans-serif',
       color: COLOR.text,
@@ -477,7 +477,7 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (moment.location) {
-    y += 20
+    y += 26
     drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
@@ -518,7 +518,7 @@ async function drawMinimal(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 16
+    y += 20
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -526,7 +526,7 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 28
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: '#F7ECDC',
@@ -539,7 +539,7 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 18
+    y += 22
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: COLOR.mid,
       font: '500 35px Inter, sans-serif',
@@ -549,7 +549,7 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (moment.mood) {
-    y += 18
+    y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
       font: '600 34px Inter, sans-serif',
       color: COLOR.text,
@@ -561,7 +561,7 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (moment.location) {
-    y += 20
+    y += 26
     drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
@@ -612,7 +612,7 @@ async function drawDark(canvas, moment) {
   y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 16
+    y += 20
     ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -620,7 +620,7 @@ async function drawDark(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 28
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: true,
       songBg: COLOR.darkCardAlt,
@@ -633,7 +633,7 @@ async function drawDark(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 20
+    y += 24
     y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
       color: 'rgba(245, 235, 221, 0.68)',
       font: '500 35px Inter, sans-serif',
@@ -643,7 +643,7 @@ async function drawDark(canvas, moment) {
   }
 
   if (moment.mood) {
-    y += 18
+    y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
       font: '600 34px Inter, sans-serif',
       color: '#FFF4E6',
@@ -655,7 +655,7 @@ async function drawDark(canvas, moment) {
   }
 
   if (moment.location) {
-    y += 22
+    y += 28
     drawLocationRow(ctx, contentX, y, contentWidth, moment.location, 'rgba(245, 235, 221, 0.65)')
   }
 }
