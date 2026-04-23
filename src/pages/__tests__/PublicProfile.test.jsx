@@ -85,6 +85,28 @@ describe('PublicProfile', () => {
     expect(screen.getByText('Another Memory')).toBeInTheDocument()
   })
 
+  it('shows an empty public state when the profile is open but has no public moments', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: 'Cat bio',
+        featured_moment_id: null,
+      },
+      moments: [],
+      total: 0,
+    })
+
+    renderPublicProfile()
+
+    expect(await screen.findByText('Cat bio')).toBeInTheDocument()
+    expect(screen.getByText('Публичных воспоминаний пока нет')).toBeInTheDocument()
+    expect(screen.getByText('Профиль открыт, но моментов с доступом «для всех» у пользователя пока нет.')).toBeInTheDocument()
+    expect(screen.queryByText('Профиль закрыт')).not.toBeInTheDocument()
+  })
+
   it('opens the featured memory card from a friend profile', async () => {
     mockGetUserProfile.mockResolvedValue({
       user: {

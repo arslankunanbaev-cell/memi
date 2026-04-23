@@ -522,6 +522,13 @@ export function PublicProfileContent({
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
     : people.length > 0 && typeof onLinkPersonPress === 'function'
+  const noPublicMoments = profileEnabled && moments.length === 0
+  const emptyMomentsTitle = !profileEnabled
+    ? 'Профиль закрыт'
+    : 'Публичных воспоминаний пока нет'
+  const emptyMomentsDescription = !profileEnabled
+    ? 'Пока пользователь не показывает публичный профиль.'
+    : 'Профиль открыт, но моментов с доступом «для всех» у пользователя пока нет.'
 
   return (
     <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
@@ -769,6 +776,36 @@ export function PublicProfileContent({
           </h2>
 
           {!profileEnabled || listMoments.length === 0 ? (
+            noPublicMoments ? (
+              <div
+                style={{
+                  backgroundColor: 'var(--moment-surface)',
+                  borderRadius: 20,
+                  padding: '36px 24px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                }}
+              >
+                <div style={{ fontSize: 36, marginBottom: 12 }}>рџ”’</div>
+                <div
+                  className="font-sans"
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: 'var(--text)',
+                    marginBottom: 6,
+                  }}
+                >
+                  {emptyMomentsTitle}
+                </div>
+                <div
+                  className="font-sans"
+                  style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
+                >
+                  {emptyMomentsDescription}
+                </div>
+              </div>
+            ) : (
             <div
               style={{
                 backgroundColor: 'var(--moment-surface)',
@@ -797,6 +834,7 @@ export function PublicProfileContent({
                 {!profileEnabled ? 'Пока пользователь не показывает публичный профиль.' : 'Пока он не открыл воспоминания для всех'}
               </div>
             </div>
+            )
           ) : (
             <div className="flex flex-col gap-3">
               {listMoments.map((moment) => {
