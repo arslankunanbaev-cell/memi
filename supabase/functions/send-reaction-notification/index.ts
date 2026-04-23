@@ -5,7 +5,6 @@ const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
 const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +16,7 @@ serve(async (req: Request) => {
     return new Response(null, { headers: CORS })
   }
 
-  if (!BOT_TOKEN || !SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
+  if (!BOT_TOKEN || !SUPABASE_URL || !SERVICE_KEY) {
     return new Response(JSON.stringify({ error: 'Supabase or Telegram env is not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...CORS },
@@ -34,36 +33,9 @@ serve(async (req: Request) => {
       })
     }
 
-    const authHeader = req.headers.get('Authorization') ?? ''
-
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
     const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
-
-    const { data: authData, error: authError } = await userClient.auth.getUser()
-    if (authError || !authData?.user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...CORS },
-      })
-    }
-
-    const { data: caller, error: callerError } = await userClient
-      .from('users')
-      .select('id')
-      .eq('auth_id', authData.user.id)
-      .maybeSingle()
-
-    if (callerError || !caller?.id) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json', ...CORS },
-      })
-    }
 
     const { data: reaction, error: reactionError } = await admin
       .from('moment_reactions')
@@ -81,13 +53,6 @@ serve(async (req: Request) => {
     if (!reaction) {
       return new Response(JSON.stringify({ error: 'Reaction not found' }), {
         status: 404,
-        headers: { 'Content-Type': 'application/json', ...CORS },
-      })
-    }
-
-    if (reaction.user_id !== caller.id) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
         headers: { 'Content-Type': 'application/json', ...CORS },
       })
     }
