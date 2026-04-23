@@ -46,19 +46,21 @@ import { upsertMomentReaction } from '../api.js'
 describe('upsertMomentReaction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInvoke.mockResolvedValue({ data: { ok: true }, error: null })
   })
 
-  it('marks a first reaction as new and invokes the quiet notification function', async () => {
-    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
-    mockSingle.mockResolvedValueOnce({
+  it('uses the server-side reaction flow and returns the edge result', async () => {
+    mockInvoke.mockResolvedValueOnce({
       data: {
-        id: 'reaction-1',
-        moment_id: 'moment-1',
-        user_id: 'user-1',
-        emoji: '🔥',
-        created_at: '2026-04-23T10:00:00.000Z',
-        updated_at: '2026-04-23T10:00:00.000Z',
+        ok: true,
+        reaction: {
+          id: 'reaction-1',
+          moment_id: 'moment-1',
+          user_id: 'user-1',
+          emoji: '🔥',
+          created_at: '2026-04-23T10:00:00.000Z',
+          updated_at: '2026-04-23T10:00:00.000Z',
+        },
+        isNew: true,
       },
       error: null,
     })
@@ -70,25 +72,35 @@ describe('upsertMomentReaction', () => {
       momentOwnerId: 'user-2',
     })
 
-    expect(result.isNew).toBe(true)
     expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
-      body: { reactionId: 'reaction-1' },
+      body: { momentId: 'moment-1', emoji: '🔥' },
     })
-  })
-
-  it('also invokes the quiet notification function when the reaction changes later', async () => {
-    mockMaybeSingle.mockResolvedValueOnce({
-      data: { id: 'reaction-1' },
-      error: null,
-    })
-    mockSingle.mockResolvedValueOnce({
-      data: {
+    expect(result).toEqual({
+      reaction: {
         id: 'reaction-1',
         moment_id: 'moment-1',
         user_id: 'user-1',
-        emoji: '❤️',
+        emoji: '🔥',
         created_at: '2026-04-23T10:00:00.000Z',
-        updated_at: '2026-04-23T10:05:00.000Z',
+        updated_at: '2026-04-23T10:00:00.000Z',
+      },
+      isNew: true,
+    })
+  })
+
+  it('supports notification-worthy reaction changes through the same server-side flow', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        reaction: {
+          id: 'reaction-1',
+          moment_id: 'moment-1',
+          user_id: 'user-1',
+          emoji: '❤️',
+          created_at: '2026-04-23T10:00:00.000Z',
+          updated_at: '2026-04-23T10:05:00.000Z',
+        },
+        isNew: false,
       },
       error: null,
     })
@@ -100,44 +112,22 @@ describe('upsertMomentReaction', () => {
       momentOwnerId: 'user-2',
     })
 
-    expect(result.isNew).toBe(false)
     expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
-      body: { reactionId: 'reaction-1' },
+      body: { momentId: 'moment-1', emoji: '❤️' },
     })
+    expect(result.isNew).toBe(false)
+    expect(result.reaction.emoji).toBe('❤️')
   })
 
-  it('still invokes the notification function when the moment owner id is not loaded on the client yet', async () => {
-    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
-    mockSingle.mockResolvedValueOnce({
-      data: {
-        id: 'reaction-3',
-        moment_id: 'moment-1',
-        user_id: 'user-1',
-        emoji: '❤️',
-        created_at: '2026-04-23T10:00:00.000Z',
-        updated_at: '2026-04-23T10:00:00.000Z',
-      },
+  it('falls back to the direct table upsert if the edge function does not return a reaction', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: { ok: false },
       error: null,
     })
-
-    const result = await upsertMomentReaction({
-      momentId: 'moment-1',
-      userId: 'user-1',
-      emoji: '❤️',
-      momentOwnerId: undefined,
-    })
-
-    expect(result.isNew).toBe(true)
-    expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
-      body: { reactionId: 'reaction-3' },
-    })
-  })
-
-  it('skips the notification when the owner reacts to their own moment', async () => {
     mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
     mockSingle.mockResolvedValueOnce({
       data: {
-        id: 'reaction-1',
+        id: 'reaction-2',
         moment_id: 'moment-1',
         user_id: 'user-1',
         emoji: '🫶',
@@ -146,15 +136,21 @@ describe('upsertMomentReaction', () => {
       },
       error: null,
     })
+    mockInvoke.mockResolvedValueOnce({ data: { ok: true }, error: null })
 
     const result = await upsertMomentReaction({
       momentId: 'moment-1',
       userId: 'user-1',
       emoji: '🫶',
-      momentOwnerId: 'user-1',
+      momentOwnerId: 'user-2',
     })
 
+    expect(mockFrom).toHaveBeenCalledWith('moment_reactions')
+    expect(mockUpsert).toHaveBeenCalled()
+    expect(mockInvoke).toHaveBeenNthCalledWith(2, 'send-reaction-notification', {
+      body: { reactionId: 'reaction-2' },
+    })
     expect(result.isNew).toBe(true)
-    expect(mockInvoke).not.toHaveBeenCalled()
+    expect(result.reaction.id).toBe('reaction-2')
   })
 })

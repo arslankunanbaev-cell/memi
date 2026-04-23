@@ -104,6 +104,33 @@ async function invokeEdgeFunction(sb, functionName, body) {
   return { data, error: null }
 }
 
+async function upsertMomentReactionLocally(sb, { momentId, userId, emoji }) {
+  const { data: existingReaction, error: existingError } = await sb
+    .from('moment_reactions')
+    .select('id')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (existingError) throw existingError
+
+  const { data, error } = await sb
+    .from('moment_reactions')
+    .upsert(
+      { moment_id: momentId, user_id: userId, emoji },
+      { onConflict: 'moment_id,user_id' },
+    )
+    .select('id, moment_id, user_id, emoji, created_at, updated_at')
+    .single()
+
+  if (error) throw error
+
+  return {
+    reaction: data,
+    isNew: !existingReaction,
+  }
+}
+
 function buildProfileMomentsQuery(sb, userId, selectFields, canSeeFriendMoments, withCount = false) {
   const query = sb.from('moments')
     .select(selectFields, withCount ? { count: 'exact' } : undefined)
@@ -411,28 +438,27 @@ export async function getMomentReactions(momentId) {
 
 export async function upsertMomentReaction({ momentId, userId, emoji, momentOwnerId }) {
   const sb = assertSupabase()
-  const { data: existingReaction, error: existingError } = await sb
-    .from('moment_reactions')
-    .select('id')
-    .eq('moment_id', momentId)
-    .eq('user_id', userId)
-    .maybeSingle()
+  const { data: edgeData, error: edgeError } = await invokeEdgeFunction(
+    sb,
+    'send-reaction-notification',
+    { momentId, emoji },
+  )
 
-  if (existingError) throw existingError
+  if (!edgeError && edgeData?.reaction) {
+    return {
+      reaction: edgeData.reaction,
+      isNew: Boolean(edgeData.isNew),
+    }
+  }
 
-  const { data, error } = await sb
-    .from('moment_reactions')
-    .upsert(
-      { moment_id: momentId, user_id: userId, emoji },
-      { onConflict: 'moment_id,user_id' },
+  if (edgeError || edgeData?.error) {
+    console.error(
+      '[MomentReaction] server upsert error:',
+      edgeError?.message ?? edgeData?.error,
     )
-    .select('id, moment_id, user_id, emoji, created_at, updated_at')
-    .single()
+  }
 
-  if (error) throw error
-
-  const reaction = data
-  const isNew = !existingReaction
+  const { reaction, isNew } = await upsertMomentReactionLocally(sb, { momentId, userId, emoji })
 
   if (
     reaction?.id &&
