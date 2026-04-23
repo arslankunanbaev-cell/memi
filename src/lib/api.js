@@ -59,6 +59,40 @@ function isMissingMomentAtColumn(error) {
   return details.includes('moment_at') && (details.includes('column') || details.includes('schema cache'))
 }
 
+async function invokeEdgeFunction(sb, functionName, body) {
+  const accessToken = typeof sb.auth?.getSession === 'function'
+    ? (await sb.auth.getSession())?.data?.session?.access_token ?? null
+    : null
+  const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
+  const url = import.meta.env.VITE_SUPABASE_URL ?? ''
+
+  const response = await fetch(`${url}/functions/v1/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken ?? anonKey}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    data = null
+  }
+
+  if (!response.ok) {
+    return {
+      data,
+      error: new Error(data?.error ?? `Edge Function ${functionName} failed with ${response.status}`),
+    }
+  }
+
+  return { data, error: null }
+}
+
 function buildProfileMomentsQuery(sb, userId, selectFields, canSeeFriendMoments, withCount = false) {
   const query = sb.from('moments')
     .select(selectFields, withCount ? { count: 'exact' } : undefined)
@@ -390,15 +424,15 @@ export async function upsertMomentReaction({ momentId, userId, emoji, momentOwne
   const isNew = !existingReaction
 
   if (
-    isNew &&
     reaction?.id &&
     momentOwnerId &&
     momentOwnerId !== userId &&
-    typeof sb.functions?.invoke === 'function'
+    typeof fetch === 'function'
   ) {
-    const { data: notificationData, error: notificationError } = await sb.functions.invoke(
+    const { data: notificationData, error: notificationError } = await invokeEdgeFunction(
+      sb,
       'send-reaction-notification',
-      { body: { reactionId: reaction.id } },
+      { reactionId: reaction.id },
     )
 
     if (notificationError || notificationData?.error) {
