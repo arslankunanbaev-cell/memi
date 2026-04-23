@@ -157,6 +157,41 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
   return normalizePhotoEntity(data)
 }
 
+const PUBLIC_PROFILE_RPC_FIELDS = ['public_profile_enabled', 'bio', 'featured_moment_id']
+
+function hasPublicProfileRpcFields(user) {
+  return PUBLIC_PROFILE_RPC_FIELDS.every((field) => Object.prototype.hasOwnProperty.call(user ?? {}, field))
+}
+
+async function getUserPublicRecord(sb, userId) {
+  const { data, error } = await sb.rpc('get_user_public', { p_user_id: userId })
+  if (error) throw error
+
+  const rpcUser = data?.[0] ?? null
+  if (!rpcUser) return null
+
+  if (hasPublicProfileRpcFields(rpcUser)) {
+    return normalizePhotoEntity(rpcUser)
+  }
+
+  const { data: directUser, error: directUserError } = await sb
+    .from('users')
+    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!directUserError && directUser) {
+    return normalizePhotoEntity(directUser)
+  }
+
+  return normalizePhotoEntity({
+    ...rpcUser,
+    public_profile_enabled: rpcUser.public_profile_enabled ?? false,
+    bio: rpcUser.bio ?? null,
+    featured_moment_id: rpcUser.featured_moment_id ?? null,
+  })
+}
+
 // Cross-user lookup by public_code via SECURITY DEFINER RPC (never exposes telegram_id).
 export async function getUserByPublicCode(publicCode) {
   const sb = assertSupabase()
@@ -537,8 +572,8 @@ export async function getFriendsFeedMoments(friendIds) {
 export async function getUserProfile(userId) {
   const sb = assertSupabase()
   try {
-    const [userResult, momentsResult, requesterCountResult, receiverCountResult] = await Promise.all([
-      sb.rpc('get_user_public', { p_user_id: userId }),
+    const [user, momentsResult, requesterCountResult, receiverCountResult] = await Promise.all([
+      getUserPublicRecord(sb, userId),
       sb.from('moments')
         .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
         .eq('user_id', userId)
@@ -553,7 +588,6 @@ export async function getUserProfile(userId) {
         .eq('status', 'accepted')
         .eq('receiver_id', userId),
     ])
-    const user = userResult.data?.[0] ?? null
     const moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
     const sortedMoments = [...moments].sort(compareMomentsByDisplayAt)
     const total = momentsResult.count ?? 0

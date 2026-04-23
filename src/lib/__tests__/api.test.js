@@ -13,6 +13,7 @@ const mockEq          = vi.fn()
 const mockOrder       = vi.fn()
 const mockUpload      = vi.fn()
 const mockGetPublicUrl = vi.fn()
+const mockRpc         = vi.fn()
 
 const mockFrom = vi.fn(() => ({
   select:     mockSelect,
@@ -39,6 +40,7 @@ const mockStorageFrom = vi.fn(() => ({
 vi.mock('../supabase.js', () => ({
   assertSupabase: () => ({
     from:    mockFrom,
+    rpc:     mockRpc,
     storage: { from: mockStorageFrom },
   }),
 }))
@@ -47,6 +49,7 @@ import {
   saveUser,
   saveMoment,
   createPerson,
+  getUserProfile,
   normalizeMomentRecord,
   mergeMomentCollections,
 } from '../api.js'
@@ -259,6 +262,92 @@ describe('saveMoment', () => {
 })
 
 // ── createPerson ───────────────────────────────────────────────────────────────
+
+describe('getUserProfile', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFrom.mockReset()
+    mockRpc.mockReset()
+  })
+
+  it('falls back to users select when get_user_public returns the old schema', async () => {
+    const rpcUser = {
+      id: 'user-2',
+      name: 'Mila',
+      photo_url: null,
+      created_at: '2024-01-01T00:00:00Z',
+      public_code: 'code-123',
+    }
+    const directUser = {
+      ...rpcUser,
+      public_profile_enabled: true,
+      bio: 'Warm bio',
+      featured_moment_id: 'm1',
+    }
+
+    mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
+
+    const usersMaybeSingle = vi.fn().mockResolvedValue({ data: directUser, error: null })
+    const usersIdEq = vi.fn(() => ({ maybeSingle: usersMaybeSingle }))
+
+    const momentsOrder = vi.fn().mockResolvedValue({
+      data: [{ id: 'm1', title: 'Open Memory', created_at: '2024-02-01T00:00:00Z', visibility: 'public' }],
+      count: 1,
+      error: null,
+    })
+    const momentsVisibilityEq = vi.fn(() => ({ order: momentsOrder }))
+    const momentsUserEq = vi.fn(() => ({ eq: momentsVisibilityEq }))
+
+    let friendshipSelectCount = 0
+    mockFrom.mockImplementation((table) => {
+      if (table === 'users') {
+        return {
+          select: () => ({ eq: usersIdEq }),
+        }
+      }
+
+      if (table === 'moments') {
+        return {
+          select: () => ({ eq: momentsUserEq }),
+        }
+      }
+
+      if (table === 'friendships') {
+        friendshipSelectCount += 1
+        const count = friendshipSelectCount === 1 ? 2 : 3
+
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => Promise.resolve({ count, error: null }),
+            }),
+          }),
+        }
+      }
+
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        upsert: mockUpsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      }
+    })
+
+    const result = await getUserProfile('user-2')
+
+    expect(mockRpc).toHaveBeenCalledWith('get_user_public', { p_user_id: 'user-2' })
+    expect(usersMaybeSingle).toHaveBeenCalledTimes(1)
+    expect(result.user).toMatchObject({
+      id: 'user-2',
+      public_profile_enabled: true,
+      bio: 'Warm bio',
+      featured_moment_id: 'm1',
+    })
+    expect(result.total).toBe(1)
+    expect(result.friendCount).toBe(5)
+  })
+})
 
 describe('createPerson', () => {
   beforeEach(() => {
