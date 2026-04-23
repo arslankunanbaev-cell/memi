@@ -98,7 +98,7 @@ export default function Home() {
                 height: 88,
                 backgroundColor: 'var(--card)',
                 boxShadow: 'var(--shadow-card)',
-                marginBottom: 20,
+                marginBottom: 24,
               }}
             >
               <span style={{ fontSize: 36 }}>✨</span>
@@ -120,7 +120,7 @@ export default function Home() {
               style={{
                 color: 'var(--mid)',
                 maxWidth: 250,
-                marginTop: 10,
+                marginTop: 12,
               }}
             >
               Сохрани фото, слово или чувство, чтобы лента начала собираться сама.
@@ -131,7 +131,7 @@ export default function Home() {
               onClick={() => setShowAdd(true)}
               className="font-sans type-button-strong transition-opacity active:opacity-70"
               style={{
-                marginTop: 22,
+                marginTop: 26,
                 border: 'none',
                 borderRadius: 20,
                 backgroundColor: 'var(--accent)',
@@ -160,12 +160,12 @@ export default function Home() {
 
           <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 110 }}>
             {groups.map((group, groupIndex) => (
-              <section key={group.label} style={{ paddingBottom: 18 }}>
-                <SectionLabel style={{ marginBottom: 10 }}>
+              <section key={group.label} style={{ paddingBottom: 24 }}>
+                <SectionLabel style={{ marginBottom: 12 }}>
                   {group.label}
                 </SectionLabel>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-5">
                   {group.items.map((moment, itemIndex) => (
                     <div
                       key={moment.id}

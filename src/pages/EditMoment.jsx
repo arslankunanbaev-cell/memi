@@ -56,7 +56,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose} title="Новый человек">
-      <div className="px-4 flex flex-col gap-4 pb-5">
+      <div className="px-4 flex flex-col gap-5 pb-5">
         <div className="flex justify-center pt-1">
           <button
             onClick={() => fileRef.current?.click()}
@@ -262,7 +262,7 @@ export default function EditMoment() {
         </button>
       </div>
 
-      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10 flex flex-col gap-6">
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10 flex flex-col gap-7">
         {/* Error */}
         {error && (
           <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>
@@ -272,7 +272,7 @@ export default function EditMoment() {
 
         {/* Photo */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Фото
           </p>
           <button
@@ -314,10 +314,10 @@ export default function EditMoment() {
 
         {/* Mood emoji picker */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Настроение
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {MOODS.map((m) => (
               <button
                 key={m}
@@ -338,7 +338,7 @@ export default function EditMoment() {
 
         {/* Title */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Заголовок
           </p>
           <input
@@ -357,7 +357,7 @@ export default function EditMoment() {
 
         {/* Description */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Описание
           </p>
           <textarea
@@ -373,7 +373,7 @@ export default function EditMoment() {
 
         {/* Location */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Место
           </p>
           <input
@@ -392,7 +392,7 @@ export default function EditMoment() {
 
         {/* Song */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Трек
           </p>
           {song ? (
@@ -439,7 +439,7 @@ export default function EditMoment() {
           <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             С кем
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {allPeople.map((p) => {
               const active = selectedPeople.includes(p.id)
               return (
@@ -501,10 +501,10 @@ export default function EditMoment() {
 
         {/* Visibility */}
         <div>
-          <p className="font-sans uppercase tracking-widest mb-2" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
+          <p className="font-sans uppercase tracking-widest mb-3" style={{ fontSize: 12, fontWeight: 600, color: 'var(--soft)', letterSpacing: '0.14em' }}>
             Видимость
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {VISIBILITY_OPTIONS.map(({ value, label }) => (
               <button
                 key={value}

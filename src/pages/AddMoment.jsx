@@ -20,7 +20,7 @@ function FormCard({ children, style = {} }) {
     <div style={{
       backgroundColor: 'var(--moment-surface)',
       borderRadius: 18,
-      padding: '16px',
+      padding: '18px',
       boxShadow: 'var(--shadow-card)',
       ...style,
     }}>
@@ -69,7 +69,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose} title="Новый человек">
-      <div className="px-4 flex flex-col gap-4 pb-5">
+      <div className="px-4 flex flex-col gap-5 pb-5">
         <div className="flex justify-center pt-1">
           <button
             onClick={() => fileRef.current?.click()}
@@ -272,7 +272,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       </div>
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10">
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-7">
           {error && (
             <p className="font-sans type-meta text-center" style={{ color: '#E05252' }}>{error}</p>
           )}
@@ -300,7 +300,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             {photoPreview ? (
               <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-3">
                 <span style={{ fontSize: 28 }}>📷</span>
                 <span className="font-sans type-support" style={{ color: 'var(--soft)' }}>Добавить фото</span>
               </div>
@@ -321,7 +321,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             style={{
               color: 'var(--text)',
               borderBottom: '1.5px solid var(--divider)',
-              paddingBottom: 10, marginBottom: 16, fontWeight: 400,
+              paddingBottom: 12, marginBottom: 20, fontWeight: 400,
             }}
           />
           <SectionLabel>Описание</SectionLabel>
@@ -339,7 +339,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         {/* Mood */}
         <div>
           <SectionLabel>Настроение</SectionLabel>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {MOODS.map((m) => (
               <button
                 key={m}
@@ -370,7 +370,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             style={{
               fontSize: 15, color: 'var(--text)',
               borderBottom: '1.5px solid var(--divider)',
-              paddingBottom: 10, marginBottom: 16,
+              paddingBottom: 12, marginBottom: 18,
             }}
           />
           <SectionLabel>Дата</SectionLabel>
@@ -461,7 +461,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           return (
             <div>
               <SectionLabel>С кем</SectionLabel>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {people.map((p) => {
                   const active = selectedPeople.includes(p.id)
                   return (
@@ -569,7 +569,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         {/* Visibility */}
         <div>
           <SectionLabel>Видимость</SectionLabel>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             {VISIBILITY_OPTIONS.map(({ value, label }) => (
               <button
                 key={value}

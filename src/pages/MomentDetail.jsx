@@ -149,7 +149,6 @@ function MenuAction({ label, danger = false, onClick, children }) {
       style={{
         border: 'none',
         backgroundColor: danger ? 'rgba(217, 64, 64, 0.07)' : 'var(--moment-surface)',
-        marginBottom: 8,
         padding: '16px 18px',
       }}
     >
@@ -472,18 +471,18 @@ export default function MomentDetail() {
         </div>
 
         <div className="px-4 pt-6">
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 18 }}>
             {formatFull(momentDisplayAt)}
           </p>
 
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 24 }}>
             <p
               className="font-sans font-semibold"
               style={{
                 color: 'var(--soft)',
                 fontSize: 12,
                 letterSpacing: '0.14em',
-                marginBottom: 10,
+                marginBottom: 12,
                 textTransform: 'uppercase',
               }}
             >
@@ -532,20 +531,20 @@ export default function MomentDetail() {
           </div>
 
           {moment.description && (
-            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.6, marginBottom: 20 }}>
+            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.6, marginBottom: 24 }}>
               {moment.description}
             </p>
           )}
 
           {moment.song_title && (
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 24 }}>
               <MusicCard title={moment.song_title} artist={moment.song_artist} cover={moment.song_cover} />
             </div>
           )}
 
           {(allPeople.length > 0 || moment.location || moment.mood) && (
             <>
-              <div style={{ height: 1, background: 'var(--divider)', marginBottom: 16 }} />
+              <div style={{ height: 1, background: 'var(--divider)', marginBottom: 18 }} />
 
               {allPeople.length > 0 && (
                 <>
@@ -555,14 +554,14 @@ export default function MomentDetail() {
                       color: 'var(--soft)',
                       fontSize: 12,
                       letterSpacing: '0.14em',
-                      marginBottom: 10,
+                      marginBottom: 12,
                       textTransform: 'uppercase',
                     }}
                   >
                     С кем
                   </p>
 
-                  <div className="flex flex-wrap gap-2" style={{ marginBottom: 20 }}>
+                  <div className="flex flex-wrap gap-2" style={{ marginBottom: 24 }}>
                     {allPeople.map((person) => (
                       <PersonChip key={person.id} person={person} />
                     ))}
@@ -578,14 +577,14 @@ export default function MomentDetail() {
                       color: 'var(--soft)',
                       fontSize: 12,
                       letterSpacing: '0.14em',
-                      marginBottom: 10,
+                      marginBottom: 12,
                       textTransform: 'uppercase',
                     }}
                   >
                     Детали
                   </p>
 
-                  <div className="flex flex-wrap gap-2" style={{ marginBottom: 24 }}>
+                  <div className="flex flex-wrap gap-2" style={{ marginBottom: 28 }}>
                     {moment.location && <DetailChip>📍 {moment.location}</DetailChip>}
                     {moment.mood && <DetailChip emoji>{moment.mood}</DetailChip>}
                   </div>
@@ -652,7 +651,7 @@ export default function MomentDetail() {
 
       {isOwn && showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)} title="Момент">
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 flex flex-col gap-3">
             <MenuAction
               label="Редактировать"
               onClick={() => {

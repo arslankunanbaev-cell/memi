@@ -45,7 +45,7 @@ function MusicBlock({ title, artist, cover }) {
     <div
       className="stats-panel-surface flex items-center gap-3"
       style={{
-        marginTop: 12,
+        marginTop: 14,
         padding: '12px 14px',
       }}
     >
@@ -229,7 +229,7 @@ export default function MomentCard({ moment }) {
       </div>
 
       {(moment.description || moment.song_title || participants.length > 0) && (
-        <div style={{ padding: '14px 16px 16px' }}>
+        <div style={{ padding: '16px 16px 18px' }}>
           {moment.description && (
             <p
               className="font-sans type-body"
@@ -254,7 +254,7 @@ export default function MomentCard({ moment }) {
           )}
 
           {participants.length > 0 && (
-            <div className="flex flex-wrap gap-2" style={{ marginTop: 12 }}>
+            <div className="flex flex-wrap gap-2" style={{ marginTop: 14 }}>
               {participants.map((person) => (
                 <div key={person.id} className="flex items-center gap-2">
                   <Avatar person={person} />

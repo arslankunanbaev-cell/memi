@@ -350,11 +350,11 @@ function EditPersonSheet({ person, onClose, onSaved, onDelete }) {
 
   return (
     <BottomSheet onClose={onClose} title="Редактировать">
-      <div className="px-4 pb-5 flex flex-col gap-4">
+      <div className="px-4 pb-5 flex flex-col gap-5">
         <div
           className="surface-card rounded-[28px]"
           style={{
-            padding: '16px 18px',
+            padding: '18px 18px',
             border: '1px solid rgba(160, 94, 44, 0.08)',
           }}
         >
@@ -433,7 +433,7 @@ function EditPersonSheet({ person, onClose, onSaved, onDelete }) {
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <label className="section-label">Имя</label>
           <input
             value={name}
@@ -445,7 +445,7 @@ function EditPersonSheet({ person, onClose, onSaved, onDelete }) {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <label className="section-label">Год знакомства</label>
 
           <div style={{ position: 'relative' }}>
@@ -486,11 +486,11 @@ function EditPersonSheet({ person, onClose, onSaved, onDelete }) {
         <div
           className="surface-card rounded-[28px]"
           style={{
-            padding: 12,
+            padding: 14,
             border: '1px solid rgba(160, 94, 44, 0.08)',
           }}
         >
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <button
               type="button"
               onClick={handleSave}
@@ -716,7 +716,7 @@ export default function PersonDetail() {
         <div
           className="surface-card-strong"
           style={{
-            marginTop: 18,
+            marginTop: 20,
             backgroundColor: 'var(--moment-surface)',
             borderRadius: 28,
             overflow: 'hidden',
@@ -732,7 +732,7 @@ export default function PersonDetail() {
             }}
           />
 
-          <div style={{ padding: '0 18px 18px' }}>
+          <div style={{ padding: '0 20px 20px' }}>
             <div className="flex items-end gap-3" style={{ marginTop: -38 }}>
               <div
                 className="flex items-center justify-center overflow-hidden rounded-full"
@@ -762,7 +762,7 @@ export default function PersonDetail() {
               </div>
             </div>
 
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 16 }}>
               <h1
                 className="font-serif"
                 style={{
@@ -776,7 +776,7 @@ export default function PersonDetail() {
                 {person.name}
               </h1>
 
-              <div className="flex flex-wrap gap-2" style={{ marginTop: 14 }}>
+              <div className="flex flex-wrap gap-2" style={{ marginTop: 16 }}>
                 <span
                   className="font-sans"
                   style={{
@@ -815,7 +815,7 @@ export default function PersonDetail() {
               </div>
             </div>
 
-            <div className="stats-panel-surface" style={{ marginTop: 18 }}>
+            <div className="stats-panel-surface" style={{ marginTop: 20 }}>
               <div className="grid grid-cols-3" style={{ position: 'relative' }}>
                 {statItems.map((item, index) => (
                   <div
@@ -859,7 +859,7 @@ export default function PersonDetail() {
           </div>
         </div>
 
-        <section style={{ marginTop: 22 }}>
+        <section style={{ marginTop: 26 }}>
           <div className="flex items-center justify-between gap-3">
             <h2
               className="font-sans"
@@ -907,10 +907,10 @@ export default function PersonDetail() {
             <div
               className="surface-card-strong"
               style={{
-                marginTop: 12,
+                marginTop: 14,
                 backgroundColor: 'var(--moment-surface)',
                 borderRadius: 24,
-                padding: '30px 22px',
+                padding: '34px 24px',
                 textAlign: 'center',
               }}
             >
@@ -954,7 +954,7 @@ export default function PersonDetail() {
                 onClick={() => setShowAddMoment(true)}
                 className="font-sans transition-opacity active:opacity-70"
                 style={{
-                  marginTop: 18,
+                  marginTop: 20,
                   border: 'none',
                   borderRadius: 9999,
                   backgroundColor: 'var(--accent)',
@@ -972,14 +972,14 @@ export default function PersonDetail() {
             <div
               className="surface-card-strong"
               style={{
-                marginTop: 12,
+                marginTop: 14,
                 backgroundColor: 'var(--moment-surface)',
                 borderRadius: 24,
-                padding: 14,
+                padding: 16,
               }}
             >
               <div
-                className="grid gap-3"
+                className="grid gap-4"
                 style={{
                   gridTemplateColumns: personMoments.length === 1 ? '1fr' : 'repeat(2, minmax(0, 1fr))',
                 }}
@@ -1001,7 +1001,7 @@ export default function PersonDetail() {
       <div
         className="px-4"
         style={{
-          paddingTop: 14,
+          paddingTop: 16,
           paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
           background: 'linear-gradient(180deg, rgba(247,244,240,0) 0%, rgba(247,244,240,0.9) 22%, var(--base) 44%)',
         }}
@@ -1052,7 +1052,7 @@ export default function PersonDetail() {
 
       {showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)} title="Действия">
-          <div className="px-4 pb-4 flex flex-col gap-3">
+          <div className="px-4 pb-4 flex flex-col gap-4">
             <SheetActionButton
               label="Редактировать"
               onClick={() => {
@@ -1089,7 +1089,7 @@ export default function PersonDetail() {
                 color: 'var(--mid)',
                 fontSize: 15,
                 fontWeight: 500,
-                padding: '8px 0 4px',
+                padding: '10px 0 4px',
               }}
             >
               Отмена

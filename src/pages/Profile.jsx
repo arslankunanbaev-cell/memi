@@ -454,12 +454,12 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   return (
     <BottomSheet onClose={onClose} title="Публичный профиль">
       <div className="px-4 pb-5">
-        <div className="flex items-start justify-between gap-3" style={{ marginBottom: 18 }}>
+        <div className="flex items-start justify-between gap-3" style={{ marginBottom: 20 }}>
           <div className="min-w-0">
             <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
               Показывать профиль другим
             </p>
-            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 3 }}>
+            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 4 }}>
               {'\u0415\u0441\u043b\u0438 \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u043e\u0442\u043a\u0440\u044b\u0442, \u0434\u0440\u0443\u0437\u044c\u044f \u0443\u0432\u0438\u0434\u044f\u0442 \u043c\u043e\u043c\u0435\u043d\u0442\u044b \u0441 \u0434\u043e\u0441\u0442\u0443\u043f\u043e\u043c \u00ab\u0412\u0441\u0435\u043c \u0434\u0440\u0443\u0437\u044c\u044f\u043c\u00bb'}
             </p>
           </div>
@@ -472,7 +472,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 18 }}>
           <p
             className="font-sans font-semibold"
             style={{ color: 'var(--soft)', fontSize: 12, letterSpacing: '0.14em', marginBottom: 10, textTransform: 'uppercase' }}
@@ -497,7 +497,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
           />
         </div>
 
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 20 }}>
           <p
             className="font-sans font-semibold"
             style={{ color: 'var(--soft)', fontSize: 12, letterSpacing: '0.14em', marginBottom: 10, textTransform: 'uppercase' }}
@@ -520,7 +520,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
               {'\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0441\u0434\u0435\u043b\u0430\u0439 \u0445\u043e\u0442\u044f \u0431\u044b \u043e\u0434\u0438\u043d \u043c\u043e\u043c\u0435\u043d\u0442 \u0432\u0438\u0434\u0438\u043c\u044b\u043c \u0434\u043b\u044f \u0434\u0440\u0443\u0437\u0435\u0439, \u0438 \u0435\u0433\u043e \u043c\u043e\u0436\u043d\u043e \u0431\u0443\u0434\u0435\u0442 \u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0437\u0434\u0435\u0441\u044c.'}
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               <button
                 type="button"
                 onClick={() => setFeaturedMomentId(null)}
@@ -604,7 +604,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
         </div>
 
         {error && (
-          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252', marginBottom: 12 }}>
+          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252', marginBottom: 14 }}>
             {error}
           </p>
         )}
@@ -621,7 +621,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
             padding: '13px 0',
             fontSize: 15,
             border: 'none',
-            marginBottom: 10,
+            marginBottom: 12,
           }}
         >
           {saving ? 'Сохранение...' : 'Сохранить'}
@@ -648,7 +648,7 @@ function PublicProfileEntryCard({ onOpen }) {
       className="surface-card flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-60"
       style={{
         padding: '16px 18px',
-        marginBottom: 18,
+        marginBottom: 20,
         backgroundColor: 'var(--moment-surface)',
         border: 'none',
       }}
@@ -829,7 +829,7 @@ export default function Profile() {
             data-testid="profile-main-screen"
             aria-hidden={false}
           >
-            <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
+            <div className="px-4 pt-topbar" style={{ paddingBottom: 22 }}>
               <h1 className="type-page-title" style={{ color: 'var(--text)', margin: 0 }}>
                 Профиль
               </h1>
@@ -838,7 +838,7 @@ export default function Profile() {
             <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
               <section
                 style={{
-                  marginBottom: 12,
+                  marginBottom: 16,
                   backgroundColor: 'var(--moment-surface)',
                   borderRadius: 28,
                   overflow: 'hidden',
@@ -855,7 +855,7 @@ export default function Profile() {
                   }}
                 />
 
-                <div style={{ padding: '0 18px 18px' }}>
+                <div style={{ padding: '0 20px 20px' }}>
                   <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
                     <div
                       className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
@@ -887,7 +887,7 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 14 }}>
+                  <div style={{ marginTop: 16 }}>
                     <p
                       className="font-serif type-sheet-title truncate"
                       style={{
@@ -902,7 +902,7 @@ export default function Profile() {
                       <p
                         className="font-sans type-support"
                         style={{
-                          marginTop: 8,
+                          marginTop: 10,
                           paddingLeft: 14,
                           color: 'var(--mid)',
                           backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
@@ -919,7 +919,7 @@ export default function Profile() {
                   <div
                     className="stats-panel-surface"
                     style={{
-                      marginTop: 16,
+                      marginTop: 18,
                     }}
                   >
 
@@ -963,7 +963,7 @@ export default function Profile() {
               <PublicProfileEntryCard onOpen={() => setActiveScreen(1)} />
 
               <section>
-                <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
+                <div className="flex items-baseline gap-2" style={{ marginBottom: 16 }}>
                   <span className="font-serif type-card-title" style={{ color: 'var(--text)' }}>
                     Капсула
                   </span>
@@ -972,7 +972,7 @@ export default function Profile() {
                   </span>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   {capsule.map((slot, index) => (
                     <CapsuleTile
                       key={index}
@@ -992,7 +992,7 @@ export default function Profile() {
             data-testid="profile-preview-screen"
             aria-hidden={false}
           >
-            <div className="px-4 pt-topbar" style={{ paddingBottom: 8 }}>
+            <div className="px-4 pt-topbar" style={{ paddingBottom: 12 }}>
               <div className="flex items-center justify-between">
                 <button
                   type="button"

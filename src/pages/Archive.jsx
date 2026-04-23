@@ -88,11 +88,11 @@ function FilterSheet({ onClose, onApply, people, current }) {
   return (
     <BottomSheet onClose={onClose} title="Фильтры">
       <div className="px-4 pb-5">
-        <SectionLabel style={{ marginBottom: 14 }}>
+        <SectionLabel style={{ marginBottom: 16 }}>
           Люди
         </SectionLabel>
 
-        <div className="flex flex-wrap gap-2" style={{ marginBottom: 28 }}>
+        <div className="flex flex-wrap gap-3" style={{ marginBottom: 24 }}>
           {people.map((person) => (
             <PersonToken
               key={person.id}
@@ -137,7 +137,7 @@ function FilterSheet({ onClose, onApply, people, current }) {
             }}
             className="w-full font-sans type-action transition-opacity active:opacity-60"
             style={{
-              marginTop: 12,
+              marginTop: 14,
               border: 'none',
               background: 'none',
               color: 'var(--mid)',
@@ -254,7 +254,7 @@ export default function Archive() {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
-        <div style={{ paddingBottom: 16 }}>
+        <div style={{ paddingBottom: 18 }}>
           <h1
             className="type-page-title"
             style={{ color: 'var(--text)', margin: 0 }}
@@ -303,7 +303,7 @@ export default function Archive() {
           </div>
         </div>
 
-        <div className="hide-scrollbar flex items-center gap-2 overflow-x-auto">
+        <div className="hide-scrollbar flex items-center gap-3 overflow-x-auto">
           {monthKeys.map((key) => {
             const active = key === resolvedActiveMonth
 
@@ -331,7 +331,7 @@ export default function Archive() {
       </div>
 
       {filterPeople.length > 0 && (
-        <div className="hide-scrollbar flex gap-2 overflow-x-auto px-4" style={{ paddingBottom: 16 }}>
+        <div className="hide-scrollbar flex gap-2 overflow-x-auto px-4" style={{ paddingBottom: 18 }}>
           {filterPeople.map((personId) => {
             const person = people.find((entry) => entry.id === personId)
             if (!person) return null
@@ -376,11 +376,11 @@ export default function Archive() {
         </div>
       )}
 
-      <div className="px-4" style={{ paddingBottom: 20 }}>
+      <div className="px-4" style={{ paddingBottom: 24 }}>
         <div
           className="stats-panel-surface"
           style={{
-            marginTop: filterPeople.length > 0 ? 0 : 4,
+            marginTop: filterPeople.length > 0 ? 0 : 8,
           }}
         >
           <div className="grid grid-cols-2" style={{ position: 'relative' }}>
@@ -430,10 +430,10 @@ export default function Archive() {
               border: '1.5px dashed var(--accent-light)',
               backgroundColor: 'rgba(255,255,255,0.28)',
               minHeight: 220,
-              padding: '20px 24px',
+              padding: '28px 24px',
             }}
           >
-            <span style={{ fontSize: 34, marginBottom: 10 }}>🗂️</span>
+            <span style={{ fontSize: 34, marginBottom: 12 }}>🗂️</span>
             <p className="font-sans type-button-strong" style={{ color: 'var(--text)', marginBottom: 6 }}>
               Здесь пока пусто
             </p>
@@ -442,7 +442,7 @@ export default function Archive() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
             {monthMoments.map((moment, index) => (
               <div
                 key={moment.id}

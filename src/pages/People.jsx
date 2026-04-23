@@ -132,8 +132,8 @@ function SectionHeader({ label, count, compact = false }) {
   return (
     <SectionLabel
       style={{
-        marginBottom: compact ? 0 : 10,
-        marginTop: compact ? 0 : 8,
+        marginBottom: compact ? 0 : 12,
+        marginTop: compact ? 0 : 10,
       }}
     >
       {label}{count != null ? ` · ${count}` : ''}
@@ -143,7 +143,7 @@ function SectionHeader({ label, count, compact = false }) {
 
 function FriendsHeader({ count, onInvite }) {
   return (
-    <div className="flex items-center justify-between gap-3" style={{ marginTop: 8, marginBottom: 10 }}>
+    <div className="flex items-center justify-between gap-3" style={{ marginTop: 10, marginBottom: 12 }}>
       <SectionHeader label="Друзья" count={count} compact />
 
       <button
@@ -309,7 +309,7 @@ function AddPersonSheet({ onClose, onCreated }) {
   return (
     <BottomSheet onClose={onClose} title="Добавить человека">
       <div className="px-4 pb-4">
-        <div className="flex justify-center" style={{ marginBottom: 20 }}>
+        <div className="flex justify-center" style={{ marginBottom: 24 }}>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -358,12 +358,12 @@ function AddPersonSheet({ onClose, onCreated }) {
           }}
         />
 
-        <p className="font-sans" style={{ color: 'var(--accent)', fontSize: 12, lineHeight: 1.45, marginTop: 10 }}>
+        <p className="font-sans" style={{ color: 'var(--accent)', fontSize: 12, lineHeight: 1.45, marginTop: 12 }}>
           Имя появится в карточках моментов, когда ты отметишь этого человека.
         </p>
 
         {error && (
-          <p className="font-sans text-center" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
+          <p className="font-sans text-center" style={{ color: '#E05252', fontSize: 12, marginTop: 14 }}>
             {error}
           </p>
         )}
@@ -374,7 +374,7 @@ function AddPersonSheet({ onClose, onCreated }) {
           disabled={!name.trim() || saving}
           className="w-full font-sans transition-opacity active:opacity-70"
           style={{
-            marginTop: 18,
+            marginTop: 20,
             border: 'none',
             borderRadius: 20,
             backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--surface)',
@@ -392,7 +392,7 @@ function AddPersonSheet({ onClose, onCreated }) {
           onClick={onClose}
           className="w-full font-sans transition-opacity active:opacity-60"
           style={{
-            marginTop: 10,
+            marginTop: 12,
             border: 'none',
             background: 'none',
             color: 'var(--mid)',
@@ -424,11 +424,11 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
   return (
     <BottomSheet onClose={onClose} title="Связать с человеком?">
       <div className="px-4 pb-4">
-        <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, marginBottom: 16 }}>
+        <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, marginBottom: 18 }}>
           Выбери, кого из твоих людей связать с <b style={{ color: 'var(--text)' }}>{friend.name}</b>
         </p>
 
-        <div className="flex flex-col gap-2" style={{ maxHeight: 280, overflowY: 'auto' }}>
+        <div className="flex flex-col gap-3" style={{ maxHeight: 280, overflowY: 'auto' }}>
           {people.map((person) => (
             <button
               key={person.id}
@@ -457,7 +457,7 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
           onClick={onClose}
           className="w-full font-sans transition-opacity active:opacity-60"
           style={{
-            marginTop: 12,
+            marginTop: 14,
             border: 'none',
             background: 'none',
             color: 'var(--mid)',
@@ -647,7 +647,7 @@ export default function People() {
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
-      <div className="px-4 pt-topbar" style={{ paddingBottom: 18 }}>
+      <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
         <div className="flex items-center justify-between">
           <h1
             className="type-page-title"
@@ -669,9 +669,9 @@ export default function People() {
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
         {incomingRequests.length > 0 && (
-          <section style={{ paddingBottom: 14 }}>
+          <section style={{ paddingBottom: 20 }}>
             <SectionHeader label="Заявки" count={incomingRequests.length} />
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {incomingRequests.map((request) => (
                 <RequestRow key={request.friendship_id} request={request} onAccept={() => handleAccept(request)} />
               ))}
@@ -679,7 +679,7 @@ export default function People() {
           </section>
         )}
 
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3">
           {friendsList.length > 0 && <FriendsHeader count={friendsList.length} onInvite={handleInvite} />}
           {friendsList.length > 0 && <SectionHeader label="Друзья" count={friendsList.length} />}
           {friendsList.length > 0 && (
@@ -763,7 +763,7 @@ export default function People() {
           onClick={() => setShowAdd(true)}
           className="flex w-full items-center gap-3 transition-opacity active:opacity-60"
           style={{
-            marginTop: mergedPeople.length > 0 || incomingRequests.length > 0 ? 10 : 0,
+            marginTop: mergedPeople.length > 0 || incomingRequests.length > 0 ? 16 : 0,
             border: '1.5px dashed rgba(217, 139, 82, 0.35)',
             borderRadius: 20,
             background: 'transparent',
@@ -782,7 +782,7 @@ export default function People() {
         </button>
 
         {mergedPeople.length === 0 && incomingRequests.length === 0 && (
-          <div className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 42 }}>
+          <div className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 52 }}>
             <p className="font-sans" style={{ color: 'var(--soft)', fontSize: 15 }}>
               Пока нет друзей
             </p>
@@ -791,7 +791,7 @@ export default function People() {
               onClick={handleInvite}
               className="font-sans transition-opacity active:opacity-70"
               style={{
-                marginTop: 14,
+                marginTop: 18,
                 border: 'none',
                 borderRadius: 20,
                 backgroundColor: 'var(--accent)',

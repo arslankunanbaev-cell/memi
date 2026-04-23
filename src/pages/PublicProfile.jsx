@@ -89,7 +89,7 @@ function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, o
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="px-4 pb-2 flex flex-col gap-4">
+      <div className="px-4 pb-2 flex flex-col gap-5">
         <p
           className="font-sans text-center font-medium"
           style={{ fontSize: 17, color: 'var(--text)' }}
@@ -98,7 +98,7 @@ function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, o
         </p>
 
         {linkedPerson && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <p
               className="font-sans text-center"
               style={{ fontSize: 13, color: 'var(--mid)' }}
@@ -132,7 +132,7 @@ function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, o
           </div>
         )}
 
-        <div className="flex flex-col gap-2" style={{ maxHeight: 300, overflowY: 'auto' }}>
+        <div className="flex flex-col gap-3" style={{ maxHeight: 300, overflowY: 'auto' }}>
           {availablePeople.map((person) => (
             <button
               key={person.id}
@@ -559,11 +559,11 @@ export function PublicProfileContent({
 
   return (
     <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
-      {topContent && <div style={{ marginTop: 20, marginBottom: 12 }}>{topContent}</div>}
+      {topContent && <div style={{ marginTop: 24, marginBottom: 16 }}>{topContent}</div>}
 
       <div
         style={{
-          marginTop: topContent ? 0 : 20,
+          marginTop: topContent ? 0 : 24,
           backgroundColor: 'var(--moment-surface)',
           borderRadius: 28,
           overflow: 'hidden',
@@ -580,7 +580,7 @@ export function PublicProfileContent({
           }}
         />
 
-        <div style={{ padding: '0 18px 18px' }}>
+        <div style={{ padding: '0 20px 20px' }}>
           <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
           <div
             className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
@@ -615,7 +615,7 @@ export function PublicProfileContent({
 
           </div>
 
-          <div style={{ marginTop: 14 }}>
+          <div style={{ marginTop: 16 }}>
             <p
               className="font-serif type-sheet-title"
               style={{
@@ -630,7 +630,7 @@ export function PublicProfileContent({
               <p
                 className="font-sans type-support"
                 style={{
-                  marginTop: 8,
+                  marginTop: 10,
                   paddingLeft: 14,
                   color: 'var(--mid)',
                   backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
@@ -646,7 +646,7 @@ export function PublicProfileContent({
             {bio && (
               <p
                 className="profile-bio-copy"
-                style={{ marginTop: 10, color: 'var(--text)' }}
+                style={{ marginTop: 12, color: 'var(--text)' }}
               >
                 {bio}
               </p>
@@ -666,7 +666,7 @@ export function PublicProfileContent({
             onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
             className="inline-flex items-center gap-2 font-sans type-chip transition-opacity active:opacity-60"
             style={{
-              marginTop: bio ? 12 : 14,
+              marginTop: bio ? 14 : 16,
               backgroundColor: linkedPerson ? 'rgba(217, 139, 82, 0.1)' : 'var(--base)',
               border: '1px solid rgba(160, 94, 44, 0.12)',
               borderRadius: 9999,
@@ -684,7 +684,7 @@ export function PublicProfileContent({
           <div
             className="stats-panel-surface"
             style={{
-              marginTop: 16,
+              marginTop: 18,
             }}
           >
             <div className="grid grid-cols-3" style={{ position: 'relative' }}>
@@ -726,8 +726,8 @@ export function PublicProfileContent({
             <div
               className="flex items-center justify-center"
               style={{
-                marginTop: 14,
-                paddingTop: 14,
+                marginTop: 16,
+                paddingTop: 16,
                 borderTop: '1px solid var(--divider)',
               }}
             >
@@ -738,12 +738,12 @@ export function PublicProfileContent({
       </div>
 
       {featuredMoment && (
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 24 }}>
           <h2
             className="font-serif type-card-title"
             style={{
               margin: 0,
-              marginBottom: 12,
+              marginBottom: 14,
               color: 'var(--text)',
             }}
           >
@@ -758,12 +758,12 @@ export function PublicProfileContent({
       )}
 
       {showMomentsSection && (
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 24 }}>
           <h2
             className="font-serif type-card-title"
             style={{
               margin: 0,
-              marginBottom: 12,
+              marginBottom: 14,
               color: 'var(--text)',
             }}
           >
@@ -775,12 +775,12 @@ export function PublicProfileContent({
               style={{
                 backgroundColor: 'var(--moment-surface)',
                 borderRadius: 20,
-                padding: '36px 24px',
+                padding: '40px 24px',
                 textAlign: 'center',
                 boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
               }}
             >
-              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+              <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'center' }}>
                 <EmptyStateLockIcon />
               </div>
               <div
@@ -800,7 +800,7 @@ export function PublicProfileContent({
               </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               {listMoments.map((moment) => {
                 const MomentRowTag = momentsAreClickable ? 'button' : 'div'
 
@@ -816,7 +816,7 @@ export function PublicProfileContent({
                             border: 'none',
                             backgroundColor: 'var(--card)',
                             borderRadius: 18,
-                            padding: '12px 13px',
+                            padding: '13px 14px',
                             boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
                           },
                         }
@@ -825,7 +825,7 @@ export function PublicProfileContent({
                           style: {
                             backgroundColor: 'var(--card)',
                             borderRadius: 18,
-                            padding: '12px 13px',
+                            padding: '13px 14px',
                             boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
                           },
                         })}
@@ -882,12 +882,12 @@ export function PublicProfileContent({
       )}
 
       {showSharedMomentsSection && (
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 24 }}>
           <h2
             className="font-sans"
             style={{
               margin: 0,
-              marginBottom: 12,
+              marginBottom: 14,
               fontSize: 16,
               fontWeight: 700,
               color: 'var(--text)',
@@ -900,14 +900,14 @@ export function PublicProfileContent({
             style={{
               backgroundColor: 'var(--moment-surface)',
               borderRadius: 20,
-              padding: 14,
+              padding: 16,
               boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
             }}
           >
             {sharedMoments.length === 0 ? (
               <div
                 style={{
-                  padding: '10px 6px 8px',
+                  padding: '12px 8px 10px',
                   textAlign: 'center',
                 }}
               >
@@ -935,7 +935,7 @@ export function PublicProfileContent({
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 {sharedMoments.map((moment) => (
                   <SharedMomentRow
                     key={moment.id}
