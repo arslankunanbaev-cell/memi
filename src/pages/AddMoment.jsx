@@ -6,6 +6,7 @@ import { useAppStore } from '../store/useAppStore'
 import { saveMoment, createPerson, addMomentParticipants } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
+import SectionLabel from '../components/SectionLabel'
 
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
@@ -13,14 +14,6 @@ const VISIBILITY_OPTIONS = [
   { value: 'friends', label: '\u0412\u0441\u0435\u043c \u0434\u0440\u0443\u0437\u044c\u044f\u043c' },
   { value: 'private', label: '\u0422\u043e\u043b\u044c\u043a\u043e \u044f' },
 ]
-
-function SectionLabel({ children }) {
-  return (
-    <p className="font-sans uppercase" style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.14em', color: 'var(--soft)', marginBottom: 12 }}>
-      {children}
-    </p>
-  )
-}
 
 function FormCard({ children, style = {} }) {
   return (
@@ -257,21 +250,21 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       <div className="flex items-center justify-between px-4 pt-topbar" style={{ borderBottom: '1px solid var(--divider)', paddingBottom: 12 }}>
         <button
           onClick={onClose}
-          className="font-sans transition-opacity active:opacity-60"
-          style={{ color: 'var(--mid)', fontSize: 15, fontWeight: 500, background: 'none', border: 'none' }}
+          className="font-sans type-action transition-opacity active:opacity-60"
+          style={{ color: 'var(--mid)', background: 'none', border: 'none' }}
         >
           Отмена
         </button>
-        <h2 className="font-serif" style={{ fontSize: 20, color: 'var(--text)', fontWeight: 700 }}>
+        <h2 className="font-serif type-sheet-title" style={{ color: 'var(--text)' }}>
           Новый момент
         </h2>
         <button
           onClick={handleSave}
           disabled={!title.trim() || saving}
-          className="font-sans font-semibold transition-opacity active:opacity-60"
+          className="font-sans type-button transition-opacity active:opacity-60"
           style={{
             color: title.trim() && !saving ? 'var(--accent)' : 'var(--soft)',
-            fontSize: 15, background: 'none', border: 'none',
+            background: 'none', border: 'none',
           }}
         >
           {saving ? '...' : 'Сохранить'}
@@ -281,7 +274,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-10" style={{ paddingTop: 20 }}>
         <div className="flex flex-col gap-6">
           {error && (
-            <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>{error}</p>
+            <p className="font-sans type-meta text-center" style={{ color: '#E05252' }}>{error}</p>
           )}
 
         {/* Photo */}
@@ -309,7 +302,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <span style={{ fontSize: 28 }}>📷</span>
-                <span className="font-sans" style={{ fontSize: 13, color: 'var(--soft)' }}>Добавить фото</span>
+                <span className="font-sans type-support" style={{ color: 'var(--soft)' }}>Добавить фото</span>
               </div>
             )}
           </button>
@@ -324,11 +317,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Название момента..."
             maxLength={80}
-            className="w-full font-serif outline-none bg-transparent"
+            className="w-full font-serif type-sheet-title outline-none bg-transparent"
             style={{
-              fontSize: 22, color: 'var(--text)',
+              color: 'var(--text)',
               borderBottom: '1.5px solid var(--divider)',
-              paddingBottom: 10, marginBottom: 16, fontWeight: 300,
+              paddingBottom: 10, marginBottom: 16, fontWeight: 400,
             }}
           />
           <SectionLabel>Описание</SectionLabel>
@@ -338,8 +331,8 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
             placeholder="Опиши этот момент..."
             rows={3}
             maxLength={1000}
-            className="w-full font-sans outline-none bg-transparent resize-none"
-            style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.6 }}
+            className="w-full font-sans type-body outline-none bg-transparent resize-none"
+            style={{ color: 'var(--text)' }}
           />
         </FormCard>
 

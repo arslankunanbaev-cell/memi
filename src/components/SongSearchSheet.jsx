@@ -50,7 +50,7 @@ function TrackRow({ track, onAdd }) {
   return (
     <button
       onClick={() => onAdd({ ...track, cover: cover ?? null })}
-      className="w-full flex items-center gap-3 px-5 py-3 transition-opacity active:opacity-60"
+      className="w-full flex items-center gap-3 px-4 py-3 transition-opacity active:opacity-60"
       style={{ background: 'none', border: 'none', textAlign: 'left' }}
     >
       {/* Cover / shimmer / placeholder */}
@@ -87,25 +87,24 @@ function TrackRow({ track, onAdd }) {
       {/* Text */}
       <div className="flex-1 min-w-0">
         <p
-          className="font-sans"
-          style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          className="font-sans type-support"
+          style={{ color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
         >
           {track.name}
         </p>
-        <p className="font-sans" style={{ fontSize: 11, color: 'var(--mid)' }}>
+        <p className="font-sans type-meta" style={{ color: 'var(--mid)' }}>
           {track.artist}
         </p>
       </div>
 
       {/* Add button */}
       <span
-        className="font-sans font-medium flex-shrink-0"
+        className="font-sans type-meta flex-shrink-0"
         style={{
           backgroundColor: 'var(--surface)',
           color: 'var(--accent)',
           borderRadius: 9999,
           padding: '5px 12px',
-          fontSize: 12,
         }}
       >
         + добавить
@@ -167,7 +166,7 @@ export default function SongSearchSheet({ onClose, onSelect }) {
   return (
     <BottomSheet onClose={onClose} title="Трек момента">
       {/* Search input */}
-      <div className="px-5 pb-3">
+      <div className="px-4 pb-3">
         <div
           className="flex items-center gap-2"
           style={{ backgroundColor: 'var(--surface)', borderRadius: 10, padding: '9px 12px' }}
@@ -180,8 +179,8 @@ export default function SongSearchSheet({ onClose, onSelect }) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Название или артист..."
             autoFocus
-            className="flex-1 font-sans outline-none bg-transparent"
-            style={{ fontSize: 14, color: 'var(--text)', border: 'none' }}
+            className="flex-1 font-sans type-topbar-meta outline-none bg-transparent"
+            style={{ color: 'var(--text)', border: 'none' }}
           />
           {query.length > 0 && (
             <button
@@ -197,7 +196,7 @@ export default function SongSearchSheet({ onClose, onSelect }) {
       <div style={{ minHeight: 220, overflowY: 'auto', maxHeight: '60dvh' }}>
         {/* Searching spinner */}
         {loading && (
-          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--soft)' }}>
+          <p className="font-sans type-support text-center py-8" style={{ color: 'var(--soft)' }}>
             Поиск...
           </p>
         )}
@@ -205,7 +204,7 @@ export default function SongSearchSheet({ onClose, onSelect }) {
         {/* Recent tracks */}
         {!loading && showRecent && (
           <>
-            <p className="font-sans uppercase tracking-widest px-5 pb-2 pt-1" style={{ fontSize: 10, color: 'var(--soft)' }}>
+            <p className="section-label px-4 pb-2 pt-1" style={{ color: 'var(--soft)' }}>
               Недавние
             </p>
             {recentSongs.map((t, i) => (
@@ -221,14 +220,14 @@ export default function SongSearchSheet({ onClose, onSelect }) {
 
         {/* No results */}
         {!loading && noResults && (
-          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--mid)' }}>
+          <p className="font-sans type-support text-center py-8" style={{ color: 'var(--mid)' }}>
             Ничего не найдено
           </p>
         )}
 
         {/* Empty hint */}
         {!loading && !showRecent && !showResults && (
-          <p className="font-sans text-center py-8" style={{ fontSize: 13, color: 'var(--soft)' }}>
+          <p className="font-sans type-support text-center py-8" style={{ color: 'var(--soft)' }}>
             Введи название трека
           </p>
         )}

@@ -87,10 +87,9 @@ export default function BottomNav({ active }) {
             >
               <span style={{ color }}>{tab.icon(color)}</span>
               <span
-                className="font-sans"
+                className="font-sans type-nav"
                 style={{
                   color,
-                  fontSize: 10,
                   fontWeight: isActive ? 600 : 400,
                 }}
               >

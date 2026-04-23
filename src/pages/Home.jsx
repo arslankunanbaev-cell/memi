@@ -3,6 +3,8 @@ import { pluralRu } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import FAB from '../components/FAB'
 import MomentCard from '../components/MomentCard'
+import PageHeader from '../components/PageHeader'
+import SectionLabel from '../components/SectionLabel'
 import { getMomentAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
@@ -75,20 +77,20 @@ export default function Home() {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
-        <div className="flex flex-1 flex-col px-4 pt-topbar">
-          <div className="flex items-center justify-between" style={{ paddingBottom: 18 }}>
-            <h1
-              className="font-serif"
-              style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}
-            >
-              memi
-            </h1>
-            <span className="font-sans capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--mid)' }}>
-              {formatTopbarDate()}
-            </span>
-          </div>
+        <div className="flex flex-1 flex-col">
+          <PageHeader
+            title="memi"
+            brand
+            aside={(
+              <span className="font-sans type-topbar-meta capitalize" style={{ color: 'var(--mid)' }}>
+                {formatTopbarDate()}
+              </span>
+            )}
+            style={{ paddingBottom: 18 }}
+            containerClassName="items-center"
+          />
 
-          <div className="flex flex-1 flex-col items-center justify-center text-center" style={{ paddingBottom: 108 }}>
+          <div className="flex flex-1 flex-col items-center justify-center px-4 text-center" style={{ paddingBottom: 108 }}>
             <div
               className="flex items-center justify-center rounded-full"
               style={{
@@ -103,11 +105,9 @@ export default function Home() {
             </div>
 
             <h2
-              className="font-serif"
+              className="type-page-title"
               style={{
                 color: 'var(--text)',
-                fontSize: 30,
-                fontWeight: 700,
                 lineHeight: 1.05,
                 margin: 0,
               }}
@@ -116,11 +116,9 @@ export default function Home() {
             </h2>
 
             <p
-              className="font-sans"
+              className="font-sans type-body"
               style={{
                 color: 'var(--mid)',
-                fontSize: 15,
-                lineHeight: 1.6,
                 maxWidth: 250,
                 marginTop: 10,
               }}
@@ -131,7 +129,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setShowAdd(true)}
-              className="font-sans transition-opacity active:opacity-70"
+              className="font-sans type-button-strong transition-opacity active:opacity-70"
               style={{
                 marginTop: 22,
                 border: 'none',
@@ -139,8 +137,6 @@ export default function Home() {
                 backgroundColor: 'var(--accent)',
                 color: '#fff',
                 padding: '15px 26px',
-                fontSize: 16,
-                fontWeight: 600,
                 boxShadow: 'var(--shadow-accent)',
               }}
             >
@@ -150,33 +146,24 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <div className="flex items-center justify-between px-4 pt-topbar" style={{ paddingBottom: 16 }}>
-            <h1
-              className="font-serif"
-              style={{ fontSize: 28, fontWeight: 600, color: 'var(--text)', margin: 0 }}
-            >
-              memi
-            </h1>
-            <span className="font-sans capitalize" style={{ fontSize: 14, fontWeight: 500, color: 'var(--mid)' }}>
-              {formatTopbarDate()}
-            </span>
-          </div>
+          <PageHeader
+            title="memi"
+            brand
+            aside={(
+              <span className="font-sans type-topbar-meta capitalize" style={{ color: 'var(--mid)' }}>
+                {formatTopbarDate()}
+              </span>
+            )}
+            style={{ paddingBottom: 16 }}
+            containerClassName="items-center"
+          />
 
           <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 110 }}>
             {groups.map((group, groupIndex) => (
               <section key={group.label} style={{ paddingBottom: 18 }}>
-                <p
-                  className="font-sans font-semibold"
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--soft)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.14em',
-                    marginBottom: 10,
-                  }}
-                >
+                <SectionLabel style={{ marginBottom: 10 }}>
                   {group.label}
-                </p>
+                </SectionLabel>
 
                 <div className="flex flex-col gap-4">
                   {group.items.map((moment, itemIndex) => (

@@ -5,6 +5,7 @@ import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import SectionLabel from '../components/SectionLabel'
 import { useAppStore } from '../store/useAppStore'
 
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
@@ -129,19 +130,14 @@ function SectionHeader({ label, count, compact = false }) {
   }
 
   return (
-    <p
-      className="font-sans font-semibold"
+    <SectionLabel
       style={{
-        color: 'var(--soft)',
-        fontSize: 12,
-        letterSpacing: '0.14em',
         marginBottom: compact ? 0 : 10,
         marginTop: compact ? 0 : 8,
-        textTransform: 'uppercase',
       }}
     >
       {label}{count != null ? ` · ${count}` : ''}
-    </p>
+    </SectionLabel>
   )
 }
 
@@ -154,15 +150,13 @@ function FriendsHeader({ count, onInvite }) {
         type="button"
         aria-label="Пригласить друга"
         onClick={onInvite}
-        className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
+        className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans type-meta transition-opacity active:opacity-70"
         style={{
           border: '1px solid rgba(217, 139, 82, 0.18)',
           borderRadius: 999,
           backgroundColor: 'rgba(255, 254, 253, 0.92)',
           boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08)',
           color: 'var(--accent)',
-          fontSize: 12,
-          fontWeight: 700,
           padding: '7px 12px',
         }}
       >
@@ -191,10 +185,10 @@ function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick 
       <Avatar person={person} />
 
       <div className="min-w-0 flex-1">
-        <div className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 600 }}>
+        <div className="font-serif type-card-title truncate" style={{ color: 'var(--text)' }}>
           {person.name}
         </div>
-        <div className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+        <div className="font-sans type-support" style={{ color: 'var(--mid)', marginTop: 2 }}>
           {momentCount === 0 ? 'нет моментов' : `${momentCount} ${plural.момент(momentCount)}`}
         </div>
       </div>
@@ -216,13 +210,11 @@ function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick 
                 onAction?.()
               }
             }}
-            className="font-sans"
+            className="font-sans type-meta"
             style={{
               borderRadius: 999,
               backgroundColor: 'rgba(217, 139, 82, 0.12)',
               color: 'var(--accent)',
-              fontSize: 12,
-              fontWeight: 600,
               padding: '5px 10px',
             }}
           >
@@ -246,10 +238,10 @@ function RequestRow({ request, onAccept }) {
       <Avatar person={request} size={48} />
 
       <div className="min-w-0 flex-1">
-        <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>
+        <p className="font-serif type-button truncate" style={{ color: 'var(--text)' }}>
           {request.name}
         </p>
-        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+        <p className="font-sans type-support" style={{ color: 'var(--mid)', marginTop: 2 }}>
           хочет добавить тебя в друзья
         </p>
       </div>
@@ -257,14 +249,12 @@ function RequestRow({ request, onAccept }) {
       <button
         type="button"
         onClick={onAccept}
-        className="font-sans transition-opacity active:opacity-70"
+        className="font-sans type-support transition-opacity active:opacity-70"
         style={{
           border: 'none',
           borderRadius: 999,
           backgroundColor: 'var(--accent)',
           color: '#fff',
-          fontSize: 13,
-          fontWeight: 600,
           padding: '8px 16px',
         }}
       >
@@ -660,8 +650,8 @@ export default function People() {
       <div className="px-4 pt-topbar" style={{ paddingBottom: 18 }}>
         <div className="flex items-center justify-between">
           <h1
-            className="font-serif"
-            style={{ color: 'var(--text)', fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}
+            className="type-page-title"
+            style={{ color: 'var(--text)', margin: 0 }}
           >
             Люди
           </h1>

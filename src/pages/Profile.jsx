@@ -830,9 +830,9 @@ export default function Profile() {
             aria-hidden={false}
           >
             <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
-              <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 17, fontWeight: 600 }}>
+              <h1 className="type-page-title" style={{ color: 'var(--text)', margin: 0 }}>
                 Профиль
-              </span>
+              </h1>
             </div>
 
             <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
@@ -889,12 +889,9 @@ export default function Profile() {
 
                   <div style={{ marginTop: 14 }}>
                     <p
-                      className="font-sans truncate"
+                      className="font-serif type-sheet-title truncate"
                       style={{
                         color: 'var(--text)',
-                        fontSize: 22,
-                        fontWeight: 700,
-                        lineHeight: 1.08,
                         margin: 0,
                       }}
                     >
@@ -903,11 +900,10 @@ export default function Profile() {
 
                     {since && (
                       <p
-                        className="font-sans"
+                        className="font-sans type-support"
                         style={{
                           marginTop: 8,
                           paddingLeft: 14,
-                          fontSize: 13,
                           color: 'var(--mid)',
                           backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
                           backgroundRepeat: 'no-repeat',
@@ -921,27 +917,11 @@ export default function Profile() {
                   </div>
 
                   <div
+                    className="stats-panel-surface"
                     style={{
                       marginTop: 16,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
-                      borderRadius: 22,
-                      border: '1px solid rgba(160, 94, 44, 0.08)',
                     }}
                   >
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        position: 'absolute',
-                        top: -28,
-                        right: -18,
-                        width: 104,
-                        height: 104,
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
-                      }}
-                    />
 
                     <div className="grid grid-cols-3" style={{ position: 'relative' }}>
                       {profileStats.map((item, index) => (
@@ -955,24 +935,18 @@ export default function Profile() {
                           }}
                         >
                           <span
-                            className="font-sans"
+                            className="font-sans type-stat-value"
                             style={{
                               color: 'var(--accent)',
-                              fontSize: 32,
-                              fontWeight: 700,
-                              lineHeight: 0.95,
                               textAlign: 'center',
                             }}
                           >
                             {item.value}
                           </span>
                           <span
-                            className="font-sans"
+                            className="font-sans type-stat-label"
                             style={{
                               marginTop: 8,
-                              fontSize: 12,
-                              fontWeight: 500,
-                              lineHeight: 1.2,
                               color: 'var(--deep)',
                               textAlign: 'center',
                             }}
@@ -990,10 +964,10 @@ export default function Profile() {
 
               <section>
                 <div className="flex items-baseline gap-2" style={{ marginBottom: 14 }}>
-                  <span className="font-sans" style={{ color: 'var(--text)', fontSize: 17, fontWeight: 700 }}>
+                  <span className="font-serif type-card-title" style={{ color: 'var(--text)' }}>
                     Капсула
                   </span>
-                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
+                  <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
                     · моменты на всю жизнь
                   </span>
                 </div>
@@ -1023,21 +997,19 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setActiveScreen(0)}
-                  className="flex items-center gap-2 transition-opacity active:opacity-60"
+                  className="flex items-center gap-2 font-sans type-action transition-opacity active:opacity-60"
                   style={{
                     background: 'none',
                     border: 'none',
                     padding: '8px 0',
                     color: 'var(--mid)',
-                    fontSize: 15,
-                    fontWeight: 500,
                   }}
                 >
                   <BackArrowIcon />
                   Назад
                 </button>
 
-                <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+                <span className="font-sans type-screen-title" style={{ color: 'var(--text)' }}>
                   Публичный профиль
                 </span>
 

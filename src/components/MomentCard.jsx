@@ -76,11 +76,9 @@ function MusicBlock({ title, artist, cover }) {
 
       <div className="min-w-0">
         <p
-          className="font-sans"
+          className="font-sans type-chip"
           style={{
             color: 'var(--text)',
-            fontSize: 14,
-            fontWeight: 600,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -89,7 +87,7 @@ function MusicBlock({ title, artist, cover }) {
           {title}
         </p>
         {artist && (
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 1 }}>
+          <p className="font-sans type-meta" style={{ color: 'var(--mid)', marginTop: 1 }}>
             {artist}
           </p>
         )}
@@ -101,7 +99,7 @@ function MusicBlock({ title, artist, cover }) {
 function PhotoChip({ children, center = false }) {
   return (
     <div
-      className="font-sans"
+      className="font-sans type-support"
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -115,8 +113,6 @@ function PhotoChip({ children, center = false }) {
         padding: '5px 12px',
         boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
         color: 'var(--text)',
-        fontSize: 13,
-        fontWeight: 500,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -167,7 +163,7 @@ export default function MomentCard({ moment }) {
           style={{ borderBottom: '1px solid var(--divider)' }}
         >
           <Avatar name={author.name} photoUrl={author.photo_url} />
-          <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500 }}>
+          <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
             {author.name}
           </span>
         </div>
@@ -219,14 +215,12 @@ export default function MomentCard({ moment }) {
         >
           {moment.mood && <span style={{ fontSize: 18 }}>{moment.mood}</span>}
           <div
-            className="font-sans"
+            className="font-sans type-support"
             style={{
               background: 'rgba(0,0,0,0.45)',
               borderRadius: 10,
               padding: '3px 8px',
               color: '#fff',
-              fontSize: 13,
-              fontWeight: 600,
             }}
           >
             {formatTime(getMomentDisplayAt(moment))}
@@ -238,11 +232,9 @@ export default function MomentCard({ moment }) {
         <div style={{ padding: '14px 16px 16px' }}>
           {moment.description && (
             <p
-              className="font-sans"
+              className="font-sans type-body"
               style={{
                 color: 'var(--text)',
-                fontSize: 15,
-                lineHeight: 1.55,
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -266,7 +258,7 @@ export default function MomentCard({ moment }) {
               {participants.map((person) => (
                 <div key={person.id} className="flex items-center gap-2">
                   <Avatar person={person} />
-                  <span className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500 }}>
+                  <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
                     {person.name}
                   </span>
                 </div>

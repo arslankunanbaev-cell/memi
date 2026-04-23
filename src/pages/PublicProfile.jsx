@@ -472,14 +472,12 @@ function SharedMomentRow({ moment, sourceLabel, onClick }) {
 
           {sourceLabel && (
             <span
-              className="font-sans"
+              className="font-sans type-meta"
               style={{
                 flexShrink: 0,
                 borderRadius: 999,
                 backgroundColor: 'rgba(217, 139, 82, 0.12)',
                 color: 'var(--deep)',
-                fontSize: 11,
-                fontWeight: 600,
                 padding: '4px 9px',
               }}
             >
@@ -619,12 +617,9 @@ export function PublicProfileContent({
 
           <div style={{ marginTop: 14 }}>
             <p
-              className="font-sans"
+              className="font-serif type-sheet-title"
               style={{
                 margin: 0,
-                fontSize: 22,
-                fontWeight: 700,
-                lineHeight: 1.08,
                 color: 'var(--text)',
               }}
             >
@@ -633,11 +628,10 @@ export function PublicProfileContent({
 
             {since && (
               <p
-                className="font-sans"
+                className="font-sans type-support"
                 style={{
                   marginTop: 8,
                   paddingLeft: 14,
-                  fontSize: 13,
                   color: 'var(--mid)',
                   backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
                   backgroundRepeat: 'no-repeat',
@@ -670,7 +664,7 @@ export function PublicProfileContent({
           <button
             type="button"
             onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
-            className="inline-flex items-center gap-2 transition-opacity active:opacity-60"
+            className="inline-flex items-center gap-2 font-sans type-chip transition-opacity active:opacity-60"
             style={{
               marginTop: bio ? 12 : 14,
               backgroundColor: linkedPerson ? 'rgba(217, 139, 82, 0.1)' : 'var(--base)',
@@ -678,39 +672,21 @@ export function PublicProfileContent({
               borderRadius: 9999,
               padding: '8px 12px',
               color: linkedPerson ? 'var(--accent)' : 'var(--mid)',
-              fontSize: 14,
-              fontWeight: 500,
             }}
           >
             <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
-            <span className="font-sans">
+            <span>
               {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
             </span>
           </button>
         )}
 
           <div
+            className="stats-panel-surface"
             style={{
               marginTop: 16,
-              position: 'relative',
-              overflow: 'hidden',
-              background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
-              borderRadius: 22,
-              border: '1px solid rgba(160, 94, 44, 0.08)',
             }}
           >
-            <div
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                top: -28,
-                right: -18,
-                width: 104,
-                height: 104,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
-              }}
-            />
             <div className="grid grid-cols-3" style={{ position: 'relative' }}>
               {statItems.map((item, index) => (
                 <div
@@ -723,24 +699,18 @@ export function PublicProfileContent({
                   }}
                 >
                   <span
-                    className="font-sans"
+                    className="font-sans type-stat-value"
                     style={{
                       color: 'var(--accent)',
-                      fontSize: 32,
-                      fontWeight: 700,
-                      lineHeight: 0.95,
                       textAlign: 'center',
                     }}
                   >
                     {item.value}
                   </span>
                   <span
-                    className="font-sans"
+                    className="font-sans type-stat-label"
                     style={{
                       marginTop: 8,
-                      fontSize: 12,
-                      fontWeight: 500,
-                      lineHeight: 1.2,
                       color: 'var(--deep)',
                       textAlign: 'center',
                     }}
@@ -770,12 +740,10 @@ export function PublicProfileContent({
       {featuredMoment && (
         <div style={{ marginTop: 20 }}>
           <h2
-            className="font-sans"
+            className="font-serif type-card-title"
             style={{
               margin: 0,
               marginBottom: 12,
-              fontSize: 16,
-              fontWeight: 700,
               color: 'var(--text)',
             }}
           >
@@ -792,12 +760,10 @@ export function PublicProfileContent({
       {showMomentsSection && (
         <div style={{ marginTop: 20 }}>
           <h2
-            className="font-sans"
+            className="font-serif type-card-title"
             style={{
               margin: 0,
               marginBottom: 12,
-              fontSize: 16,
-              fontWeight: 700,
               color: 'var(--text)',
             }}
           >
@@ -818,10 +784,8 @@ export function PublicProfileContent({
                 <EmptyStateLockIcon />
               </div>
               <div
-                className="font-sans"
+                className="font-sans type-button"
                 style={{
-                  fontSize: 15,
-                  fontWeight: 600,
                   color: 'var(--text)',
                   marginBottom: 6,
                 }}
@@ -829,8 +793,8 @@ export function PublicProfileContent({
                 {emptyMomentsTitle}
               </div>
               <div
-                className="font-sans"
-                style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
+                className="font-sans type-topbar-meta"
+                style={{ color: 'var(--mid)' }}
               >
                 {emptyMomentsDescription}
               </div>
@@ -1155,14 +1119,12 @@ export default function PublicProfile() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 font-sans type-action"
               style={{
                 background: 'none',
                 border: 'none',
                 padding: '8px 0',
                 color: 'var(--mid)',
-                fontSize: 15,
-                fontWeight: 500,
               }}
             >
               <svg
@@ -1183,7 +1145,7 @@ export default function PublicProfile() {
               Назад
             </button>
 
-            <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+            <span className="font-sans type-screen-title" style={{ color: 'var(--text)' }}>
               Профиль
             </span>
 
@@ -1212,14 +1174,12 @@ export default function PublicProfile() {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 transition-opacity active:opacity-60"
+            className="flex items-center gap-2 font-sans type-action transition-opacity active:opacity-60"
             style={{
               background: 'none',
               border: 'none',
               padding: '8px 0',
               color: 'var(--mid)',
-              fontSize: 15,
-              fontWeight: 500,
             }}
           >
             <svg
@@ -1240,7 +1200,7 @@ export default function PublicProfile() {
             Назад
           </button>
 
-          <span className="font-sans" style={{ fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>
+          <span className="font-sans type-screen-title" style={{ color: 'var(--text)' }}>
             Профиль
           </span>
 

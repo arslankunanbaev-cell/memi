@@ -61,13 +61,11 @@ export default function BottomSheet({ onClose, title, children }) {
         </div>
 
         {title && (
-          <div className="px-5 pb-3 pt-1" style={{ position: 'relative' }}>
+          <div className="px-4 pb-3 pt-1" style={{ position: 'relative' }}>
             <h3
-              className="font-sans"
+              className="font-sans type-sheet-title"
               style={{
                 color: 'var(--text)',
-                fontSize: 22,
-                fontWeight: 700,
                 lineHeight: 1.15,
               }}
             >

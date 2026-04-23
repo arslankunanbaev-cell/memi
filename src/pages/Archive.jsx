@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 
@@ -86,19 +87,10 @@ function FilterSheet({ onClose, onApply, people, current }) {
 
   return (
     <BottomSheet onClose={onClose} title="Фильтры">
-      <div className="px-5 pb-5">
-        <p
-          className="font-sans font-semibold"
-          style={{
-            fontSize: 12,
-            color: 'var(--soft)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.14em',
-            marginBottom: 14,
-          }}
-        >
+      <div className="px-4 pb-5">
+        <SectionLabel style={{ marginBottom: 14 }}>
           Люди
-        </p>
+        </SectionLabel>
 
         <div className="flex flex-wrap gap-2" style={{ marginBottom: 28 }}>
           {people.map((person) => (
@@ -111,7 +103,7 @@ function FilterSheet({ onClose, onApply, people, current }) {
           ))}
 
           {people.length === 0 && (
-            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>
+            <p className="font-sans type-topbar-meta" style={{ color: 'var(--mid)' }}>
               Пока некого выбирать.
             </p>
           )}
@@ -123,15 +115,13 @@ function FilterSheet({ onClose, onApply, people, current }) {
             onApply(selectedPeople)
             onClose()
           }}
-          className="w-full font-sans transition-opacity active:opacity-70"
+          className="w-full font-sans type-button-strong transition-opacity active:opacity-70"
           style={{
             border: 'none',
             borderRadius: 20,
             backgroundColor: 'var(--accent)',
             color: '#fff',
             padding: '16px',
-            fontSize: 16,
-            fontWeight: 700,
             letterSpacing: '0.02em',
           }}
         >
@@ -145,13 +135,12 @@ function FilterSheet({ onClose, onApply, people, current }) {
               onApply([])
               onClose()
             }}
-            className="w-full font-sans transition-opacity active:opacity-60"
+            className="w-full font-sans type-action transition-opacity active:opacity-60"
             style={{
               marginTop: 12,
               border: 'none',
               background: 'none',
               color: 'var(--mid)',
-              fontSize: 14,
             }}
           >
             Сбросить фильтры
@@ -267,26 +256,24 @@ export default function Archive() {
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
         <div style={{ paddingBottom: 16 }}>
           <h1
-            className="font-serif"
-            style={{ color: 'var(--text)', fontSize: 32, fontWeight: 700, letterSpacing: '-0.03em', margin: 0 }}
+            className="type-page-title"
+            style={{ color: 'var(--text)', margin: 0 }}
           >
             Архив
           </h1>
           <div className="flex items-center justify-between gap-3" style={{ marginTop: 2 }}>
-            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14, margin: 0 }}>
+            <p className="font-sans type-topbar-meta" style={{ color: 'var(--mid)', margin: 0 }}>
               {moments.length} {moments.length === 1 ? 'момент' : 'момента'}
             </p>
 
             <button
               type="button"
               onClick={() => setShowFilter(true)}
-              className="flex items-center gap-2 whitespace-nowrap transition-opacity active:opacity-60"
+              className="flex items-center gap-2 whitespace-nowrap font-sans type-topbar-meta transition-opacity active:opacity-60"
               style={{
                 border: 'none',
                 background: 'none',
                 color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
-                fontSize: 14,
-                fontWeight: 500,
                 padding: 0,
               }}
             >
@@ -296,7 +283,7 @@ export default function Archive() {
               Фильтр
               {filterPeople.length > 0 && (
                 <span
-                  className="font-sans"
+                  className="font-sans type-meta"
                   style={{
                     minWidth: 18,
                     height: 18,
@@ -306,8 +293,6 @@ export default function Archive() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: 11,
-                    fontWeight: 700,
                     padding: '0 5px',
                   }}
                 >
@@ -327,14 +312,13 @@ export default function Archive() {
                 key={key}
                 type="button"
                 onClick={() => setActiveMonth(key)}
-                className="font-sans whitespace-nowrap transition-opacity active:opacity-70"
+                className="font-sans type-chip whitespace-nowrap transition-opacity active:opacity-70"
                 style={{
                   border: 'none',
                   borderRadius: 20,
                   backgroundColor: active ? 'var(--accent)' : 'var(--card)',
                   boxShadow: active ? 'none' : 'var(--shadow-card)',
                   color: active ? '#fff' : 'var(--mid)',
-                  fontSize: 14,
                   fontWeight: active ? 600 : 500,
                   padding: '7px 16px',
                 }}
@@ -394,27 +378,11 @@ export default function Archive() {
 
       <div className="px-4" style={{ paddingBottom: 20 }}>
         <div
+          className="stats-panel-surface"
           style={{
-            position: 'relative',
-            overflow: 'hidden',
-            background: 'linear-gradient(135deg, rgba(217, 139, 82, 0.18) 0%, rgba(237, 230, 220, 0.96) 62%, rgba(255, 255, 255, 0.72) 100%)',
-            borderRadius: 22,
-            border: '1px solid rgba(160, 94, 44, 0.08)',
+            marginTop: filterPeople.length > 0 ? 0 : 4,
           }}
         >
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: -28,
-              right: -18,
-              width: 104,
-              height: 104,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0) 72%)',
-            }}
-          />
-
           <div className="grid grid-cols-2" style={{ position: 'relative' }}>
             {[
               { label: 'Моментов', value: stats.count },
@@ -430,24 +398,18 @@ export default function Archive() {
                 }}
               >
                 <span
-                  className="font-sans"
+                  className="font-sans type-stat-value"
                   style={{
                     color: 'var(--accent)',
-                    fontSize: 32,
-                    fontWeight: 700,
-                    lineHeight: 0.95,
                     textAlign: 'center',
                   }}
                 >
                   {card.value}
                 </span>
                 <span
-                  className="font-sans"
+                  className="font-sans type-stat-label"
                   style={{
                     marginTop: 8,
-                    fontSize: 12,
-                    fontWeight: 500,
-                    lineHeight: 1.2,
                     color: 'var(--deep)',
                     textAlign: 'center',
                   }}
@@ -472,10 +434,10 @@ export default function Archive() {
             }}
           >
             <span style={{ fontSize: 34, marginBottom: 10 }}>🗂️</span>
-            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
+            <p className="font-sans type-button-strong" style={{ color: 'var(--text)', marginBottom: 6 }}>
               Здесь пока пусто
             </p>
-            <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 14, lineHeight: 1.5 }}>
+            <p className="font-sans type-topbar-meta text-center" style={{ color: 'var(--mid)' }}>
               {filterPeople.length > 0 ? 'Для выбранных людей в этом месяце нет моментов.' : 'В выбранном месяце пока нет сохранённых моментов.'}
             </p>
           </div>
