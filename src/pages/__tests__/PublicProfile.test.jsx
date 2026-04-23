@@ -87,6 +87,7 @@ describe('PublicProfile', () => {
     renderPublicProfile()
 
     expect(await screen.findByText('Warm bio')).toBeInTheDocument()
+    expect(mockGetUserProfile).toHaveBeenCalledWith('user-2', 'user-1', { assumeFriend: true })
     expect(screen.getAllByText('Главное воспоминание').length).toBeGreaterThan(0)
     expect(screen.getByText('Featured Memory')).toBeInTheDocument()
     expect(screen.getByText('Another Memory')).toBeInTheDocument()

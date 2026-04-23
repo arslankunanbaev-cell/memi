@@ -1062,7 +1062,9 @@ export default function PublicProfile() {
           monthCount,
           friendCount,
           viewerCanSeeFriendMoments,
-        } = await getUserProfile(userId, currentUser?.id ?? null)
+        } = await getUserProfile(userId, currentUser?.id ?? null, {
+          assumeFriend: isAlreadyFriend,
+        })
 
         setProfileUser(user)
         setMoments(publicMoments)
@@ -1085,7 +1087,7 @@ export default function PublicProfile() {
     if (userId) {
       load()
     }
-  }, [userId, currentUser?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, currentUser?.id, isAlreadyFriend]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAddFriend() {
     if (!currentUser?.id || !userId) return

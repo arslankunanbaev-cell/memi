@@ -416,6 +416,65 @@ describe('getUserProfile', () => {
     expect(result.total).toBe(1)
     expect(result.viewerCanSeeFriendMoments).toBe(false)
   })
+
+  it('uses assumed friendship to load friend-visible moments', async () => {
+    const rpcUser = {
+      id: 'user-2',
+      name: 'Mila',
+      photo_url: null,
+      created_at: '2024-01-01T00:00:00Z',
+      public_code: 'code-123',
+      public_profile_enabled: true,
+      bio: 'Warm bio',
+      featured_moment_id: null,
+    }
+
+    mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
+
+    const momentsOrder = vi.fn().mockResolvedValue({
+      data: [{ id: 'm-friends', title: 'Friends Memory', created_at: '2024-02-01T00:00:00Z', visibility: 'friends' }],
+      count: 1,
+      error: null,
+    })
+    const momentsVisibilityIn = vi.fn(() => ({ order: momentsOrder }))
+    const momentsUserEq = vi.fn(() => ({ in: momentsVisibilityIn }))
+
+    let friendshipSelectCount = 0
+    mockFrom.mockImplementation((table) => {
+      if (table === 'moments') {
+        return {
+          select: () => ({ eq: momentsUserEq }),
+        }
+      }
+
+      if (table === 'friendships') {
+        friendshipSelectCount += 1
+
+        return {
+          select: () => ({
+            eq: () => ({
+              eq: () => Promise.resolve({ count: 1, error: null }),
+            }),
+          }),
+        }
+      }
+
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        upsert: mockUpsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      }
+    })
+
+    const result = await getUserProfile('user-2', 'user-1', { assumeFriend: true })
+
+    expect(result.moments).toHaveLength(1)
+    expect(result.viewerCanSeeFriendMoments).toBe(true)
+    expect(momentsVisibilityIn).toHaveBeenCalledWith('visibility', ['friends', 'public'])
+    expect(friendshipSelectCount).toBe(2)
+  })
 })
 
 describe('createPerson', () => {

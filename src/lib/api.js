@@ -612,8 +612,9 @@ function emptyUserProfileResult() {
   }
 }
 
-export async function getUserProfile(userId, viewerId = null) {
+export async function getUserProfile(userId, viewerId = null, options = {}) {
   const sb = assertSupabase()
+  const { assumeFriend = false } = options
   let user = null
 
   try {
@@ -625,8 +626,8 @@ export async function getUserProfile(userId, viewerId = null) {
 
   if (!user) return emptyUserProfileResult()
 
-  let canSeeFriendMoments = viewerId === userId
-  if (viewerId && viewerId !== userId) {
+  let canSeeFriendMoments = viewerId === userId || assumeFriend
+  if (!canSeeFriendMoments && viewerId && viewerId !== userId) {
     try {
       canSeeFriendMoments = await isAcceptedFriendship(sb, viewerId, userId)
     } catch (error) {
