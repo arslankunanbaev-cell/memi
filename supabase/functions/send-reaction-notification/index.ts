@@ -92,12 +92,6 @@ serve(async (req: Request) => {
       })
     }
 
-    if (reaction.created_at !== reaction.updated_at) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'updated_reaction' }), {
-        headers: { 'Content-Type': 'application/json', ...CORS },
-      })
-    }
-
     const { data: moment, error: momentError } = await admin
       .from('moments')
       .select('id, user_id, title')
@@ -140,6 +134,16 @@ serve(async (req: Request) => {
 
     const titleSuffix = moment.title ? ` "${moment.title}"` : ''
     const text = `${reactor?.name ?? 'Кто-то'} отреагировал${reaction.emoji ? ` ${reaction.emoji}` : ''} на ваш момент${titleSuffix}`
+
+    console.log(
+      '[send-reaction-notification] sending',
+      JSON.stringify({
+        reactionId: reaction.id,
+        ownerUserId: owner.id,
+        reactorUserId: reaction.user_id,
+        ownerChatId: owner.telegram_id,
+      }),
+    )
 
     const tgRes = await fetch(`${TG_API}/sendMessage`, {
       method: 'POST',

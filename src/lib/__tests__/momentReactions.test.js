@@ -1,29 +1,33 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+const mockMaybeSingle = vi.fn()
 const mockSingle = vi.fn()
-const mockSelect = vi.fn()
-const mockEq = vi.fn()
-const mockOrder = vi.fn()
 const mockUpsert = vi.fn()
 const mockInvoke = vi.fn()
 
-const mockFrom = vi.fn(() => ({
-  select: mockSelect,
-  upsert: mockUpsert,
-}))
+function createQueryBuilder() {
+  const builder = {
+    eq: vi.fn(() => builder),
+    maybeSingle: mockMaybeSingle,
+    single: mockSingle,
+  }
 
-mockSelect.mockReturnValue({
-  eq: mockEq,
-  single: mockSingle,
-  maybeSingle: mockSingle,
-  order: mockOrder,
+  return builder
+}
+
+const mockFrom = vi.fn((table) => {
+  if (table === 'moment_reactions') {
+    return {
+      select: vi.fn(() => createQueryBuilder()),
+      upsert: mockUpsert,
+    }
+  }
+
+  return {
+    select: vi.fn(() => createQueryBuilder()),
+  }
 })
-mockEq.mockReturnValue({
-  single: mockSingle,
-  maybeSingle: mockSingle,
-  order: mockOrder,
-})
-mockOrder.mockResolvedValue({ data: [], error: null })
+
 mockUpsert.mockReturnValue({
   select: () => ({ single: mockSingle }),
 })
@@ -45,7 +49,8 @@ describe('upsertMomentReaction', () => {
   })
 
   it('marks a first reaction as new and invokes the quiet notification function', async () => {
-    mockSingle.mockResolvedValue({
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
+    mockSingle.mockResolvedValueOnce({
       data: {
         id: 'reaction-1',
         moment_id: 'moment-1',
@@ -71,8 +76,12 @@ describe('upsertMomentReaction', () => {
     })
   })
 
-  it('does not invoke a second notification when the reaction was updated', async () => {
-    mockSingle.mockResolvedValue({
+  it('does not invoke a second notification when the reaction already existed', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({
+      data: { id: 'reaction-1' },
+      error: null,
+    })
+    mockSingle.mockResolvedValueOnce({
       data: {
         id: 'reaction-1',
         moment_id: 'moment-1',

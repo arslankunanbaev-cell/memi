@@ -285,6 +285,15 @@ export async function getMomentReactions(momentId) {
 
 export async function upsertMomentReaction({ momentId, userId, emoji, momentOwnerId }) {
   const sb = assertSupabase()
+  const { data: existingReaction, error: existingError } = await sb
+    .from('moment_reactions')
+    .select('id')
+    .eq('moment_id', momentId)
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (existingError) throw existingError
+
   const { data, error } = await sb
     .from('moment_reactions')
     .upsert(
@@ -297,11 +306,7 @@ export async function upsertMomentReaction({ momentId, userId, emoji, momentOwne
   if (error) throw error
 
   const reaction = data
-  const isNew = Boolean(
-    reaction?.created_at &&
-    reaction?.updated_at &&
-    reaction.created_at === reaction.updated_at,
-  )
+  const isNew = !existingReaction
 
   if (
     isNew &&
