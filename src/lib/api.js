@@ -269,6 +269,63 @@ export async function deleteMoment(id) {
   if (error) throw error
 }
 
+export async function getMomentReactions(momentId) {
+  if (!momentId) return []
+
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('moment_reactions')
+    .select('id, moment_id, user_id, emoji, created_at, updated_at')
+    .eq('moment_id', momentId)
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function upsertMomentReaction({ momentId, userId, emoji, momentOwnerId }) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('moment_reactions')
+    .upsert(
+      { moment_id: momentId, user_id: userId, emoji },
+      { onConflict: 'moment_id,user_id' },
+    )
+    .select('id, moment_id, user_id, emoji, created_at, updated_at')
+    .single()
+
+  if (error) throw error
+
+  const reaction = data
+  const isNew = Boolean(
+    reaction?.created_at &&
+    reaction?.updated_at &&
+    reaction.created_at === reaction.updated_at,
+  )
+
+  if (
+    isNew &&
+    reaction?.id &&
+    momentOwnerId &&
+    momentOwnerId !== userId &&
+    typeof sb.functions?.invoke === 'function'
+  ) {
+    const { data: notificationData, error: notificationError } = await sb.functions.invoke(
+      'send-reaction-notification',
+      { body: { reactionId: reaction.id } },
+    )
+
+    if (notificationError || notificationData?.error) {
+      console.error(
+        '[MomentReaction] notification error:',
+        notificationError?.message ?? notificationData?.error,
+      )
+    }
+  }
+
+  return { reaction, isNew }
+}
+
 // ── People ────────────────────────────────────────────────────────────────────
 
 export async function getPeople(userId) {

@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
-import { deleteCapsuleSlot, deleteMoment, getMomentDetails, saveCapsuleSlot } from '../lib/api'
+import {
+  deleteCapsuleSlot,
+  deleteMoment,
+  getMomentDetails,
+  getMomentReactions,
+  saveCapsuleSlot,
+  upsertMomentReaction,
+} from '../lib/api'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { tgHaptic } from '../lib/telegram'
@@ -24,6 +31,8 @@ function formatFull(iso) {
 
   return `${weekday} · ${day} · ${time}`
 }
+
+const REACTION_EMOJIS = ['❤️', '🥹', '😄', '🔥', '🫶']
 
 function CircleButton({ onClick, children, light = false, ariaLabel }) {
   return (
@@ -184,6 +193,9 @@ export default function MomentDetail() {
   const [showCapsuleSheet, setShowCapsuleSheet] = useState(false)
   const [remoteMoment, setRemoteMoment] = useState(routePreviewMoment)
   const [loadingMoment, setLoadingMoment] = useState(false)
+  const [reactions, setReactions] = useState([])
+  const [loadingReactions, setLoadingReactions] = useState(false)
+  const [reactingEmoji, setReactingEmoji] = useState(null)
 
   const shouldFetchRemoteMoment = !storeMoment
     || location.state?.forceFetch === true
@@ -228,6 +240,85 @@ export default function MomentDetail() {
       isActive = false
     }
   }, [id, routePreviewMoment, shouldFetchRemoteMoment])
+
+  useEffect(() => {
+    let isActive = true
+
+    if (!id) {
+      setReactions([])
+      setLoadingReactions(false)
+      return () => {
+        isActive = false
+      }
+    }
+
+    setLoadingReactions(true)
+
+    async function loadReactions() {
+      try {
+        const nextReactions = await getMomentReactions(id)
+        if (isActive) {
+          setReactions(nextReactions)
+        }
+      } catch (error) {
+        console.error('[MomentDetail] reactions load error:', error)
+        if (isActive) {
+          setReactions([])
+        }
+      } finally {
+        if (isActive) {
+          setLoadingReactions(false)
+        }
+      }
+    }
+
+    loadReactions()
+
+    return () => {
+      isActive = false
+    }
+  }, [id])
+
+  const myReaction = reactions.find((entry) => entry.user_id === currentUser?.id) ?? null
+  const reactionCounts = REACTION_EMOJIS.reduce((acc, emoji) => {
+    acc[emoji] = 0
+    return acc
+  }, {})
+
+  for (const reaction of reactions) {
+    if (reaction?.emoji in reactionCounts) {
+      reactionCounts[reaction.emoji] += 1
+    }
+  }
+
+  async function handleReact(emoji) {
+    if (!currentUser?.id || !moment?.id || reactingEmoji || myReaction?.emoji === emoji) return
+
+    tgHaptic('light')
+    setReactingEmoji(emoji)
+
+    try {
+      const { reaction } = await upsertMomentReaction({
+        momentId: moment.id,
+        userId: currentUser.id,
+        emoji,
+        momentOwnerId: moment.user_id,
+      })
+
+      setReactions((current) => {
+        const next = [...current.filter((entry) => entry.user_id !== currentUser.id), reaction]
+        return next.sort((left, right) => {
+          const leftTime = new Date(left.created_at ?? 0).getTime()
+          const rightTime = new Date(right.created_at ?? 0).getTime()
+          return leftTime - rightTime
+        })
+      })
+    } catch (error) {
+      console.error('[MomentDetail] react error:', error)
+    } finally {
+      setReactingEmoji(null)
+    }
+  }
 
   if (!moment) {
     if (loadingMoment) {
@@ -384,6 +475,61 @@ export default function MomentDetail() {
           <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
             {formatFull(momentDisplayAt)}
           </p>
+
+          <div style={{ marginBottom: 20 }}>
+            <p
+              className="font-sans font-semibold"
+              style={{
+                color: 'var(--soft)',
+                fontSize: 12,
+                letterSpacing: '0.14em',
+                marginBottom: 10,
+                textTransform: 'uppercase',
+              }}
+            >
+              Реакции
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {REACTION_EMOJIS.map((emoji) => {
+                const isSelected = myReaction?.emoji === emoji
+                const count = reactionCounts[emoji] ?? 0
+
+                return (
+                  <button
+                    key={emoji}
+                    type="button"
+                    aria-label={`Реакция ${emoji}`}
+                    aria-pressed={isSelected}
+                    disabled={!currentUser?.id || loadingReactions || Boolean(reactingEmoji)}
+                    onClick={() => handleReact(emoji)}
+                    className="inline-flex items-center gap-2 rounded-[20px] transition-opacity active:opacity-60"
+                    style={{
+                      border: 'none',
+                      padding: '10px 14px',
+                      backgroundColor: isSelected ? 'rgba(217,139,82,0.16)' : 'var(--moment-surface)',
+                      color: 'var(--text)',
+                      boxShadow: isSelected ? 'inset 0 0 0 1px rgba(217,139,82,0.38)' : 'none',
+                      opacity: reactingEmoji && reactingEmoji !== emoji ? 0.72 : 1,
+                    }}
+                  >
+                    <span style={{ fontSize: 20, lineHeight: 1 }}>{emoji}</span>
+                    <span
+                      className="font-sans"
+                      style={{
+                        color: isSelected ? 'var(--deep)' : 'var(--mid)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        minWidth: count > 0 ? 10 : 'auto',
+                      }}
+                    >
+                      {count > 0 ? count : ''}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           {moment.description && (
             <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.6, marginBottom: 20 }}>
