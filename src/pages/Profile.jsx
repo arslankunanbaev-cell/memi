@@ -889,7 +889,7 @@ export default function Profile() {
 
                   <div style={{ marginTop: 16 }}>
                     <p
-                      className="font-serif type-sheet-title truncate"
+                      className="font-sans type-sheet-title truncate"
                       style={{
                         color: 'var(--text)',
                         margin: 0,

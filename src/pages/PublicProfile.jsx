@@ -617,7 +617,7 @@ export function PublicProfileContent({
 
           <div style={{ marginTop: 16 }}>
             <p
-              className="font-serif type-sheet-title"
+              className="font-sans type-sheet-title"
               style={{
                 margin: 0,
                 color: 'var(--text)',
@@ -740,7 +740,7 @@ export function PublicProfileContent({
       {featuredMoment && (
         <div style={{ marginTop: 24 }}>
           <h2
-            className="font-serif type-card-title"
+            className="font-sans type-card-title"
             style={{
               margin: 0,
               marginBottom: 14,
@@ -760,7 +760,7 @@ export function PublicProfileContent({
       {showMomentsSection && (
         <div style={{ marginTop: 24 }}>
           <h2
-            className="font-serif type-card-title"
+            className="font-sans type-card-title"
             style={{
               margin: 0,
               marginBottom: 14,
