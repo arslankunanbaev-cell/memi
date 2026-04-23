@@ -44,6 +44,12 @@ export function proxifyImageUrl(url) {
 export const shouldProxyCoverUrl = shouldProxyImageUrl
 export const proxifyCoverUrl = proxifyImageUrl
 
+export function normalizeMomentVisibility(visibility) {
+  if (visibility === 'private') return 'private'
+  if (visibility === 'public') return 'friends'
+  return visibility ?? 'friends'
+}
+
 export function normalizePhotoEntity(entity) {
   if (!entity) return entity
 
@@ -58,6 +64,7 @@ export function normalizeMomentMedia(moment) {
 
   return {
     ...moment,
+    visibility: normalizeMomentVisibility(moment.visibility),
     photo_url: proxifyImageUrl(moment.photo_url ?? null),
     song_cover: proxifyImageUrl(moment.song_cover ?? null),
     people: (moment.people ?? []).map((person) => normalizePhotoEntity(person)),

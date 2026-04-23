@@ -11,9 +11,8 @@ import { tgHaptic } from '../lib/telegram'
 const MOODS = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
 const VISIBILITY_OPTIONS = [
-  { value: 'private', label: 'Только я' },
-  { value: 'friends', label: 'Друзья' },
-  { value: 'public', label: 'Открыто' },
+  { value: 'friends', label: '\u0412\u0441\u0435\u043c \u0434\u0440\u0443\u0437\u044c\u044f\u043c' },
+  { value: 'private', label: '\u0422\u043e\u043b\u044c\u043a\u043e \u044f' },
 ]
 
 function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
@@ -144,7 +143,7 @@ export default function EditMoment() {
   const [newPhotoFile, setNewPhotoFile]       = useState(null)
   const [photoPreview, setPhotoPreview]       = useState(moment?.photo_url ?? null)
 
-  const [visibility, setVisibility] = useState(moment?.visibility ?? 'private')
+  const [visibility, setVisibility] = useState(moment?.visibility === 'private' ? 'private' : 'friends')
 
   // UI state
   const [saving, setSaving]         = useState(false)

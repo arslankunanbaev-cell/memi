@@ -142,7 +142,7 @@ describe('Profile', () => {
     expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 
-  it('opens the public profile preview and shows only public moments', () => {
+  it('opens the public profile preview and shows only friend-visible moments', () => {
     useAppStore.setState({
       currentUser: {
         id: 'u1',
@@ -150,10 +150,10 @@ describe('Profile', () => {
         created_at: '2024-01-15T00:00:00Z',
         public_profile_enabled: true,
         bio: 'Short bio',
-        featured_moment_id: 'm-public',
+        featured_moment_id: 'm-friends',
       },
       moments: [
-        { id: 'm-public', title: 'Open Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'public' },
+        { id: 'm-friends', title: 'Friends Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'friends' },
         { id: 'm-private', title: 'Private Moment', created_at: '2024-02-02', user_id: 'u1', visibility: 'private' },
       ],
     })
@@ -170,15 +170,15 @@ describe('Profile', () => {
 
     const preview = within(previewScreen)
     expect(preview.getByText('Short bio')).toBeInTheDocument()
-    expect(preview.getByText('Open Moment')).toBeInTheDocument()
+    expect(preview.getByText('Friends Moment')).toBeInTheDocument()
     expect(preview.queryByText('Private Moment')).not.toBeInTheDocument()
   })
 
-  it('shows only public moments in the public profile editor and saves bio', async () => {
+  it('shows only friend-visible moments in the public profile editor and saves bio', async () => {
     useAppStore.setState({
       currentUser: { id: 'u1', name: 'Arslan', created_at: '2024-01-15T00:00:00Z' },
       moments: [
-        { id: 'm-public', title: 'Open Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'public' },
+        { id: 'm-friends', title: 'Friends Moment', created_at: '2024-02-01', user_id: 'u1', visibility: 'friends' },
         { id: 'm-private', title: 'Private Moment', created_at: '2024-02-02', user_id: 'u1', visibility: 'private' },
       ],
     })
@@ -188,7 +188,7 @@ describe('Profile', () => {
     fireEvent.click(screen.getByTestId('public-profile-more-button'))
     fireEvent.click(screen.getByTestId('public-profile-edit-button'))
 
-    expect(screen.getByText('Open Moment')).toBeInTheDocument()
+    expect(screen.getByText('Friends Moment')).toBeInTheDocument()
     expect(screen.queryByText('Private Moment')).not.toBeInTheDocument()
 
     fireEvent.change(screen.getByPlaceholderText('Пара слов о себе'), {

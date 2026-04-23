@@ -82,6 +82,7 @@ describe('AddMoment', () => {
         })
       )
     })
+    expect(mockSaveMoment.mock.calls[0][0].fields.visibility).toBe('friends')
   })
 
   it('после сохранения переходит на /moment-saved (обычный режим)', async () => {

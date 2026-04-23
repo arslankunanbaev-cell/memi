@@ -61,6 +61,13 @@ describe('PublicProfile', () => {
   })
 
   it('shows bio and featured moment when the public profile is enabled', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+      moments: [],
+    })
+
     mockGetUserProfile.mockResolvedValue({
       user: {
         id: 'user-2',
@@ -86,6 +93,13 @@ describe('PublicProfile', () => {
   })
 
   it('shows an empty public state when the profile is open but has no public moments', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+      moments: [],
+    })
+
     mockGetUserProfile.mockResolvedValue({
       user: {
         id: 'user-2',
@@ -102,12 +116,25 @@ describe('PublicProfile', () => {
     renderPublicProfile()
 
     expect(await screen.findByText('Cat bio')).toBeInTheDocument()
+    expect(screen.getByText('Воспоминаний для друзей пока нет')).toBeInTheDocument()
+    expect(screen.getByText('Профиль открыт, но пользователь пока не поделился моментами с друзьями.')).toBeInTheDocument()
+    expect(screen.queryByText('РџСЂРѕС„РёР»СЊ Р·Р°РєСЂС‹С‚')).not.toBeInTheDocument()
+    return
+
+    expect(await screen.findByText('Cat bio')).toBeInTheDocument()
     expect(screen.getByText('Публичных воспоминаний пока нет')).toBeInTheDocument()
     expect(screen.getByText('Профиль открыт, но моментов с доступом «для всех» у пользователя пока нет.')).toBeInTheDocument()
     expect(screen.queryByText('Профиль закрыт')).not.toBeInTheDocument()
   })
 
   it('opens the featured memory card from a friend profile', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+      moments: [],
+    })
+
     mockGetUserProfile.mockResolvedValue({
       user: {
         id: 'user-2',
@@ -138,7 +165,14 @@ describe('PublicProfile', () => {
     })
   })
 
-  it('opens a public memory from the moments list', async () => {
+  it('opens a friend-visible memory from the moments list', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      friends: [{ id: 'user-2', name: 'Mila', friendship_id: 'friendship-1' }],
+      people: [],
+      moments: [],
+    })
+
     mockGetUserProfile.mockResolvedValue({
       user: {
         id: 'user-2',

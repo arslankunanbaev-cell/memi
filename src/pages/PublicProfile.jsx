@@ -32,6 +32,30 @@ function LinkIcon({ color = 'var(--soft)' }) {
   )
 }
 
+function EmptyStateLockIcon() {
+  return (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7 10V7.75A5 5 0 0 1 17 7.75V10"
+        stroke="var(--soft)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      <rect
+        x="5"
+        y="10"
+        width="14"
+        height="10"
+        rx="2.5"
+        fill="rgba(217, 139, 82, 0.16)"
+        stroke="var(--accent)"
+        strokeWidth="1.6"
+      />
+      <circle cx="12" cy="15" r="1.2" fill="var(--deep)" />
+    </svg>
+  )
+}
+
 function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, onClose }) {
   const [saving, setSaving] = useState(false)
 
@@ -496,6 +520,7 @@ export function PublicProfileContent({
   showSharedMomentsSection = false,
   onMomentPress,
   onSharedMomentPress,
+  canViewFriendMoments = false,
 }) {
   if (!profileUser) return null
 
@@ -522,13 +547,17 @@ export function PublicProfileContent({
   const showLinkControl = linkedPerson
     ? people.length > 0 && typeof onLinkedPersonPress === 'function'
     : people.length > 0 && typeof onLinkPersonPress === 'function'
-  const noPublicMoments = profileEnabled && moments.length === 0
+  const showEmptyMomentsState = !profileEnabled || listMoments.length === 0
   const emptyMomentsTitle = !profileEnabled
-    ? 'Профиль закрыт'
-    : 'Публичных воспоминаний пока нет'
+    ? '\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u0437\u0430\u043a\u0440\u044b\u0442'
+    : canViewFriendMoments
+      ? '\u0412\u043e\u0441\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u0439 \u0434\u043b\u044f \u0434\u0440\u0443\u0437\u0435\u0439 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442'
+      : '\u041c\u043e\u043c\u0435\u043d\u0442\u044b \u0432\u0438\u0434\u043d\u044b \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u0440\u0443\u0437\u044c\u044f\u043c'
   const emptyMomentsDescription = !profileEnabled
-    ? 'Пока пользователь не показывает публичный профиль.'
-    : 'Профиль открыт, но моментов с доступом «для всех» у пользователя пока нет.'
+    ? '\u041f\u043e\u043a\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043d\u0435 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u043f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u043f\u0440\u043e\u0444\u0438\u043b\u044c.'
+    : canViewFriendMoments
+      ? '\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u043e\u0442\u043a\u0440\u044b\u0442, \u043d\u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043f\u043e\u043a\u0430 \u043d\u0435 \u043f\u043e\u0434\u0435\u043b\u0438\u043b\u0441\u044f \u043c\u043e\u043c\u0435\u043d\u0442\u0430\u043c\u0438 \u0441 \u0434\u0440\u0443\u0437\u044c\u044f\u043c\u0438.'
+      : '\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u043e\u0442\u043a\u0440\u044b\u0442, \u043d\u043e \u0432\u043e\u0441\u043f\u043e\u043c\u0438\u043d\u0430\u043d\u0438\u044f \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u0440\u0443\u0437\u044c\u044f\u043c.'
 
   return (
     <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: contentPaddingBottom }}>
@@ -772,40 +801,10 @@ export function PublicProfileContent({
               color: 'var(--text)',
             }}
           >
-            Моменты пользователя
+            {'\u041c\u043e\u043c\u0435\u043d\u0442\u044b \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f'}
           </h2>
 
-          {!profileEnabled || listMoments.length === 0 ? (
-            noPublicMoments ? (
-              <div
-                style={{
-                  backgroundColor: 'var(--moment-surface)',
-                  borderRadius: 20,
-                  padding: '36px 24px',
-                  textAlign: 'center',
-                  boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-                }}
-              >
-                <div style={{ fontSize: 36, marginBottom: 12 }}>рџ”’</div>
-                <div
-                  className="font-sans"
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 600,
-                    color: 'var(--text)',
-                    marginBottom: 6,
-                  }}
-                >
-                  {emptyMomentsTitle}
-                </div>
-                <div
-                  className="font-sans"
-                  style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
-                >
-                  {emptyMomentsDescription}
-                </div>
-              </div>
-            ) : (
+          {showEmptyMomentsState ? (
             <div
               style={{
                 backgroundColor: 'var(--moment-surface)',
@@ -815,7 +814,9 @@ export function PublicProfileContent({
                 boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
               }}
             >
-              <div style={{ fontSize: 36, marginBottom: 12 }}>🔒</div>
+              <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                <EmptyStateLockIcon />
+              </div>
               <div
                 className="font-sans"
                 style={{
@@ -825,16 +826,15 @@ export function PublicProfileContent({
                   marginBottom: 6,
                 }}
               >
-                {!profileEnabled ? 'Профиль закрыт' : 'Воспоминания закрыты'}
+                {emptyMomentsTitle}
               </div>
               <div
                 className="font-sans"
                 style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--mid)' }}
               >
-                {!profileEnabled ? 'Пока пользователь не показывает публичный профиль.' : 'Пока он не открыл воспоминания для всех'}
+                {emptyMomentsDescription}
               </div>
             </div>
-            )
           ) : (
             <div className="flex flex-col gap-3">
               {listMoments.map((moment) => {
@@ -1004,6 +1004,7 @@ export default function PublicProfile() {
   const [publicMomentsTotal, setPublicMomentsTotal] = useState(0)
   const [publicMonthsCount, setPublicMonthsCount] = useState(0)
   const [publicFriendsCount, setPublicFriendsCount] = useState(0)
+  const [canViewFriendMoments, setCanViewFriendMoments] = useState(false)
   const [loading, setLoading] = useState(true)
   const [friendSent, setFriendSent] = useState(false)
   const [removing, setRemoving] = useState(false)
@@ -1054,19 +1055,28 @@ export default function PublicProfile() {
       setLoading(true)
 
       try {
-        const { user, moments: publicMoments, total, monthCount, friendCount } = await getUserProfile(userId)
+        const {
+          user,
+          moments: publicMoments,
+          total,
+          monthCount,
+          friendCount,
+          viewerCanSeeFriendMoments,
+        } = await getUserProfile(userId, currentUser?.id ?? null)
 
         setProfileUser(user)
         setMoments(publicMoments)
         setPublicMomentsTotal(total ?? 0)
         setPublicMonthsCount(monthCount ?? uniqueMonths(publicMoments))
         setPublicFriendsCount(friendCount ?? 0)
+        setCanViewFriendMoments(Boolean(viewerCanSeeFriendMoments))
       } catch {
         setProfileUser(null)
         setMoments([])
         setPublicMomentsTotal(0)
         setPublicMonthsCount(0)
         setPublicFriendsCount(0)
+        setCanViewFriendMoments(false)
       } finally {
         setLoading(false)
       }
@@ -1292,6 +1302,7 @@ export default function PublicProfile() {
         showSharedMomentsSection={isAlreadyFriend || sharedMoments.length > 0}
         onMomentPress={handleOpenMoment}
         onSharedMomentPress={(moment) => navigate(`/moment/${moment.id}`)}
+        canViewFriendMoments={canViewFriendMoments || isAlreadyFriend}
       />
 
       {showActionsSheet && isAlreadyFriend && (

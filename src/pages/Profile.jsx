@@ -460,7 +460,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
               Показывать профиль другим
             </p>
             <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 3 }}>
-              Другие смогут видеть ваши открытые воспоминания
+              {'\u0415\u0441\u043b\u0438 \u043f\u0440\u043e\u0444\u0438\u043b\u044c \u043e\u0442\u043a\u0440\u044b\u0442, \u0434\u0440\u0443\u0437\u044c\u044f \u0443\u0432\u0438\u0434\u044f\u0442 \u043c\u043e\u043c\u0435\u043d\u0442\u044b \u0441 \u0434\u043e\u0441\u0442\u0443\u043f\u043e\u043c \u00ab\u0412\u0441\u0435\u043c \u0434\u0440\u0443\u0437\u044c\u044f\u043c\u00bb'}
             </p>
           </div>
 
@@ -517,7 +517,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
                 padding: '14px 16px',
               }}
             >
-              Сначала сделай хотя бы один момент открытым, и его можно будет выбрать здесь.
+              {'\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0441\u0434\u0435\u043b\u0430\u0439 \u0445\u043e\u0442\u044f \u0431\u044b \u043e\u0434\u0438\u043d \u043c\u043e\u043c\u0435\u043d\u0442 \u0432\u0438\u0434\u0438\u043c\u044b\u043c \u0434\u043b\u044f \u0434\u0440\u0443\u0437\u0435\u0439, \u0438 \u0435\u0433\u043e \u043c\u043e\u0436\u043d\u043e \u0431\u0443\u0434\u0435\u0442 \u0432\u044b\u0431\u0440\u0430\u0442\u044c \u0437\u0434\u0435\u0441\u044c.'}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -753,7 +753,7 @@ export default function Profile() {
     [moments, currentUser?.id],
   )
   const publicMoments = useMemo(
-    () => ownMoments.filter((moment) => moment.visibility === 'public'),
+    () => ownMoments.filter((moment) => moment.visibility !== 'private'),
     [ownMoments],
   )
 

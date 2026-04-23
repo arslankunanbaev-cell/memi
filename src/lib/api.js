@@ -1,4 +1,4 @@
-import { normalizeMomentMedia, normalizePhotoEntity } from './imageProxy'
+import { normalizeMomentMedia, normalizeMomentVisibility, normalizePhotoEntity } from './imageProxy'
 import { compareMomentsByAddedAt, compareMomentsByDisplayAt, getMomentDisplayAt } from './momentTime'
 import { assertSupabase } from './supabase'
 
@@ -232,6 +232,10 @@ export async function getMoments(userId) {
 
 export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
   const sb = assertSupabase()
+  const normalizedFields = {
+    ...fields,
+    visibility: normalizeMomentVisibility(fields?.visibility),
+  }
 
   let photo_url = null
   let photo_path = null
@@ -243,14 +247,14 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
 
   let { data: moment, error: momentError } = await sb
     .from('moments')
-    .insert({ user_id: userId, ...fields, photo_url, photo_path })
+    .insert({ user_id: userId, ...normalizedFields, photo_url, photo_path })
     .select()
     .single()
 
-  if (momentError && isMissingMomentAtColumn(momentError) && fields?.moment_at) {
+  if (momentError && isMissingMomentAtColumn(momentError) && normalizedFields?.moment_at) {
     const legacyFields = {
-      ...fields,
-      created_at: fields.moment_at,
+      ...normalizedFields,
+      created_at: normalizedFields.moment_at,
     }
     delete legacyFields.moment_at
 
@@ -274,8 +278,14 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
 
 export async function updateMoment(id, payload) {
   const sb = assertSupabase()
+  const nextPayload = payload?.visibility === undefined
+    ? payload
+    : {
+        ...payload,
+        visibility: normalizeMomentVisibility(payload.visibility),
+      }
   const { data, error } = await sb
-    .from('moments').update(payload).eq('id', id).select().single()
+    .from('moments').update(nextPayload).eq('id', id).select().single()
   if (error) throw error
   return normalizeMomentMedia(data)
 }
@@ -569,16 +579,54 @@ export async function getFriendsFeedMoments(friendIds) {
 
 // ── Public profiles ───────────────────────────────────────────────────────────
 
-export async function getUserProfile(userId) {
+async function isAcceptedFriendship(sb, viewerId, profileUserId) {
+  if (!viewerId || !profileUserId || viewerId === profileUserId) return viewerId === profileUserId
+
+  const [{ count: directCount, error: directError }, { count: reverseCount, error: reverseError }] = await Promise.all([
+    sb.from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'accepted')
+      .eq('requester_id', viewerId)
+      .eq('receiver_id', profileUserId),
+    sb.from('friendships')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'accepted')
+      .eq('requester_id', profileUserId)
+      .eq('receiver_id', viewerId),
+  ])
+
+  if (directError) throw directError
+  if (reverseError) throw reverseError
+
+  return (directCount ?? 0) > 0 || (reverseCount ?? 0) > 0
+}
+
+export async function getUserProfile(userId, viewerId = null) {
   const sb = assertSupabase()
   try {
-    const [user, momentsResult, requesterCountResult, receiverCountResult] = await Promise.all([
-      getUserPublicRecord(sb, userId),
-      sb.from('moments')
+    const canSeeFriendMoments = viewerId
+      ? await isAcceptedFriendship(sb, viewerId, userId)
+      : false
+
+    let momentsResult = { data: [], count: 0, error: null }
+    if (canSeeFriendMoments) {
+      momentsResult = await sb.from('moments')
+        .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
+        .eq('user_id', userId)
+        .in('visibility', ['friends', 'public'])
+        .order('created_at', { ascending: false })
+    } else if (!viewerId) {
+      momentsResult = await sb.from('moments')
         .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
         .eq('user_id', userId)
         .eq('visibility', 'public')
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+    }
+
+    if (momentsResult.error) throw momentsResult.error
+
+    const [user, requesterCountResult, receiverCountResult] = await Promise.all([
+      getUserPublicRecord(sb, userId),
       sb.from('friendships')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'accepted')
@@ -604,9 +652,17 @@ export async function getUserProfile(userId) {
       total,
       monthCount,
       friendCount,
+      viewerCanSeeFriendMoments: canSeeFriendMoments,
     }
   } catch {
-    return { user: null, moments: [], total: 0, monthCount: 0, friendCount: 0 }
+    return {
+      user: null,
+      moments: [],
+      total: 0,
+      monthCount: 0,
+      friendCount: 0,
+      viewerCanSeeFriendMoments: false,
+    }
   }
 }
 
@@ -617,7 +673,7 @@ export async function getPublicMoments(userId) {
       .from('moments')
       .select('id, title, photo_url, created_at, moment_at, visibility')
       .eq('user_id', userId)
-      .eq('visibility', 'public')
+      .in('visibility', ['friends', 'public'])
       .order('created_at', { ascending: false })
     if (error) return []
     return (data ?? [])
