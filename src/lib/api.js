@@ -601,32 +601,74 @@ async function isAcceptedFriendship(sb, viewerId, profileUserId) {
   return (directCount ?? 0) > 0 || (reverseCount ?? 0) > 0
 }
 
+function emptyUserProfileResult() {
+  return {
+    user: null,
+    moments: [],
+    total: 0,
+    monthCount: 0,
+    friendCount: 0,
+    viewerCanSeeFriendMoments: false,
+  }
+}
+
 export async function getUserProfile(userId, viewerId = null) {
   const sb = assertSupabase()
-  try {
-    const canSeeFriendMoments = viewerId
-      ? await isAcceptedFriendship(sb, viewerId, userId)
-      : false
+  let user = null
 
-    let momentsResult = { data: [], count: 0, error: null }
-    if (canSeeFriendMoments) {
-      momentsResult = await sb.from('moments')
-        .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
-        .eq('user_id', userId)
+  try {
+    user = await getUserPublicRecord(sb, userId)
+  } catch (error) {
+    console.error('[getUserProfile] user lookup failed:', error?.message)
+    return emptyUserProfileResult()
+  }
+
+  if (!user) return emptyUserProfileResult()
+
+  let canSeeFriendMoments = viewerId === userId
+  if (viewerId && viewerId !== userId) {
+    try {
+      canSeeFriendMoments = await isAcceptedFriendship(sb, viewerId, userId)
+    } catch (error) {
+      console.warn('[getUserProfile] friendship lookup failed:', error?.message)
+    }
+  }
+
+  let moments = []
+  let total = 0
+
+  try {
+    const baseQuery = sb.from('moments')
+      .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
+      .eq('user_id', userId)
+
+    const momentsResult = canSeeFriendMoments
+      ? await baseQuery
         .in('visibility', ['friends', 'public'])
         .order('created_at', { ascending: false })
-    } else if (!viewerId) {
-      momentsResult = await sb.from('moments')
-        .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
-        .eq('user_id', userId)
+      : await baseQuery
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
-    }
 
     if (momentsResult.error) throw momentsResult.error
 
-    const [user, requesterCountResult, receiverCountResult] = await Promise.all([
-      getUserPublicRecord(sb, userId),
+    moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
+    total = momentsResult.count ?? 0
+  } catch (error) {
+    console.warn('[getUserProfile] moments lookup failed:', error?.message)
+  }
+
+  const sortedMoments = [...moments].sort(compareMomentsByDisplayAt)
+  const monthCount = new Set(
+    sortedMoments.map((moment) => {
+      const date = new Date(getMomentDisplayAt(moment))
+      return `${date.getFullYear()}-${date.getMonth()}`
+    }),
+  ).size
+
+  let friendCount = 0
+  try {
+    const [requesterCountResult, receiverCountResult] = await Promise.all([
       sb.from('friendships')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'accepted')
@@ -636,33 +678,22 @@ export async function getUserProfile(userId, viewerId = null) {
         .eq('status', 'accepted')
         .eq('receiver_id', userId),
     ])
-    const moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
-    const sortedMoments = [...moments].sort(compareMomentsByDisplayAt)
-    const total = momentsResult.count ?? 0
-    const monthCount = new Set(
-      sortedMoments.map((moment) => {
-        const date = new Date(getMomentDisplayAt(moment))
-        return `${date.getFullYear()}-${date.getMonth()}`
-      }),
-    ).size
-    const friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
-    return {
-      user: normalizePhotoEntity(user),
-      moments: sortedMoments,
-      total,
-      monthCount,
-      friendCount,
-      viewerCanSeeFriendMoments: canSeeFriendMoments,
-    }
-  } catch {
-    return {
-      user: null,
-      moments: [],
-      total: 0,
-      monthCount: 0,
-      friendCount: 0,
-      viewerCanSeeFriendMoments: false,
-    }
+
+    if (requesterCountResult.error) throw requesterCountResult.error
+    if (receiverCountResult.error) throw receiverCountResult.error
+
+    friendCount = (requesterCountResult.count ?? 0) + (receiverCountResult.count ?? 0)
+  } catch (error) {
+    console.warn('[getUserProfile] friend count lookup failed:', error?.message)
+  }
+
+  return {
+    user: normalizePhotoEntity(user),
+    moments: sortedMoments,
+    total,
+    monthCount,
+    friendCount,
+    viewerCanSeeFriendMoments: canSeeFriendMoments,
   }
 }
 
