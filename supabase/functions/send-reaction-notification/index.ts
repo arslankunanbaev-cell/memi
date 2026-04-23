@@ -110,6 +110,9 @@ serve(async (req: Request) => {
       }),
     )
 
+    const meRes = await fetch(`${TG_API}/getMe`, { method: 'POST' })
+    const meJson = await meRes.json()
+
     const tgRes = await fetch(`${TG_API}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -128,7 +131,12 @@ serve(async (req: Request) => {
       })
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
+    return new Response(JSON.stringify({
+      ok: true,
+      bot_username: meJson?.result?.username ?? null,
+      target_chat_id: owner.telegram_id,
+      message_id: tgJson?.result?.message_id ?? null,
+    }), {
       headers: { 'Content-Type': 'application/json', ...CORS },
     })
   } catch (error) {
