@@ -60,18 +60,29 @@ function isMissingMomentAtColumn(error) {
 }
 
 async function invokeEdgeFunction(sb, functionName, body) {
-  const accessToken = typeof sb.auth?.getSession === 'function'
-    ? (await sb.auth.getSession())?.data?.session?.access_token ?? null
-    : null
+  if (typeof sb.functions?.invoke === 'function') {
+    try {
+      return await sb.functions.invoke(functionName, { body })
+    } catch (error) {
+      console.error(`[EdgeFunction] ${functionName} invoke failed:`, error)
+    }
+  }
+
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
   const url = import.meta.env.VITE_SUPABASE_URL ?? ''
+
+  if (!url || typeof fetch !== 'function') {
+    return {
+      data: null,
+      error: new Error(`Edge Function ${functionName} is unavailable`),
+    }
+  }
 
   const response = await fetch(`${url}/functions/v1/${functionName}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      apikey: anonKey,
-      Authorization: `Bearer ${accessToken ?? anonKey}`,
+      Authorization: `Bearer ${anonKey}`,
     },
     body: JSON.stringify(body),
   })
@@ -426,7 +437,7 @@ export async function upsertMomentReaction({ momentId, userId, emoji, momentOwne
   if (
     reaction?.id &&
     momentOwnerId !== userId &&
-    typeof fetch === 'function'
+    (typeof sb.functions?.invoke === 'function' || typeof fetch === 'function')
   ) {
     const { data: notificationData, error: notificationError } = await invokeEdgeFunction(
       sb,

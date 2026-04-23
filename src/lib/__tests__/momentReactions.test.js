@@ -1,10 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mockMaybeSingle = vi.fn()
 const mockSingle = vi.fn()
 const mockUpsert = vi.fn()
-const mockGetSession = vi.fn()
-const mockFetch = vi.fn()
+const mockInvoke = vi.fn()
 
 function createQueryBuilder() {
   const builder = {
@@ -36,8 +35,8 @@ mockUpsert.mockReturnValue({
 vi.mock('../supabase.js', () => ({
   assertSupabase: () => ({
     from: mockFrom,
-    auth: {
-      getSession: mockGetSession,
+    functions: {
+      invoke: mockInvoke,
     },
   }),
 }))
@@ -47,22 +46,7 @@ import { upsertMomentReaction } from '../api.js'
 describe('upsertMomentReaction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({ ok: true }),
-    })
-    mockGetSession.mockResolvedValue({
-      data: {
-        session: {
-          access_token: 'session-token',
-        },
-      },
-    })
-    vi.stubGlobal('fetch', mockFetch)
-  })
-
-  afterEach(() => {
-    vi.unstubAllGlobals()
+    mockInvoke.mockResolvedValue({ data: { ok: true }, error: null })
   })
 
   it('marks a first reaction as new and invokes the quiet notification function', async () => {
@@ -87,18 +71,9 @@ describe('upsertMomentReaction', () => {
     })
 
     expect(result.isNew).toBe(true)
-    expect(mockFetch).toHaveBeenCalledTimes(1)
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/functions/v1/send-reaction-notification'),
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ reactionId: 'reaction-1' }),
-        headers: expect.objectContaining({
-          Authorization: 'Bearer session-token',
-          'Content-Type': 'application/json',
-        }),
-      }),
-    )
+    expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
+      body: { reactionId: 'reaction-1' },
+    })
   })
 
   it('also invokes the quiet notification function when the reaction changes later', async () => {
@@ -126,13 +101,9 @@ describe('upsertMomentReaction', () => {
     })
 
     expect(result.isNew).toBe(false)
-    expect(mockFetch).toHaveBeenCalledTimes(1)
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/functions/v1/send-reaction-notification'),
-      expect.objectContaining({
-        body: JSON.stringify({ reactionId: 'reaction-1' }),
-      }),
-    )
+    expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
+      body: { reactionId: 'reaction-1' },
+    })
   })
 
   it('still invokes the notification function when the moment owner id is not loaded on the client yet', async () => {
@@ -157,13 +128,9 @@ describe('upsertMomentReaction', () => {
     })
 
     expect(result.isNew).toBe(true)
-    expect(mockFetch).toHaveBeenCalledTimes(1)
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/functions/v1/send-reaction-notification'),
-      expect.objectContaining({
-        body: JSON.stringify({ reactionId: 'reaction-3' }),
-      }),
-    )
+    expect(mockInvoke).toHaveBeenCalledWith('send-reaction-notification', {
+      body: { reactionId: 'reaction-3' },
+    })
   })
 
   it('skips the notification when the owner reacts to their own moment', async () => {
@@ -188,6 +155,6 @@ describe('upsertMomentReaction', () => {
     })
 
     expect(result.isNew).toBe(true)
-    expect(mockFetch).not.toHaveBeenCalled()
+    expect(mockInvoke).not.toHaveBeenCalled()
   })
 })
