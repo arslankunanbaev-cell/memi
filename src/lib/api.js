@@ -425,7 +425,6 @@ export async function upsertMomentReaction({ momentId, userId, emoji, momentOwne
 
   if (
     reaction?.id &&
-    momentOwnerId &&
     momentOwnerId !== userId &&
     typeof fetch === 'function'
   ) {

@@ -135,6 +135,37 @@ describe('upsertMomentReaction', () => {
     )
   })
 
+  it('still invokes the notification function when the moment owner id is not loaded on the client yet', async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
+    mockSingle.mockResolvedValueOnce({
+      data: {
+        id: 'reaction-3',
+        moment_id: 'moment-1',
+        user_id: 'user-1',
+        emoji: '❤️',
+        created_at: '2026-04-23T10:00:00.000Z',
+        updated_at: '2026-04-23T10:00:00.000Z',
+      },
+      error: null,
+    })
+
+    const result = await upsertMomentReaction({
+      momentId: 'moment-1',
+      userId: 'user-1',
+      emoji: '❤️',
+      momentOwnerId: undefined,
+    })
+
+    expect(result.isNew).toBe(true)
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/functions/v1/send-reaction-notification'),
+      expect.objectContaining({
+        body: JSON.stringify({ reactionId: 'reaction-3' }),
+      }),
+    )
+  })
+
   it('skips the notification when the owner reacts to their own moment', async () => {
     mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null })
     mockSingle.mockResolvedValueOnce({
