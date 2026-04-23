@@ -50,6 +50,7 @@ import {
   saveMoment,
   createPerson,
   getUserProfile,
+  getPublicMoments,
   normalizeMomentRecord,
   mergeMomentCollections,
 } from '../api.js'
@@ -474,6 +475,122 @@ describe('getUserProfile', () => {
     expect(result.viewerCanSeeFriendMoments).toBe(true)
     expect(momentsVisibilityIn).toHaveBeenCalledWith('visibility', ['friends', 'public'])
     expect(friendshipSelectCount).toBe(2)
+  })
+
+  it('falls back to the legacy moments select when moment_at is unavailable', async () => {
+    const rpcUser = {
+      id: 'user-2',
+      name: 'Mila',
+      photo_url: null,
+      created_at: '2024-01-01T00:00:00Z',
+      public_code: 'code-123',
+      public_profile_enabled: true,
+      bio: 'Warm bio',
+      featured_moment_id: null,
+    }
+
+    mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
+
+    const legacyMomentsOrder = vi.fn().mockResolvedValue({
+      data: [{ id: 'm-legacy', title: 'Legacy Memory', created_at: '2024-02-01T00:00:00Z', visibility: 'friends' }],
+      count: 1,
+      error: null,
+    })
+    const legacyVisibilityIn = vi.fn(() => ({ order: legacyMomentsOrder }))
+    const firstMomentsSelect = vi.fn(() => ({
+      eq: () => ({
+        in: () => ({
+          order: () => Promise.resolve({
+            data: null,
+            count: 0,
+            error: { message: "Could not find the 'moment_at' column of 'moments' in the schema cache" },
+          }),
+        }),
+      }),
+    }))
+    const secondMomentsSelect = vi.fn(() => ({
+      eq: () => ({
+        in: legacyVisibilityIn,
+      }),
+    }))
+
+    let momentsSelectCount = 0
+    mockFrom.mockImplementation((table) => {
+      if (table === 'moments') {
+        momentsSelectCount += 1
+        return {
+          select: momentsSelectCount === 1 ? firstMomentsSelect : secondMomentsSelect,
+        }
+      }
+
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        upsert: mockUpsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      }
+    })
+
+    const result = await getUserProfile('user-2', 'user-1', { assumeFriend: true })
+
+    expect(result.moments).toHaveLength(1)
+    expect(result.total).toBe(1)
+    expect(result.viewerCanSeeFriendMoments).toBe(true)
+    expect(legacyVisibilityIn).toHaveBeenCalledWith('visibility', ['friends', 'public'])
+  })
+})
+
+describe('getPublicMoments', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFrom.mockReset()
+  })
+
+  it('falls back to the legacy select when moment_at is unavailable', async () => {
+    const legacyMomentsOrder = vi.fn().mockResolvedValue({
+      data: [{ id: 'm-legacy', title: 'Legacy Memory', created_at: '2024-02-01T00:00:00Z', visibility: 'friends' }],
+      error: null,
+    })
+    const legacyVisibilityIn = vi.fn(() => ({ order: legacyMomentsOrder }))
+    const firstMomentsSelect = vi.fn(() => ({
+      eq: () => ({
+        in: () => ({
+          order: () => Promise.resolve({
+            data: null,
+            error: { message: "Could not find the 'moment_at' column of 'moments' in the schema cache" },
+          }),
+        }),
+      }),
+    }))
+    const secondMomentsSelect = vi.fn(() => ({
+      eq: () => ({
+        in: legacyVisibilityIn,
+      }),
+    }))
+
+    let momentsSelectCount = 0
+    mockFrom.mockImplementation((table) => {
+      if (table === 'moments') {
+        momentsSelectCount += 1
+        return {
+          select: momentsSelectCount === 1 ? firstMomentsSelect : secondMomentsSelect,
+        }
+      }
+
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        upsert: mockUpsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      }
+    })
+
+    const result = await getPublicMoments('user-2')
+
+    expect(result).toHaveLength(1)
+    expect(legacyVisibilityIn).toHaveBeenCalledWith('visibility', ['friends', 'public'])
   })
 })
 

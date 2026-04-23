@@ -59,6 +59,42 @@ function isMissingMomentAtColumn(error) {
   return details.includes('moment_at') && (details.includes('column') || details.includes('schema cache'))
 }
 
+function buildProfileMomentsQuery(sb, userId, selectFields, canSeeFriendMoments, withCount = false) {
+  const query = sb.from('moments')
+    .select(selectFields, withCount ? { count: 'exact' } : undefined)
+    .eq('user_id', userId)
+
+  return canSeeFriendMoments
+    ? query
+      .in('visibility', ['friends', 'public'])
+      .order('created_at', { ascending: false })
+    : query
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+}
+
+async function getProfileMomentsResult(sb, userId, canSeeFriendMoments, withCount = false) {
+  let result = await buildProfileMomentsQuery(
+    sb,
+    userId,
+    'id, title, photo_url, created_at, moment_at, visibility',
+    canSeeFriendMoments,
+    withCount,
+  )
+
+  if (result.error && isMissingMomentAtColumn(result.error)) {
+    result = await buildProfileMomentsQuery(
+      sb,
+      userId,
+      'id, title, photo_url, created_at, visibility',
+      canSeeFriendMoments,
+      withCount,
+    )
+  }
+
+  return result
+}
+
 // ── Helper: upload a photo and return { photo_url, photo_path } ───────────────
 // Strategy:
 //   1. Upload file to storage (UUID-based path, so bucket paths are unguessable).
@@ -639,17 +675,7 @@ export async function getUserProfile(userId, viewerId = null, options = {}) {
   let total = 0
 
   try {
-    const baseQuery = sb.from('moments')
-      .select('id, title, photo_url, created_at, moment_at, visibility', { count: 'exact' })
-      .eq('user_id', userId)
-
-    const momentsResult = canSeeFriendMoments
-      ? await baseQuery
-        .in('visibility', ['friends', 'public'])
-        .order('created_at', { ascending: false })
-      : await baseQuery
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
+    const momentsResult = await getProfileMomentsResult(sb, userId, canSeeFriendMoments, true)
 
     if (momentsResult.error) throw momentsResult.error
 
@@ -701,12 +727,7 @@ export async function getUserProfile(userId, viewerId = null, options = {}) {
 export async function getPublicMoments(userId) {
   const sb = assertSupabase()
   try {
-    const { data, error } = await sb
-      .from('moments')
-      .select('id, title, photo_url, created_at, moment_at, visibility')
-      .eq('user_id', userId)
-      .in('visibility', ['friends', 'public'])
-      .order('created_at', { ascending: false })
+    const { data, error } = await getProfileMomentsResult(sb, userId, true)
     if (error) return []
     return (data ?? [])
       .map((moment) => normalizeMomentMedia(moment))
