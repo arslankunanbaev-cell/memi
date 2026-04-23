@@ -964,7 +964,7 @@ export default function Profile() {
 
               <section>
                 <div className="flex items-baseline gap-2" style={{ marginBottom: 16 }}>
-                  <span className="font-serif type-card-title" style={{ color: 'var(--text)' }}>
+                  <span className="font-sans type-card-title" style={{ color: 'var(--text)' }}>
                     Капсула
                   </span>
                   <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>

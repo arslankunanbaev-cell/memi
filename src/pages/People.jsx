@@ -185,7 +185,7 @@ function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick 
       <Avatar person={person} />
 
       <div className="min-w-0 flex-1">
-        <div className="font-serif type-card-title truncate" style={{ color: 'var(--text)' }}>
+        <div className="font-sans type-card-title truncate" style={{ color: 'var(--text)' }}>
           {person.name}
         </div>
         <div className="font-sans type-support" style={{ color: 'var(--mid)', marginTop: 2 }}>
@@ -238,7 +238,7 @@ function RequestRow({ request, onAccept }) {
       <Avatar person={request} size={48} />
 
       <div className="min-w-0 flex-1">
-        <p className="font-serif type-button truncate" style={{ color: 'var(--text)' }}>
+        <p className="font-sans type-button truncate" style={{ color: 'var(--text)' }}>
           {request.name}
         </p>
         <p className="font-sans type-support" style={{ color: 'var(--mid)', marginTop: 2 }}>
