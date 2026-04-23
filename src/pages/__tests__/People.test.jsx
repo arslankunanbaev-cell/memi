@@ -81,6 +81,7 @@ describe('People', () => {
     renderPeople()
     fireEvent.click(screen.getByRole('button', { name: 'Пригласить друга' }))
 
+    expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('https%3A%2F%2Ft.me%2Fmemimntbot%2Fapp'))
     expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('startapp%3Dref_test-code'))
   })
 

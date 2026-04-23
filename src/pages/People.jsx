@@ -545,7 +545,7 @@ export default function People() {
 
     tgHaptic('light')
 
-    const botName = import.meta.env.VITE_BOT_USERNAME ?? 'memi_app_bot'
+    const botName = (import.meta.env.VITE_BOT_USERNAME ?? 'memimntbot').replace(/^@+/, '')
     const appName = import.meta.env.VITE_APP_SHORT_NAME ?? 'app'
     const link = `https://t.me/${botName}/${appName}?startapp=ref_${publicCode}`
     const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Присоединяйся ко мне в memi 🌿')}`
