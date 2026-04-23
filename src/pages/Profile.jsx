@@ -152,7 +152,7 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
 
       {showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)} title="Капсула">
-          <div className="px-5 pb-4">
+          <div className="px-4 pb-4">
             <button
               type="button"
               onClick={() => {
@@ -225,7 +225,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
             onClose()
             onCreateNew()
           }}
-          className="flex w-full items-center gap-3 px-5 py-4 text-left transition-opacity active:opacity-60"
+          className="flex w-full items-center gap-3 px-4 py-4 text-left transition-opacity active:opacity-60"
           style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
         >
           <div
@@ -254,7 +254,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
               color: 'var(--soft)',
               fontSize: 12,
               letterSpacing: '0.14em',
-              margin: '12px 20px 8px',
+              margin: '12px 16px 8px',
               textTransform: 'uppercase',
             }}
           >
@@ -276,7 +276,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
               onPick(moment)
               onClose()
             }}
-            className="flex w-full items-center gap-3 px-5 py-3 text-left transition-opacity active:opacity-60"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-opacity active:opacity-60"
             style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
           >
             <div
@@ -453,7 +453,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
 
   return (
     <BottomSheet onClose={onClose} title="Публичный профиль">
-      <div className="px-5 pb-5">
+      <div className="px-4 pb-5">
         <div className="flex items-start justify-between gap-3" style={{ marginBottom: 18 }}>
           <div className="min-w-0">
             <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>

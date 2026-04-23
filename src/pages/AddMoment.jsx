@@ -271,7 +271,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         </button>
       </div>
 
-      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-10" style={{ paddingTop: 20 }}>
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10">
         <div className="flex flex-col gap-6">
           {error && (
             <p className="font-sans type-meta text-center" style={{ color: '#E05252' }}>{error}</p>

@@ -89,7 +89,7 @@ function LinkPersonSheet({ targetUser, people, linkedPerson, onLink, onUnlink, o
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="px-5 pb-2 flex flex-col gap-4">
+      <div className="px-4 pb-2 flex flex-col gap-4">
         <p
           className="font-sans text-center font-medium"
           style={{ fontSize: 17, color: 'var(--text)' }}
@@ -308,7 +308,7 @@ function FriendMenuAction({ label, danger = false, onClick, children, disabled =
 function FriendActionsSheet({ removing, onRemove, onClose }) {
   return (
     <BottomSheet onClose={onClose} title="Друг">
-      <div className="px-5 pb-4">
+      <div className="px-4 pb-4">
         <FriendMenuAction
           label={removing ? 'Удаляем...' : 'Удалить из друзей'}
           danger

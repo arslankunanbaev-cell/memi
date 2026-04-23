@@ -56,7 +56,7 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose} title="Новый человек">
-      <div className="px-5 flex flex-col gap-4 pb-5">
+      <div className="px-4 flex flex-col gap-4 pb-5">
         <div className="flex justify-center pt-1">
           <button
             onClick={() => fileRef.current?.click()}
@@ -262,7 +262,7 @@ export default function EditMoment() {
         </button>
       </div>
 
-      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-6" style={{ paddingTop: 20 }}>
+      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10 flex flex-col gap-6">
         {/* Error */}
         {error && (
           <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252' }}>

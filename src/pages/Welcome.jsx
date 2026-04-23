@@ -5,7 +5,7 @@ export default function Welcome() {
 
   return (
     <div
-      className="flex flex-col items-center justify-between h-full w-full px-8 pt-safe"
+      className="flex h-full w-full flex-col items-center justify-between px-4 pt-topbar"
       style={{ backgroundColor: 'var(--base)' }}
     >
       {/* Top spacer */}

@@ -350,7 +350,7 @@ function EditPersonSheet({ person, onClose, onSaved, onDelete }) {
 
   return (
     <BottomSheet onClose={onClose} title="Редактировать">
-      <div className="px-5 pb-5 flex flex-col gap-4">
+      <div className="px-4 pb-5 flex flex-col gap-4">
         <div
           className="surface-card rounded-[28px]"
           style={{
@@ -1052,7 +1052,7 @@ export default function PersonDetail() {
 
       {showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)} title="Действия">
-          <div className="px-5 pb-4 flex flex-col gap-3">
+          <div className="px-4 pb-4 flex flex-col gap-3">
             <SheetActionButton
               label="Редактировать"
               onClick={() => {

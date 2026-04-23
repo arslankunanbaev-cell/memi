@@ -961,7 +961,7 @@ export default function StoryPreview() {
       </div>
 
       <div className="hide-scrollbar flex-1 overflow-y-auto">
-        <div className="px-4" style={{ paddingTop: 20, paddingBottom: 24 }}>
+        <div className="px-4 pt-6 pb-6">
           <div className="mx-auto w-full max-w-[356px]">
             <div
               className="relative rounded-[32px] p-2"

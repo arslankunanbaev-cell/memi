@@ -13,7 +13,7 @@ export default function MomentSaved() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full px-8 gap-6"
+      className="flex h-full flex-col items-center justify-center gap-6 px-4 pt-topbar"
       style={{ backgroundColor: 'var(--base)' }}
     >
       <div

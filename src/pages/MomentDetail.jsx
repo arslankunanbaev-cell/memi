@@ -453,7 +453,7 @@ export default function MomentDetail() {
             )}
           </div>
 
-          <div style={{ position: 'absolute', left: 20, right: 20, bottom: 20 }}>
+          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 20 }}>
             <h1
               className="font-serif"
               style={{
@@ -471,7 +471,7 @@ export default function MomentDetail() {
           </div>
         </div>
 
-        <div className="px-4" style={{ paddingTop: 20 }}>
+        <div className="px-4 pt-6">
           <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 16 }}>
             {formatFull(momentDisplayAt)}
           </p>
@@ -652,7 +652,7 @@ export default function MomentDetail() {
 
       {isOwn && showMenu && (
         <BottomSheet onClose={() => setShowMenu(false)} title="Момент">
-          <div className="px-5 pb-4">
+          <div className="px-4 pb-4">
             <MenuAction
               label="Редактировать"
               onClick={() => {
@@ -724,7 +724,7 @@ export default function MomentDetail() {
                       console.error('[Capsule] save error:', error)
                     }
                   }}
-                  className="flex w-full items-center gap-3 px-5 py-4 text-left transition-opacity active:opacity-60"
+                  className="flex w-full items-center gap-3 px-4 py-4 text-left transition-opacity active:opacity-60"
                   style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
                 >
                   <div

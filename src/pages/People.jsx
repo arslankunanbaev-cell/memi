@@ -308,7 +308,7 @@ function AddPersonSheet({ onClose, onCreated }) {
 
   return (
     <BottomSheet onClose={onClose} title="Добавить человека">
-      <div className="px-5 pb-4">
+      <div className="px-4 pb-4">
         <div className="flex justify-center" style={{ marginBottom: 20 }}>
           <button
             type="button"
@@ -423,7 +423,7 @@ function LinkPersonSheet({ friend, people, onLink, onClose }) {
 
   return (
     <BottomSheet onClose={onClose} title="Связать с человеком?">
-      <div className="px-5 pb-4">
+      <div className="px-4 pb-4">
         <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, marginBottom: 16 }}>
           Выбери, кого из твоих людей связать с <b style={{ color: 'var(--text)' }}>{friend.name}</b>
         </p>

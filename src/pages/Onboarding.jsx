@@ -78,7 +78,7 @@ function AddPersonSheet({ onClose }) {
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="px-5 flex flex-col gap-5 pb-2">
+      <div className="px-4 flex flex-col gap-5 pb-2">
         {/* Title */}
         <p className="font-sans text-center font-medium" style={{ fontSize: 17, color: 'var(--text)' }}>
           Добавить человека
@@ -189,7 +189,7 @@ export default function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col px-6 pt-12 pb-6 overflow-y-auto">
+      <div className="flex-1 flex flex-col overflow-y-auto px-4 pt-topbar pb-6">
         {/* Heading */}
         <h1
           className="font-serif"
@@ -229,7 +229,7 @@ export default function Onboarding() {
 
       {/* Bottom actions */}
       <div
-        className="flex flex-col gap-3 px-6 pb-safe"
+        className="flex flex-col gap-3 px-4 pb-safe"
         style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
         <button
