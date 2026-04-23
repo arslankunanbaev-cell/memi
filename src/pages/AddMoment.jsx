@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { tgHaptic } from '../lib/telegram'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
+import { trackEvent } from '../lib/analytics'
 import { saveMoment, createPerson, addMomentParticipants } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
@@ -215,6 +216,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         fields,
         photoFile,
         peopleIds: selectedPeople,
+      })
+
+      void trackEvent('moment_created', {
+        has_photo: Boolean(saved.photo_url),
+        people_count: selectedPeople.length + taggedFriends.length,
       })
 
       if (taggedFriends.length > 0) {

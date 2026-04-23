@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import { createPerson } from '../lib/api'
+import { trackEvent } from '../lib/analytics'
 import BottomSheet from '../components/BottomSheet'
 import { tgHaptic } from '../lib/telegram'
 
@@ -173,7 +174,8 @@ export default function Onboarding() {
   const setOnboarded = useAppStore((s) => s.setOnboarded)
   const [showSheet, setShowSheet] = useState(false)
 
-  function finish() {
+  function finish(method) {
+    void trackEvent('onboarding_completed', { method })
     setOnboarded(true)
     navigate('/home', { replace: true })
   }
@@ -249,7 +251,7 @@ export default function Onboarding() {
 
         {people.length > 0 && (
           <button
-            onClick={finish}
+            onClick={() => finish('completed')}
             className="w-full font-sans font-medium transition-opacity active:opacity-70"
             style={{
               backgroundColor: 'var(--surface)',
@@ -265,7 +267,7 @@ export default function Onboarding() {
         )}
 
         <button
-          onClick={finish}
+          onClick={() => finish('skipped')}
           className="font-sans transition-opacity active:opacity-60 py-2"
           style={{ color: 'var(--mid)', fontSize: 13, background: 'none', border: 'none' }}
         >

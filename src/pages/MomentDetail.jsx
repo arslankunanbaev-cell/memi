@@ -12,6 +12,7 @@ import {
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { tgHaptic } from '../lib/telegram'
+import { trackEvent } from '../lib/analytics'
 import { useAppStore } from '../store/useAppStore'
 
 function formatFull(iso) {
@@ -297,12 +298,16 @@ export default function MomentDetail() {
     setReactingEmoji(emoji)
 
     try {
-      const { reaction } = await upsertMomentReaction({
+      const { reaction, isNew } = await upsertMomentReaction({
         momentId: moment.id,
         userId: currentUser.id,
         emoji,
         momentOwnerId: moment.user_id,
       })
+
+      if (isNew) {
+        void trackEvent('reaction_added', { emoji })
+      }
 
       setReactions((current) => {
         const next = [...current.filter((entry) => entry.user_id !== currentUser.id), reaction]

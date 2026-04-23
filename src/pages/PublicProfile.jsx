@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import {
@@ -7,6 +7,7 @@ import {
   removeFriend,
   sendFriendRequest,
 } from '../lib/api'
+import { trackEvent } from '../lib/analytics'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -974,6 +975,7 @@ export default function PublicProfile() {
   const [removing, setRemoving] = useState(false)
   const [showLinkSheet, setShowLinkSheet] = useState(false)
   const [showActionsSheet, setShowActionsSheet] = useState(false)
+  const lastTrackedProfileIdRef = useRef(null)
 
   const friendEntry = friends.find((friend) => friend.id === userId)
   const isAlreadyFriend = Boolean(friendEntry)
@@ -1030,6 +1032,11 @@ export default function PublicProfile() {
           assumeFriend: isAlreadyFriend,
         })
 
+        if (user?.id && lastTrackedProfileIdRef.current !== user.id) {
+          lastTrackedProfileIdRef.current = user.id
+          void trackEvent('public_profile_viewed', { profile_user_id: user.id })
+        }
+
         setProfileUser(user)
         setMoments(publicMoments)
         setPublicMomentsTotal(total ?? 0)
@@ -1057,7 +1064,10 @@ export default function PublicProfile() {
     if (!currentUser?.id || !userId) return
 
     try {
-      await sendFriendRequest(currentUser.id, userId)
+      const friendship = await sendFriendRequest(currentUser.id, userId)
+      if (friendship?.id) {
+        void trackEvent('friend_added', { source: 'manual' })
+      }
       setFriendSent(true)
     } catch {
       // silently fail

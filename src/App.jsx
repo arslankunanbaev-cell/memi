@@ -27,6 +27,9 @@ import StoryPreview from './pages/StoryPreview'
 import StoryPreviewScreen from './pages/StoryPreviewScreen'
 import EditMoment from './pages/EditMoment'
 import PublicProfile from './pages/PublicProfile'
+import { trackEvent } from './lib/analytics'
+
+let hasTrackedAppOpened = false
 
 export default function App() {
   const navigate = useNavigate()
@@ -123,6 +126,11 @@ export default function App() {
         setCapsule(fetchedCapsule)
         setInitResult(user, isNew)
 
+        if (!hasTrackedAppOpened) {
+          hasTrackedAppOpened = true
+          void trackEvent('app_opened')
+        }
+
         try {
           const [fetchedFriendships, fetchedShared] = await Promise.all([
             getFriendships(user.id),
@@ -171,7 +179,10 @@ export default function App() {
             }
 
             if (refUser?.id && refUser.id !== user.id) {
-              await sendFriendRequest(user.id, refUser.id).catch(() => {})
+              const friendship = await sendFriendRequest(user.id, refUser.id).catch(() => null)
+              if (friendship?.id) {
+                void trackEvent('friend_added', { source: 'invite' })
+              }
             }
           }
         } catch (socialErr) {
