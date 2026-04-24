@@ -121,7 +121,7 @@ function AddPersonSheet({ onClose }) {
             autoFocus
             className="w-full font-sans outline-none"
             style={{
-              backgroundColor: 'var(--surface)',
+              backgroundColor: 'var(--moment-surface)',
               borderRadius: 10,
               padding: '11px 14px',
               fontSize: 15,

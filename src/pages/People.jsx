@@ -348,7 +348,7 @@ function AddPersonSheet({ onClose, onCreated }) {
           className="w-full outline-none"
           style={{
             marginTop: 8,
-            backgroundColor: 'var(--card)',
+            backgroundColor: 'var(--moment-surface)',
             border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
             borderRadius: 14,
             boxShadow: 'var(--shadow-card)',
