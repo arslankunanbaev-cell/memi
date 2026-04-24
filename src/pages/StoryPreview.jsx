@@ -583,7 +583,7 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
   ctx.textBaseline = 'top'
 
   const titleLines = wrapText(ctx, frameTitle, titleWidth, 2)
-  let titleY = titleAreaY + Math.max(0, (titleAreaHeight - titleLines.length * titleLineHeight) / 2) - 4
+  let titleY = titleAreaY + Math.max(0, (titleAreaHeight - titleLines.length * titleLineHeight) / 2) - 6
 
   for (const line of titleLines) {
     ctx.fillText(line, 0, titleY)
@@ -654,7 +654,8 @@ async function drawPolaroid(canvas, moment) {
 
   const contentX = 102
   const contentWidth = width - contentX * 2
-  let y = 1064
+  const contentGap = 30
+  let y = 1034 + contentGap
 
   if (moment.description) {
     ctx.fillStyle = COLOR.mid
@@ -689,7 +690,7 @@ async function drawPolaroid(canvas, moment) {
 
     const panelX = 86
     const panelWidth = 908
-    const panelY = Math.max(y + 36, height - panelBottomInset - panelHeight)
+    const panelY = Math.min(y + contentGap, height - panelBottomInset - panelHeight)
 
     drawElevatedPanel(ctx, {
       x: panelX,
