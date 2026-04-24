@@ -962,7 +962,7 @@ export default function StoryPreview() {
 
       <div className="hide-scrollbar flex-1 overflow-y-auto">
         <div className="px-4 pt-6 pb-6">
-          <div className="mx-auto w-full max-w-[356px]">
+          <div className="mx-auto w-full" style={{ maxWidth: 'min(356px, calc((100vh - 300px) * 9 / 16))' }}>
             <div
               className="relative rounded-[32px] p-2"
               style={{
