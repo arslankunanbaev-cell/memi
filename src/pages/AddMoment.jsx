@@ -262,7 +262,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         >
           Отмена
         </button>
-        <h2 className="font-sans type-sheet-title" style={{ color: 'var(--text)', fontSize: 20 }}>
+        <h2 className="font-sans type-sheet-title" style={{ color: 'var(--text)', fontSize: 16 }}>
           Новый момент
         </h2>
         <button
