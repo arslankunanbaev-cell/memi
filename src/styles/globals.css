@@ -296,7 +296,8 @@
   }
 
   .section-label {
-    margin: 0;
+    margin-top: 0;
+    margin-bottom: 12px;
     font-family: var(--font-sans);
     color: var(--soft);
     font-size: 12px;
