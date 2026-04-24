@@ -259,7 +259,7 @@ export default function EditMoment() {
         >
           Отмена
         </button>
-        <h2 className="font-serif type-sheet-title" style={{ color: 'var(--text)' }}>
+        <h2 className="font-sans type-sheet-title" style={{ color: 'var(--text)' }}>
           Редактировать момент
         </h2>
         <button
