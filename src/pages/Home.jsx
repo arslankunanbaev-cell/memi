@@ -73,6 +73,15 @@ export default function Home() {
 
   const groups = groupByDay(moments)
   const isEmpty = moments.length === 0
+  const topbarDate = formatTopbarDate()
+  const topbarAside = (
+    <span
+      className="flex min-h-7 items-center font-sans type-topbar-meta capitalize"
+      style={{ color: 'var(--mid)' }}
+    >
+      {topbarDate}
+    </span>
+  )
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
@@ -81,11 +90,7 @@ export default function Home() {
           <PageHeader
             title="memi"
             brand
-            aside={(
-              <span className="font-sans type-topbar-meta capitalize" style={{ color: 'var(--mid)' }}>
-                {formatTopbarDate()}
-              </span>
-            )}
+            aside={topbarAside}
             style={{ paddingBottom: 18 }}
             containerClassName="items-center"
           />
@@ -149,11 +154,7 @@ export default function Home() {
           <PageHeader
             title="memi"
             brand
-            aside={(
-              <span className="font-sans type-topbar-meta capitalize" style={{ color: 'var(--mid)' }}>
-                {formatTopbarDate()}
-              </span>
-            )}
+            aside={topbarAside}
             style={{ paddingBottom: 16 }}
             containerClassName="items-center"
           />

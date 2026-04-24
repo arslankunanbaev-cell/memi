@@ -7,12 +7,11 @@ export default function Splash() {
       style={{ backgroundColor: 'var(--base)' }}
     >
       <h1
-        className="font-serif"
+        className="type-brand"
         style={{
           fontSize: 48,
-          letterSpacing: '4px',
           color: 'var(--text)',
-          fontWeight: 300,
+          margin: 0,
         }}
       >
         memi
