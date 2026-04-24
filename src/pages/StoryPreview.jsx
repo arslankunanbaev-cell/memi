@@ -140,17 +140,11 @@ function clipTopRoundRect(ctx, x, y, width, height, radius) {
   ctx.clip()
 }
 
-const imageCache = new Map()
-
 async function loadImage(src) {
-  if (imageCache.has(src)) return imageCache.get(src)
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      imageCache.set(src, img)
-      resolve(img)
-    }
+    img.onload = () => resolve(img)
     img.onerror = reject
     img.src = src
   })
@@ -224,56 +218,39 @@ function drawBackground(ctx, template, width, height) {
   ctx.fillRect(0, 0, width, height)
 }
 
-function drawLocationChip(ctx, x, y, maxWidth, text, theme) {
+function drawLocationRow(ctx, x, y, maxWidth, text, color) {
   if (!text) return
 
-  const chipH = 72
-  const iconAreaW = 52
-  const padH = 28
-
-  ctx.font = '500 34px Inter, sans-serif'
-  const clipped = trimToWidth(ctx, text, maxWidth - iconAreaW - padH * 2)
-  const chipW = Math.min(maxWidth, ctx.measureText(clipped).width + iconAreaW + padH * 2)
-
-  fillRoundRect(ctx, x, y, chipW, chipH, chipH / 2, theme.chipBg)
-
-  // Pin icon centered vertically
-  const pinCX = x + padH + 11
-  const pinTop = y + (chipH - 26) / 2
   ctx.save()
-  ctx.strokeStyle = theme.iconColor
-  ctx.lineWidth = 3.5
+  ctx.strokeStyle = color
+  ctx.lineWidth = 3.8
   ctx.lineCap = 'round'
   ctx.beginPath()
-  ctx.moveTo(pinCX, pinTop + 2)
-  ctx.bezierCurveTo(pinCX - 9, pinTop + 2, pinCX - 9, pinTop + 16, pinCX, pinTop + 22)
-  ctx.bezierCurveTo(pinCX + 9, pinTop + 16, pinCX + 9, pinTop + 2, pinCX, pinTop + 2)
+  ctx.moveTo(x + 13, y + 5)
+  ctx.bezierCurveTo(x + 2.5, y + 5, x + 2.5, y + 21, x + 13, y + 29)
+  ctx.bezierCurveTo(x + 23.5, y + 21, x + 23.5, y + 5, x + 13, y + 5)
   ctx.stroke()
+
   ctx.beginPath()
-  ctx.arc(pinCX, pinTop + 11, 3, 0, Math.PI * 2)
-  ctx.fillStyle = theme.iconColor
+  ctx.arc(x + 13, y + 15, 3.2, 0, Math.PI * 2)
+  ctx.fillStyle = color
   ctx.fill()
   ctx.restore()
 
-  ctx.fillStyle = theme.textColor
-  ctx.font = '500 34px Inter, sans-serif'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(clipped, x + padH + iconAreaW, y + chipH / 2)
+  ctx.fillStyle = color
+  ctx.font = '500 36px Inter, sans-serif'
+  ctx.textBaseline = 'top'
+  ctx.fillText(trimToWidth(ctx, text, maxWidth - 44), x + 44, y - 2)
 }
 
 async function drawSongChip(ctx, x, y, width, moment, theme) {
   if (!moment.song_title) return 0
 
-  const chipHeight = 140
-  const coverSize = 96
-  const coverX = x + 20
-  const coverY = y + (chipHeight - coverSize) / 2
-
-  // Background
+  const chipHeight = 128
+  const coverX = x + 18
+  const coverY = y + 21
+  const coverSize = 86
   fillRoundRect(ctx, x, y, width, chipHeight, 30, theme.songBg)
-
-  // Left accent stripe
-  fillRoundRect(ctx, x + 13, y + 20, 4, chipHeight - 40, 2, theme.songIconStroke)
 
   const songCover = proxifyCoverUrl(moment.song_cover)
 
@@ -302,13 +279,13 @@ async function drawSongChip(ctx, x, y, width, moment, theme) {
 
   ctx.textBaseline = 'top'
   ctx.fillStyle = theme.songTitle
-  ctx.font = '700 38px Inter, sans-serif'
-  ctx.fillText(trimToWidth(ctx, moment.song_title, width - 154), x + 136, y + 26)
+  ctx.font = '700 36px Inter, sans-serif'
+  ctx.fillText(trimToWidth(ctx, moment.song_title, width - 148), x + 122, y + 24)
 
   if (moment.song_artist) {
     ctx.fillStyle = theme.songSubtitle
-    ctx.font = '500 30px Inter, sans-serif'
-    ctx.fillText(trimToWidth(ctx, moment.song_artist, width - 154), x + 136, y + 78)
+    ctx.font = '500 31px Inter, sans-serif'
+    ctx.fillText(trimToWidth(ctx, moment.song_artist, width - 148), x + 122, y + 72)
   }
 
   return chipHeight
@@ -323,6 +300,16 @@ function drawTextBlock(ctx, lines, x, y, lineHeight) {
   }
 
   return currentY
+}
+
+function drawTopBadge(ctx, text, x, y, theme) {
+  ctx.font = '700 24px Inter, sans-serif'
+  const paddingX = 18
+  const width = ctx.measureText(text).width + paddingX * 2
+  fillRoundRect(ctx, x - width, y, width, 44, 22, theme.badgeBg)
+  ctx.fillStyle = theme.badgeText
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, x - width + paddingX, y + 22)
 }
 
 function drawCanvasHeader(ctx, { logoX, logoY, dateX, dateY, dateText, dark = false }) {
@@ -343,6 +330,13 @@ function getMomentPeopleNames(moment) {
   ].filter(Boolean))]
 }
 
+function drawMetaText(ctx, text, x, y, maxWidth, theme) {
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = theme.color
+  ctx.font = theme.font
+  const lines = wrapText(ctx, text, maxWidth, theme.maxLines ?? 2)
+  return drawTextBlock(ctx, lines, x, y, theme.lineHeight)
+}
 
 function drawMoodChip(ctx, x, y, mood, theme) {
   const paddingX = theme.paddingX ?? 20
@@ -358,21 +352,9 @@ function drawMoodChip(ctx, x, y, mood, theme) {
   return height
 }
 
-function drawPeopleChip(ctx, x, y, maxWidth, peopleNames, theme) {
+function drawPeopleBlock(ctx, x, y, maxWidth, peopleNames, theme) {
   if (peopleNames.length === 0) return y
-
-  // Label row
-  ctx.textBaseline = 'top'
-  ctx.fillStyle = theme.labelColor
-  ctx.font = '600 26px Inter, sans-serif'
-  ctx.fillText('С КЕМ', x, y)
-  y += 36
-
-  // Names
-  ctx.fillStyle = theme.textColor
-  ctx.font = '500 36px Inter, sans-serif'
-  const lines = wrapText(ctx, peopleNames.join(', '), maxWidth, 2)
-  return drawTextBlock(ctx, lines, x, y, 48)
+  return drawMetaText(ctx, `С кем: ${peopleNames.join(', ')}`, x, y, maxWidth, theme)
 }
 
 async function drawPolaroidPhotoFrame(ctx, moment, frame) {
@@ -385,10 +367,6 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
     photoInsetX = 22,
     photoInsetTop = 20,
     photoBottomPad = 88,
-    bgColor = '#FFFFFF',
-    shadowOpacity = 0.18,
-    photoRadius = 0,
-    drawImage = true,
   } = frame
 
   const photoWidth = width - photoInsetX * 2
@@ -399,28 +377,26 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
   ctx.rotate(rotation)
 
   ctx.save()
-  ctx.shadowColor = `rgba(59, 35, 18, ${shadowOpacity})`
-  ctx.shadowBlur = 36
-  ctx.shadowOffsetY = 18
-  ctx.fillStyle = bgColor
+  ctx.shadowColor = 'rgba(59, 35, 18, 0.18)'
+  ctx.shadowBlur = 28
+  ctx.shadowOffsetY = 14
+  ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(-width / 2, -height / 2, width, height)
   ctx.restore()
 
-  ctx.strokeStyle = 'rgba(23,20,14,0.05)'
+  ctx.strokeStyle = 'rgba(23,20,14,0.06)'
   ctx.lineWidth = 2
   ctx.strokeRect(-width / 2 + 1, -height / 2 + 1, width - 2, height - 2)
 
-  if (drawImage) {
-    await drawPhoto(
-      ctx,
-      moment,
-      -width / 2 + photoInsetX,
-      -height / 2 + photoInsetTop,
-      photoWidth,
-      photoHeight,
-      photoRadius,
-    )
-  }
+  await drawPhoto(
+    ctx,
+    moment,
+    -width / 2 + photoInsetX,
+    -height / 2 + photoInsetTop,
+    photoWidth,
+    photoHeight,
+    0,
+  )
 
   ctx.restore()
 }
@@ -444,59 +420,28 @@ async function drawPolaroid(canvas, moment) {
     dateText,
   })
 
-  const frameX = 108
-  const frameY = 178
-  const frameWidth = 864
-  const frameHeight = 830
-
-  // Ghost frame stacked behind — plain, warm-tinted, counter-rotated
   await drawPolaroidPhotoFrame(ctx, moment, {
-    x: frameX + 8,
-    y: frameY + 6,
-    width: frameWidth,
-    height: frameHeight,
-    rotation: 0.052,
-    photoInsetX: 18,
-    photoInsetTop: 18,
-    photoBottomPad: 110,
-    bgColor: '#EDE7DC',
-    shadowOpacity: 0.07,
-    drawImage: false,
-  })
-
-  // Main polaroid frame
-  await drawPolaroidPhotoFrame(ctx, moment, {
-    x: frameX,
-    y: frameY,
-    width: frameWidth,
-    height: frameHeight,
+    x: 108,
+    y: 178,
+    width: 864,
+    height: 830,
     rotation: -0.018,
     photoInsetX: 18,
     photoInsetTop: 18,
     photoBottomPad: 110,
-    bgColor: '#FFFFFF',
-    shadowOpacity: 0.20,
-    photoRadius: 10,
   })
 
   const contentX = 98
   const contentWidth = width - contentX * 2
-  let y = 1104
+  let y = 1096
 
-  // Accent ornament line above title
-  ctx.save()
-  ctx.fillStyle = COLOR.accent
-  ctx.fillRect(contentX, y - 34, 52, 3)
-  ctx.restore()
-
-  ctx.textBaseline = 'top'
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 88px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 84px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 90)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 30
+    y += 28
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -504,7 +449,7 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 36
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: COLOR.cardAlt,
@@ -517,32 +462,30 @@ async function drawPolaroid(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 26
-    y = drawPeopleChip(ctx, contentX, y, contentWidth, peopleNames, {
-      labelColor: COLOR.mid,
-      textColor: COLOR.text,
+    y += 24
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
+      color: COLOR.mid,
+      font: '500 36px Inter, sans-serif',
+      lineHeight: 46,
+      maxLines: 2,
     })
   }
 
   if (moment.mood) {
     y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 36px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: COLOR.text,
-      background: '#F0E6DA',
-      paddingX: 28,
-      height: 72,
-      minWidth: 160,
+      background: '#F6EFE6',
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
   if (moment.location) {
-    y += 20
-    drawLocationChip(ctx, contentX, y, contentWidth, moment.location, {
-      chipBg: COLOR.cardAlt,
-      iconColor: COLOR.mid,
-      textColor: COLOR.mid,
-    })
+    y += 26
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
 
@@ -570,53 +513,19 @@ async function drawMinimal(canvas, moment) {
     dateText,
   })
 
-  // Blurred atmosphere haze behind photo (uses cached image)
-  if (moment.photo_url) {
-    try {
-      const image = await loadImage(moment.photo_url)
-      ctx.save()
-      ctx.filter = 'blur(54px)'
-      ctx.globalAlpha = 0.28
-      const hazeScale = Math.max(width / image.width, (photoHeight + 200) / image.height)
-      const hazeW = image.width * hazeScale
-      const hazeH = image.height * hazeScale
-      const hazeX = (width - hazeW) / 2
-      const hazeY = photoY - 80 + (photoHeight + 200 - hazeH) / 2
-      ctx.drawImage(image, hazeX - 60, hazeY - 40, hazeW + 120, hazeH + 80)
-      ctx.globalAlpha = 1
-      ctx.filter = 'none'
-      ctx.restore()
-    } catch {}
-  }
-
-  // Photo drop shadow (draw placeholder rect first, then photo covers it)
-  ctx.save()
-  ctx.shadowColor = 'rgba(80, 50, 30, 0.18)'
-  ctx.shadowBlur = 44
-  ctx.shadowOffsetY = 18
-  fillRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 46, '#FAF7F3')
-  ctx.restore()
-
   await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 46)
 
   const contentX = 72
   const contentWidth = width - contentX * 2
-  let y = photoY + photoHeight + 88
+  let y = photoY + photoHeight + 96
 
-  // Accent ornament line above title
-  ctx.save()
-  ctx.fillStyle = COLOR.accent
-  ctx.fillRect(contentX, y - 30, 52, 3)
-  ctx.restore()
-
-  ctx.textBaseline = 'top'
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 88px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 90)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 30
+    y += 28
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -624,7 +533,7 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 36
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
       songBg: '#F7ECDC',
@@ -637,32 +546,30 @@ async function drawMinimal(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 26
-    y = drawPeopleChip(ctx, contentX, y, contentWidth, peopleNames, {
-      labelColor: COLOR.mid,
-      textColor: COLOR.text,
+    y += 22
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
+      color: COLOR.mid,
+      font: '500 35px Inter, sans-serif',
+      lineHeight: 45,
+      maxLines: 2,
     })
   }
 
   if (moment.mood) {
     y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 36px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: COLOR.text,
-      background: '#F0E6DA',
-      paddingX: 28,
-      height: 72,
-      minWidth: 160,
+      background: '#F5EBDD',
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
   if (moment.location) {
-    y += 20
-    drawLocationChip(ctx, contentX, y, contentWidth, moment.location, {
-      chipBg: '#F7ECDC',
-      iconColor: COLOR.accent,
-      textColor: COLOR.mid,
-    })
+    y += 26
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
 
@@ -677,31 +584,21 @@ async function drawDark(canvas, moment) {
   drawBackground(ctx, 'dark', width, height)
 
   const dateText = formatStoryDate(getMomentDisplayAt(moment))
-  const photoHeight = 960 // cinematic — ~50% of canvas
+  const photoHeight = 842
   await drawPhoto(ctx, moment, 0, 0, width, photoHeight, 0, true)
 
-  // Cinematic bottom fade
-  const photoFade = ctx.createLinearGradient(0, photoHeight * 0.42, 0, photoHeight + 80)
+  const photoFade = ctx.createLinearGradient(0, 560, 0, 1040)
   photoFade.addColorStop(0, 'rgba(23,20,14,0)')
-  photoFade.addColorStop(0.55, 'rgba(23,20,14,0.62)')
+  photoFade.addColorStop(0.62, 'rgba(23,20,14,0.68)')
   photoFade.addColorStop(1, 'rgba(23,20,14,1)')
   ctx.fillStyle = photoFade
-  ctx.fillRect(0, 0, width, photoHeight + 80)
+  ctx.fillRect(0, 0, width, 1100)
 
-  // Top vignette
-  const topShade = ctx.createLinearGradient(0, 0, 0, 240)
-  topShade.addColorStop(0, 'rgba(23,20,14,0.52)')
+  const topShade = ctx.createLinearGradient(0, 0, 0, 220)
+  topShade.addColorStop(0, 'rgba(23,20,14,0.5)')
   topShade.addColorStop(1, 'rgba(23,20,14,0)')
   ctx.fillStyle = topShade
-  ctx.fillRect(0, 0, width, 240)
-
-  // Amber light leak — top-right corner
-  const lightLeak = ctx.createRadialGradient(width, 0, 0, width, 0, 700)
-  lightLeak.addColorStop(0, 'rgba(217,139,82,0.15)')
-  lightLeak.addColorStop(0.5, 'rgba(217,139,82,0.04)')
-  lightLeak.addColorStop(1, 'rgba(217,139,82,0)')
-  ctx.fillStyle = lightLeak
-  ctx.fillRect(0, 0, width, photoHeight)
+  ctx.fillRect(0, 0, width, 220)
 
   drawCanvasHeader(ctx, {
     logoX: 84,
@@ -714,22 +611,15 @@ async function drawDark(canvas, moment) {
 
   const contentX = 84
   const contentWidth = width - contentX * 2
-  let y = photoHeight + 72
+  let y = photoHeight + 108
 
-  // Accent ornament line above title
-  ctx.save()
-  ctx.fillStyle = COLOR.accent
-  ctx.fillRect(contentX, y - 30, 52, 3)
-  ctx.restore()
-
-  ctx.textBaseline = 'top'
   ctx.fillStyle = '#FFF4E6'
-  ctx.font = '700 88px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 90)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
 
   if (moment.description) {
-    y += 30
+    y += 28
     ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
     ctx.font = '500 40px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
@@ -737,7 +627,7 @@ async function drawDark(canvas, moment) {
   }
 
   if (moment.song_title) {
-    y += 36
+    y += 34
     const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: true,
       songBg: COLOR.darkCardAlt,
@@ -750,32 +640,30 @@ async function drawDark(canvas, moment) {
   }
 
   if (peopleNames.length > 0) {
-    y += 26
-    y = drawPeopleChip(ctx, contentX, y, contentWidth, peopleNames, {
-      labelColor: 'rgba(245, 235, 221, 0.45)',
-      textColor: 'rgba(245, 235, 221, 0.88)',
+    y += 24
+    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
+      color: 'rgba(245, 235, 221, 0.68)',
+      font: '500 35px Inter, sans-serif',
+      lineHeight: 45,
+      maxLines: 2,
     })
   }
 
   if (moment.mood) {
     y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 36px Inter, sans-serif',
+      font: '600 34px Inter, sans-serif',
       color: '#FFF4E6',
-      background: 'rgba(255, 244, 230, 0.12)',
-      paddingX: 28,
-      height: 72,
-      minWidth: 160,
+      background: 'rgba(255, 244, 230, 0.1)',
+      paddingX: 26,
+      height: 68,
+      minWidth: 152,
     })
   }
 
   if (moment.location) {
-    y += 20
-    drawLocationChip(ctx, contentX, y, contentWidth, moment.location, {
-      chipBg: 'rgba(255, 244, 230, 0.08)',
-      iconColor: COLOR.accent,
-      textColor: 'rgba(245, 235, 221, 0.72)',
-    })
+    y += 28
+    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, 'rgba(245, 235, 221, 0.65)')
   }
 }
 
