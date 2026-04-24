@@ -583,7 +583,7 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
   ctx.textBaseline = 'top'
 
   const titleLines = wrapText(ctx, frameTitle, titleWidth, 2)
-  let titleY = titleAreaY + Math.max(0, (titleAreaHeight - titleLines.length * titleLineHeight) / 2) - 6
+  let titleY = titleAreaY + Math.max(0, (titleAreaHeight - titleLines.length * titleLineHeight) / 2) - 11
 
   for (const line of titleLines) {
     ctx.fillText(line, 0, titleY)
@@ -654,7 +654,7 @@ async function drawPolaroid(canvas, moment) {
 
   const contentX = 102
   const contentWidth = width - contentX * 2
-  const contentGap = 30
+  const contentGap = 35
   let y = 1034 + contentGap
 
   if (moment.description) {
