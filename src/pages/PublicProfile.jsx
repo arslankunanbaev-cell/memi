@@ -815,7 +815,7 @@ export function PublicProfileContent({
                           className: 'flex w-full items-center gap-3 text-left transition-transform duration-150 ease-out active:scale-[0.99]',
                           style: {
                             border: 'none',
-                            backgroundColor: 'var(--card)',
+                            backgroundColor: 'var(--moment-surface)',
                             borderRadius: 18,
                             padding: '13px 14px',
                             boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
@@ -824,7 +824,7 @@ export function PublicProfileContent({
                       : {
                           className: 'flex items-center gap-3',
                           style: {
-                            backgroundColor: 'var(--card)',
+                            backgroundColor: 'var(--moment-surface)',
                             borderRadius: 18,
                             padding: '13px 14px',
                             boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
