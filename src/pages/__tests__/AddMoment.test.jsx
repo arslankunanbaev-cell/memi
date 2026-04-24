@@ -13,10 +13,13 @@ vi.mock('react-router-dom', async (importOriginal) => ({
 }))
 
 const mockSaveMoment = vi.fn()
+const mockAddMomentParticipants = vi.fn()
+const mockNotifyTaggedFriends = vi.fn()
 vi.mock('../../lib/api.js', () => ({
   saveMoment:    (...args) => mockSaveMoment(...args),
   createPerson:  vi.fn(),
-  addMomentParticipants: vi.fn(),
+  addMomentParticipants: (...args) => mockAddMomentParticipants(...args),
+  notifyTaggedFriends: (...args) => mockNotifyTaggedFriends(...args),
 }))
 
 // ── Хелпер ───────────────────────────────────────────────────────────────────
@@ -102,6 +105,28 @@ describe('AddMoment', () => {
     await waitFor(() => {
       expect(afterSave).toHaveBeenCalledWith(expect.objectContaining({ id: 'm2' }))
       expect(mockNavigate).not.toHaveBeenCalledWith('/moment-saved', expect.anything())
+    })
+  })
+
+  it('отправляет уведомление отмеченному другу после сохранения момента', async () => {
+    mockSaveMoment.mockResolvedValue({ id: 'moment-1', title: 'Тест', user_id: 'user-uuid-1' })
+    mockAddMomentParticipants.mockResolvedValue(undefined)
+    mockNotifyTaggedFriends.mockResolvedValue({ ok: true })
+    useAppStore.setState({
+      currentUser: { id: 'user-uuid-1', name: 'Test User' },
+      people: [],
+      friends: [{ id: 'friend-1', name: 'Мила', photo_url: null }],
+      moments: [],
+    })
+
+    renderAddMoment()
+    await userEvent.type(screen.getByPlaceholderText('Название момента...'), 'Тест момента')
+    await userEvent.click(screen.getByText('Мила'))
+    fireEvent.click(screen.getByText('Сохранить'))
+
+    await waitFor(() => {
+      expect(mockAddMomentParticipants).toHaveBeenCalledWith('moment-1', ['friend-1'])
+      expect(mockNotifyTaggedFriends).toHaveBeenCalledWith('moment-1', ['friend-1'])
     })
   })
 

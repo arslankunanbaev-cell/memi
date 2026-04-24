@@ -70,6 +70,7 @@ async function invokeEdgeFunction(sb, functionName, body) {
 
   const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
   const url = import.meta.env.VITE_SUPABASE_URL ?? ''
+  let authToken = anonKey
 
   if (!url || typeof fetch !== 'function') {
     return {
@@ -78,11 +79,20 @@ async function invokeEdgeFunction(sb, functionName, body) {
     }
   }
 
+  if (typeof sb.auth?.getSession === 'function') {
+    try {
+      const { data: sessionData } = await sb.auth.getSession()
+      authToken = sessionData?.session?.access_token ?? authToken
+    } catch (error) {
+      console.warn(`[EdgeFunction] ${functionName} session lookup failed:`, error)
+    }
+  }
+
   const response = await fetch(`${url}/functions/v1/${functionName}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${anonKey}`,
+      Authorization: `Bearer ${authToken}`,
     },
     body: JSON.stringify(body),
   })
@@ -635,6 +645,23 @@ export async function addMomentParticipants(momentId, userIds) {
   const rows = userIds.map((user_id) => ({ moment_id: momentId, user_id }))
   const { error } = await sb.from('moment_participants').insert(rows)
   if (error) throw error
+}
+
+export async function notifyTaggedFriends(momentId, taggedUserIds) {
+  const uniqueUserIds = [...new Set((taggedUserIds ?? []).filter(Boolean))]
+  if (!momentId || !uniqueUserIds.length) {
+    return { ok: true, skipped: 'no_tagged_friends' }
+  }
+
+  const sb = assertSupabase()
+  const { data, error } = await invokeEdgeFunction(sb, 'send-tag-notification', {
+    momentId,
+    taggedUserIds: uniqueUserIds,
+  })
+
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return data
 }
 
 export async function getSharedMoments(userId) {

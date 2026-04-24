@@ -4,7 +4,7 @@ import { tgHaptic } from '../lib/telegram'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { trackEvent } from '../lib/analytics'
-import { saveMoment, createPerson, addMomentParticipants } from '../lib/api'
+import { saveMoment, createPerson, addMomentParticipants, notifyTaggedFriends } from '../lib/api'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
@@ -227,6 +227,11 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
       if (taggedFriends.length > 0) {
         try {
           await addMomentParticipants(saved.id, taggedFriends)
+          try {
+            await notifyTaggedFriends(saved.id, taggedFriends)
+          } catch (notificationErr) {
+            console.warn('[AddMoment] tag notification failed (non-fatal):', notificationErr?.message)
+          }
         } catch (participantErr) {
           console.warn('[AddMoment] ⚠ participant insert failed (non-fatal):', participantErr?.message)
         }
