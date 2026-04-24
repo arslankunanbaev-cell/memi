@@ -162,6 +162,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const [visibility, setVisibility] = useState('friends')
   const [taggedFriends, setTaggedFriends] = useState([])
   const [showAddPerson, setShowAddPerson] = useState(false)
+  const outerSectionLabelClassName = 'mb-3'
 
   function handlePersonCreated(person) {
     addPerson(person)
@@ -285,7 +286,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Photo */}
         <div>
-          <SectionLabel>Фото</SectionLabel>
+          <SectionLabel className={outerSectionLabelClassName}>Фото</SectionLabel>
           <button
             onClick={() => photoRef.current?.click()}
             className="w-full transition-opacity active:opacity-70"
@@ -344,7 +345,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Mood */}
         <div>
-          <SectionLabel>Настроение</SectionLabel>
+          <SectionLabel className={outerSectionLabelClassName}>Настроение</SectionLabel>
           <div className="flex flex-wrap gap-3">
             {MOODS.map((m) => (
               <button
@@ -399,7 +400,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Song */}
         <div>
-          <SectionLabel>Трек</SectionLabel>
+          <SectionLabel className={outerSectionLabelClassName}>Трек</SectionLabel>
           {song ? (
             <div
               className="stats-panel-surface flex items-center gap-3"
@@ -466,7 +467,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
           const unlinkedFriends = friends.filter((f) => !linkedUserIds.has(f.id))
           return (
             <div>
-              <SectionLabel>С кем</SectionLabel>
+              <SectionLabel className={outerSectionLabelClassName}>С кем</SectionLabel>
               <div className="flex flex-wrap gap-3">
                 {people.map((p) => {
                   const active = selectedPeople.includes(p.id)
@@ -574,7 +575,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
 
         {/* Visibility */}
         <div>
-          <SectionLabel>Видимость</SectionLabel>
+          <SectionLabel className={outerSectionLabelClassName}>Видимость</SectionLabel>
           <div className="flex gap-3">
             {VISIBILITY_OPTIONS.map(({ value, label }) => (
               <button
