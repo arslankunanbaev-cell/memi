@@ -162,7 +162,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const [visibility, setVisibility] = useState('friends')
   const [taggedFriends, setTaggedFriends] = useState([])
   const [showAddPerson, setShowAddPerson] = useState(false)
-  const outerSectionLabelClassName = 'mb-2'
+  const outerSectionLabelClassName = 'mb-3'
 
   function handlePersonCreated(person) {
     addPerson(person)

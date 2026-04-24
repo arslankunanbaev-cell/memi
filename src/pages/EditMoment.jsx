@@ -167,7 +167,7 @@ export default function EditMoment() {
   const [error, setError]           = useState(null)
   const [showAddPerson, setShowAddPerson] = useState(false)
   const songCover = proxifyCoverUrl(song?.cover ?? null)
-  const outerSectionLabelClassName = 'mb-2'
+  const outerSectionLabelClassName = 'mb-3'
 
   if (!moment) {
     return (
