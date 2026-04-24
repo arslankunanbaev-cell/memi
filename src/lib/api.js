@@ -582,6 +582,14 @@ export async function sendFriendRequest(requesterId, receiverId) {
     .select()
     .maybeSingle()
   if (error) throw error
+
+  // Notify the receiver via Telegram (fire-and-forget, errors are non-fatal)
+  if (data) {
+    invokeEdgeFunction(sb, 'send-friend-notification', { receiverId }).catch((err) => {
+      console.warn('[sendFriendRequest] notification failed:', err)
+    })
+  }
+
   return data
 }
 
