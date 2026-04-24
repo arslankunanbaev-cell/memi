@@ -8,22 +8,30 @@ import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
 
 const TEMPLATES = [
-  { id: 'polaroid', label: 'Полароид' },
-  { id: 'minimal', label: 'Минимал' },
-  { id: 'dark', label: 'Тёмный' },
+  { id: 'polaroid', label: 'Полароид', hint: 'Тёплая бумага, мягкие тени и эффект личной заметки' },
+  { id: 'minimal', label: 'Минимал', hint: 'Галерейная подача с воздухом и аккуратной типографикой' },
+  { id: 'dark', label: 'Ночь', hint: 'Кинематографичный контраст с глубиной и мягким свечением' },
 ]
 
 const COLOR = {
   base: '#F7F4F0',
   card: '#FBF7F0',
   cardAlt: '#F3ECE3',
+  paper: '#FFFDF9',
+  paperWarm: '#F8F0E6',
   accent: '#D98B52',
+  accentStrong: '#BE6D34',
   accentLight: '#E9D2BC',
+  accentMist: 'rgba(217, 139, 82, 0.16)',
   text: '#17140E',
   mid: '#8A7A6A',
+  soft: '#B8A898',
+  line: 'rgba(160, 94, 44, 0.14)',
   darkBg: '#17140E',
   darkCard: '#221A14',
   darkCardAlt: '#34271E',
+  darkLine: 'rgba(255,244,230,0.12)',
+  darkTextSoft: 'rgba(245,235,221,0.7)',
 }
 
 function formatStoryDate(iso) {
@@ -119,6 +127,38 @@ function fillRoundRect(ctx, x, y, width, height, radius, color) {
   ctx.fill()
 }
 
+function strokeRoundRect(ctx, x, y, width, height, radius, color, lineWidth = 1) {
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = lineWidth
+  roundRect(ctx, x, y, width, height, radius)
+  ctx.stroke()
+  ctx.restore()
+}
+
+function drawSoftGlow(ctx, x, y, radius, color, alpha = 1) {
+  const glow = ctx.createRadialGradient(x, y, 0, x, y, radius)
+  glow.addColorStop(0, color)
+  glow.addColorStop(1, 'rgba(255,255,255,0)')
+
+  ctx.save()
+  ctx.globalAlpha = alpha
+  ctx.fillStyle = glow
+  ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2)
+  ctx.restore()
+}
+
+function drawHairline(ctx, x, y, width, color, lineWidth = 1) {
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = lineWidth
+  ctx.beginPath()
+  ctx.moveTo(x, y)
+  ctx.lineTo(x + width, y)
+  ctx.stroke()
+  ctx.restore()
+}
+
 function clipRoundRect(ctx, x, y, width, height, radius) {
   ctx.save()
   roundRect(ctx, x, y, width, height, radius)
@@ -192,76 +232,79 @@ async function drawPhoto(ctx, moment, x, y, width, height, radius, dark = false,
 function drawBackground(ctx, template, width, height) {
   if (template === 'dark') {
     const darkGradient = ctx.createLinearGradient(0, 0, 0, height)
-    darkGradient.addColorStop(0, '#241A14')
+    darkGradient.addColorStop(0, '#261B15')
+    darkGradient.addColorStop(0.45, '#1D1510')
     darkGradient.addColorStop(1, COLOR.darkBg)
     ctx.fillStyle = darkGradient
     ctx.fillRect(0, 0, width, height)
 
-    const glow = ctx.createRadialGradient(width / 2, height * 0.16, 80, width / 2, height * 0.16, width * 0.55)
-    glow.addColorStop(0, 'rgba(217,139,82,0.18)')
-    glow.addColorStop(1, 'rgba(217,139,82,0)')
-    ctx.fillStyle = glow
-    ctx.fillRect(0, 0, width, height)
+    drawSoftGlow(ctx, width * 0.78, height * 0.14, width * 0.34, 'rgba(217,139,82,0.2)', 1)
+    drawSoftGlow(ctx, width * 0.26, height * 0.42, width * 0.28, 'rgba(133,79,44,0.18)', 0.72)
     return
   }
 
   const baseGradient = ctx.createLinearGradient(0, 0, 0, height)
-  baseGradient.addColorStop(0, '#FCF8F2')
-  baseGradient.addColorStop(1, COLOR.base)
+  if (template === 'minimal') {
+    baseGradient.addColorStop(0, '#FFFCF7')
+    baseGradient.addColorStop(0.55, '#F7F2EB')
+    baseGradient.addColorStop(1, '#F1EBE2')
+  } else {
+    baseGradient.addColorStop(0, '#FDF9F3')
+    baseGradient.addColorStop(0.52, '#F7F2EA')
+    baseGradient.addColorStop(1, '#F1E8DE')
+  }
+
   ctx.fillStyle = baseGradient
   ctx.fillRect(0, 0, width, height)
 
-  const glow = ctx.createRadialGradient(width / 2, height * 0.2, 100, width / 2, height * 0.2, width * 0.58)
-  glow.addColorStop(0, 'rgba(233,210,188,0.75)')
-  glow.addColorStop(1, 'rgba(233,210,188,0)')
-  ctx.fillStyle = glow
-  ctx.fillRect(0, 0, width, height)
-}
+  if (template === 'polaroid') {
+    drawSoftGlow(ctx, width * 0.68, height * 0.18, width * 0.34, 'rgba(255,255,255,0.94)', 1)
+    drawSoftGlow(ctx, width * 0.34, height * 0.7, width * 0.3, 'rgba(233,210,188,0.72)', 0.85)
+    drawSoftGlow(ctx, width * 0.78, height * 0.9, width * 0.22, 'rgba(217,139,82,0.14)', 0.75)
+    return
+  }
 
-function drawLocationRow(ctx, x, y, maxWidth, text, color) {
-  if (!text) return
-
-  ctx.save()
-  ctx.strokeStyle = color
-  ctx.lineWidth = 3.8
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.moveTo(x + 13, y + 5)
-  ctx.bezierCurveTo(x + 2.5, y + 5, x + 2.5, y + 21, x + 13, y + 29)
-  ctx.bezierCurveTo(x + 23.5, y + 21, x + 23.5, y + 5, x + 13, y + 5)
-  ctx.stroke()
-
-  ctx.beginPath()
-  ctx.arc(x + 13, y + 15, 3.2, 0, Math.PI * 2)
-  ctx.fillStyle = color
-  ctx.fill()
-  ctx.restore()
-
-  ctx.fillStyle = color
-  ctx.font = '500 36px Inter, sans-serif'
-  ctx.textBaseline = 'top'
-  ctx.fillText(trimToWidth(ctx, text, maxWidth - 44), x + 44, y - 2)
+  drawSoftGlow(ctx, width * 0.82, height * 0.16, width * 0.24, 'rgba(255,255,255,0.96)', 1)
+  drawSoftGlow(ctx, width * 0.28, height * 0.24, width * 0.26, 'rgba(233,210,188,0.5)', 0.72)
 }
 
 async function drawSongChip(ctx, x, y, width, moment, theme) {
   if (!moment.song_title) return 0
 
-  const chipHeight = 128
-  const coverX = x + 18
-  const coverY = y + 21
-  const coverSize = 86
-  fillRoundRect(ctx, x, y, width, chipHeight, 30, theme.songBg)
+  const chipHeight = theme.height ?? 144
+  const padding = theme.padding ?? 20
+  const coverSize = theme.coverSize ?? 88
+  const coverX = x + padding
+  const coverY = y + (chipHeight - coverSize) / 2
+  const textX = coverX + coverSize + 20
+  const textWidth = width - (textX - x) - padding
+
+  if (theme.shadowColor) {
+    ctx.save()
+    ctx.shadowColor = theme.shadowColor
+    ctx.shadowBlur = theme.shadowBlur ?? 26
+    ctx.shadowOffsetY = theme.shadowOffsetY ?? 14
+    fillRoundRect(ctx, x, y, width, chipHeight, theme.radius ?? 32, theme.songBg)
+    ctx.restore()
+  } else {
+    fillRoundRect(ctx, x, y, width, chipHeight, theme.radius ?? 32, theme.songBg)
+  }
+
+  if (theme.songBorder) {
+    strokeRoundRect(ctx, x, y, width, chipHeight, theme.radius ?? 32, theme.songBorder, theme.songBorderWidth ?? 1)
+  }
 
   const songCover = proxifyCoverUrl(moment.song_cover)
 
   if (songCover) {
     try {
-      await drawPhoto(ctx, { photo_url: songCover }, coverX, coverY, coverSize, coverSize, 22, theme.dark)
+      await drawPhoto(ctx, { photo_url: songCover }, coverX, coverY, coverSize, coverSize, theme.coverRadius ?? 24, theme.dark)
     } catch {
-      fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 22, theme.songIconBg)
+      fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, theme.coverRadius ?? 24, theme.songIconBg)
     }
   } else {
-    fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, 22, theme.songIconBg)
+    fillRoundRect(ctx, coverX, coverY, coverSize, coverSize, theme.coverRadius ?? 24, theme.songIconBg)
+    ctx.save()
     ctx.strokeStyle = theme.songIconStroke
     ctx.lineWidth = 5
     ctx.lineCap = 'round'
@@ -275,17 +318,25 @@ async function drawSongChip(ctx, x, y, width, moment, theme) {
     ctx.arc(coverX + 31, coverY + 62, 7.4, 0, Math.PI * 2)
     ctx.arc(coverX + 62, coverY + 55, 7.4, 0, Math.PI * 2)
     ctx.stroke()
+    ctx.restore()
   }
 
   ctx.textBaseline = 'top'
+
+  if (theme.eyebrow) {
+    ctx.fillStyle = theme.eyebrowColor ?? theme.songSubtitle
+    ctx.font = theme.eyebrowFont ?? '700 18px Inter, sans-serif'
+    ctx.fillText(theme.eyebrow.toUpperCase(), textX, y + 22)
+  }
+
   ctx.fillStyle = theme.songTitle
-  ctx.font = '700 36px Inter, sans-serif'
-  ctx.fillText(trimToWidth(ctx, moment.song_title, width - 148), x + 122, y + 24)
+  ctx.font = theme.titleFont ?? '700 36px Inter, sans-serif'
+  ctx.fillText(trimToWidth(ctx, moment.song_title, textWidth), textX, y + (theme.eyebrow ? 46 : 32))
 
   if (moment.song_artist) {
     ctx.fillStyle = theme.songSubtitle
-    ctx.font = '500 31px Inter, sans-serif'
-    ctx.fillText(trimToWidth(ctx, moment.song_artist, width - 148), x + 122, y + 72)
+    ctx.font = theme.subtitleFont ?? '500 29px Inter, sans-serif'
+    ctx.fillText(trimToWidth(ctx, moment.song_artist, textWidth), textX, y + (theme.eyebrow ? 88 : 76))
   }
 
   return chipHeight
@@ -303,13 +354,17 @@ function drawTextBlock(ctx, lines, x, y, lineHeight) {
 }
 
 function drawTopBadge(ctx, text, x, y, theme) {
-  ctx.font = '700 24px Inter, sans-serif'
-  const paddingX = 18
+  ctx.font = theme.font ?? '700 24px Inter, sans-serif'
+  const paddingX = theme.paddingX ?? 18
+  const height = theme.height ?? 44
   const width = ctx.measureText(text).width + paddingX * 2
-  fillRoundRect(ctx, x - width, y, width, 44, 22, theme.badgeBg)
+  fillRoundRect(ctx, x - width, y, width, height, height / 2, theme.badgeBg)
+  if (theme.border) {
+    strokeRoundRect(ctx, x - width, y, width, height, height / 2, theme.border, theme.borderWidth ?? 1)
+  }
   ctx.fillStyle = theme.badgeText
   ctx.textBaseline = 'middle'
-  ctx.fillText(text, x - width + paddingX, y + 22)
+  ctx.fillText(text, x - width + paddingX, y + height / 2)
 }
 
 function drawCanvasHeader(ctx, { logoX, logoY, dateX, dateY, dateText, dark = false }) {
@@ -330,12 +385,58 @@ function getMomentPeopleNames(moment) {
   ].filter(Boolean))]
 }
 
-function drawMetaText(ctx, text, x, y, maxWidth, theme) {
+function getWrappedTextMetrics(ctx, text, font, maxWidth, maxLines, lineHeight) {
+  if (!text) return { lines: [], height: 0 }
+
+  ctx.save()
+  ctx.font = font
+  const lines = wrapText(ctx, text, maxWidth, maxLines)
+  ctx.restore()
+
+  return {
+    lines,
+    height: lines.length * lineHeight,
+  }
+}
+
+function drawSectionEyebrow(ctx, text, x, y, theme = {}) {
+  const lineWidth = theme.lineWidth ?? 36
+  const lineColor = theme.lineColor ?? theme.color ?? COLOR.accent
+
   ctx.textBaseline = 'top'
-  ctx.fillStyle = theme.color
-  ctx.font = theme.font
-  const lines = wrapText(ctx, text, maxWidth, theme.maxLines ?? 2)
-  return drawTextBlock(ctx, lines, x, y, theme.lineHeight)
+  fillRoundRect(ctx, x, y + 10, lineWidth, 4, 2, lineColor)
+  ctx.fillStyle = theme.color ?? COLOR.accentStrong
+  ctx.font = theme.font ?? '700 22px Inter, sans-serif'
+  ctx.fillText(text.toUpperCase(), x + lineWidth + 14, y)
+
+  return y + (theme.height ?? 28)
+}
+
+function drawMetaItem(ctx, {
+  label,
+  value,
+  x,
+  y,
+  maxWidth,
+  labelColor = COLOR.soft,
+  labelFont = '700 20px Inter, sans-serif',
+  valueColor = COLOR.text,
+  valueFont = '500 34px Inter, sans-serif',
+  valueLineHeight = 42,
+  maxLines = 2,
+  labelGap = 28,
+}) {
+  if (!value) return y
+
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = labelColor
+  ctx.font = labelFont
+  ctx.fillText(label.toUpperCase(), x, y)
+
+  ctx.fillStyle = valueColor
+  ctx.font = valueFont
+  const lines = wrapText(ctx, value, maxWidth, maxLines)
+  return drawTextBlock(ctx, lines, x, y + labelGap, valueLineHeight)
 }
 
 function drawMoodChip(ctx, x, y, mood, theme) {
@@ -344,7 +445,22 @@ function drawMoodChip(ctx, x, y, mood, theme) {
 
   ctx.font = theme.font
   const width = Math.max(theme.minWidth ?? 0, ctx.measureText(mood).width + paddingX * 2)
-  fillRoundRect(ctx, x, y, width, height, height / 2, theme.background)
+
+  if (theme.shadowColor) {
+    ctx.save()
+    ctx.shadowColor = theme.shadowColor
+    ctx.shadowBlur = theme.shadowBlur ?? 18
+    ctx.shadowOffsetY = theme.shadowOffsetY ?? 10
+    fillRoundRect(ctx, x, y, width, height, height / 2, theme.background)
+    ctx.restore()
+  } else {
+    fillRoundRect(ctx, x, y, width, height, height / 2, theme.background)
+  }
+
+  if (theme.border) {
+    strokeRoundRect(ctx, x, y, width, height, height / 2, theme.border, theme.borderWidth ?? 1)
+  }
+
   ctx.fillStyle = theme.color
   ctx.textBaseline = 'middle'
   ctx.fillText(mood, x + paddingX, y + height / 2)
@@ -352,9 +468,60 @@ function drawMoodChip(ctx, x, y, mood, theme) {
   return height
 }
 
-function drawPeopleBlock(ctx, x, y, maxWidth, peopleNames, theme) {
-  if (peopleNames.length === 0) return y
-  return drawMetaText(ctx, `С кем: ${peopleNames.join(', ')}`, x, y, maxWidth, theme)
+function drawElevatedPanel(ctx, {
+  x,
+  y,
+  width,
+  height,
+  radius,
+  fill,
+  border,
+  borderWidth = 1,
+  shadowColor = 'rgba(80,50,30,0.12)',
+  shadowBlur = 24,
+  shadowOffsetY = 12,
+}) {
+  ctx.save()
+  ctx.shadowColor = shadowColor
+  ctx.shadowBlur = shadowBlur
+  ctx.shadowOffsetY = shadowOffsetY
+  fillRoundRect(ctx, x, y, width, height, radius, fill)
+  ctx.restore()
+
+  if (border) {
+    strokeRoundRect(ctx, x, y, width, height, radius, border, borderWidth)
+  }
+}
+
+function drawRotatedSheet(ctx, {
+  x,
+  y,
+  width,
+  height,
+  radius = 40,
+  rotation = 0,
+  fill,
+  border,
+  borderWidth = 1,
+  shadowColor = 'rgba(80,50,30,0.12)',
+  shadowBlur = 24,
+  shadowOffsetY = 12,
+}) {
+  ctx.save()
+  ctx.translate(x + width / 2, y + height / 2)
+  ctx.rotate(rotation)
+  ctx.save()
+  ctx.shadowColor = shadowColor
+  ctx.shadowBlur = shadowBlur
+  ctx.shadowOffsetY = shadowOffsetY
+  fillRoundRect(ctx, -width / 2, -height / 2, width, height, radius, fill)
+  ctx.restore()
+
+  if (border) {
+    strokeRoundRect(ctx, -width / 2, -height / 2, width, height, radius, border, borderWidth)
+  }
+
+  ctx.restore()
 }
 
 async function drawPolaroidPhotoFrame(ctx, moment, frame) {
@@ -377,13 +544,18 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
   ctx.rotate(rotation)
 
   ctx.save()
-  ctx.shadowColor = 'rgba(59, 35, 18, 0.18)'
-  ctx.shadowBlur = 28
-  ctx.shadowOffsetY = 14
+  ctx.shadowColor = 'rgba(59, 35, 18, 0.2)'
+  ctx.shadowBlur = 36
+  ctx.shadowOffsetY = 18
   ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(-width / 2, -height / 2, width, height)
   ctx.restore()
 
+  const frameGradient = ctx.createLinearGradient(0, -height / 2, 0, height / 2)
+  frameGradient.addColorStop(0, 'rgba(255,255,255,0.95)')
+  frameGradient.addColorStop(1, 'rgba(247,240,232,0.92)')
+  ctx.fillStyle = frameGradient
+  ctx.fillRect(-width / 2, -height / 2, width, height)
   ctx.strokeStyle = 'rgba(23,20,14,0.06)'
   ctx.lineWidth = 2
   ctx.strokeRect(-width / 2 + 1, -height / 2 + 1, width - 2, height - 2)
@@ -398,6 +570,7 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
     0,
   )
 
+  fillRoundRect(ctx, -width / 2 + 30, height / 2 - 64, 132, 6, 3, 'rgba(160,94,44,0.14)')
   ctx.restore()
 }
 
@@ -420,72 +593,164 @@ async function drawPolaroid(canvas, moment) {
     dateText,
   })
 
-  await drawPolaroidPhotoFrame(ctx, moment, {
-    x: 108,
-    y: 178,
-    width: 864,
-    height: 830,
-    rotation: -0.018,
-    photoInsetX: 18,
-    photoInsetTop: 18,
-    photoBottomPad: 110,
+  drawRotatedSheet(ctx, {
+    x: 110,
+    y: 182,
+    width: 860,
+    height: 850,
+    radius: 42,
+    rotation: -0.07,
+    fill: 'rgba(255,255,255,0.44)',
+    border: 'rgba(160,94,44,0.06)',
+    shadowColor: 'rgba(80,50,30,0.08)',
+    shadowBlur: 24,
+    shadowOffsetY: 12,
   })
 
-  const contentX = 98
+  drawRotatedSheet(ctx, {
+    x: 154,
+    y: 166,
+    width: 832,
+    height: 812,
+    radius: 40,
+    rotation: 0.045,
+    fill: 'rgba(244,234,224,0.96)',
+    border: 'rgba(160,94,44,0.08)',
+    shadowColor: 'rgba(80,50,30,0.1)',
+    shadowBlur: 28,
+    shadowOffsetY: 14,
+  })
+
+  await drawPolaroidPhotoFrame(ctx, moment, {
+    x: 110,
+    y: 184,
+    width: 860,
+    height: 850,
+    rotation: -0.014,
+    photoInsetX: 20,
+    photoInsetTop: 20,
+    photoBottomPad: 132,
+  })
+
+  const contentX = 102
   const contentWidth = width - contentX * 2
-  let y = 1096
+  let y = 1086
+
+  y = drawSectionEyebrow(ctx, 'Личная заметка', contentX, y, {
+    color: COLOR.accentStrong,
+    lineColor: COLOR.accent,
+  })
 
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 84px "Cormorant Garamond", Georgia, serif'
-  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
+  ctx.font = '700 78px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth - 40, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y + 20, 82)
 
   if (moment.description) {
-    y += 28
-    ctx.fillStyle = COLOR.mid
-    ctx.font = '500 40px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
-  }
-
-  if (moment.song_title) {
-    y += 34
-    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
-      dark: false,
-      songBg: COLOR.cardAlt,
-      songIconBg: COLOR.accentLight,
-      songIconStroke: COLOR.accent,
-      songTitle: COLOR.text,
-      songSubtitle: COLOR.mid,
-    })
-    y += songHeight
-  }
-
-  if (peopleNames.length > 0) {
-    y += 24
-    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
-      color: COLOR.mid,
-      font: '500 36px Inter, sans-serif',
-      lineHeight: 46,
-      maxLines: 2,
-    })
-  }
-
-  if (moment.mood) {
-    y += 22
-    y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 34px Inter, sans-serif',
-      color: COLOR.text,
-      background: '#F6EFE6',
-      paddingX: 26,
-      height: 68,
-      minWidth: 152,
-    })
-  }
-
-  if (moment.location) {
     y += 26
-    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
+    ctx.fillStyle = COLOR.mid
+    ctx.font = '500 38px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth - 20, 3)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 58)
+  }
+
+  const hasMeta = Boolean(moment.song_title || peopleNames.length || moment.mood || moment.location)
+
+  if (hasMeta) {
+    const peopleValue = peopleNames.join(', ')
+    const peopleHeight = peopleNames.length
+      ? getWrappedTextMetrics(ctx, peopleValue, '500 33px Inter, sans-serif', contentWidth - 108, 2, 42).height + 28
+      : 0
+    const locationHeight = moment.location
+      ? getWrappedTextMetrics(ctx, moment.location, '500 33px Inter, sans-serif', contentWidth - 108, 2, 42).height + 28
+      : 0
+    const panelHeight = 76
+      + (moment.song_title ? 154 : 0)
+      + (peopleNames.length ? peopleHeight + 18 : 0)
+      + (moment.mood ? 88 : 0)
+      + (moment.location ? locationHeight + 18 : 0)
+
+    y += 40
+    const panelX = 86
+    const panelWidth = 908
+    drawElevatedPanel(ctx, {
+      x: panelX,
+      y,
+      width: panelWidth,
+      height: panelHeight,
+      radius: 42,
+      fill: 'rgba(255,250,245,0.88)',
+      border: 'rgba(160,94,44,0.08)',
+      shadowColor: 'rgba(80,50,30,0.12)',
+      shadowBlur: 36,
+      shadowOffsetY: 18,
+    })
+
+    let metaY = y + 36
+    const metaX = panelX + 34
+    const metaWidth = panelWidth - 68
+
+    if (moment.song_title) {
+      metaY += await drawSongChip(ctx, metaX, metaY, metaWidth, moment, {
+        dark: false,
+        height: 146,
+        radius: 30,
+        songBg: 'rgba(243,236,227,0.92)',
+        songBorder: 'rgba(160,94,44,0.08)',
+        songIconBg: COLOR.accentLight,
+        songIconStroke: COLOR.accent,
+        songTitle: COLOR.text,
+        songSubtitle: COLOR.mid,
+        shadowColor: 'rgba(160,94,44,0.08)',
+        eyebrow: 'Саундтрек',
+        eyebrowColor: COLOR.accentStrong,
+      })
+      metaY += 24
+    }
+
+    if (peopleNames.length > 0) {
+      metaY = drawMetaItem(ctx, {
+        label: 'С кем',
+        value: peopleValue,
+        x: metaX,
+        y: metaY,
+        maxWidth: metaWidth,
+        labelColor: COLOR.soft,
+        valueColor: COLOR.text,
+        valueFont: '500 33px Inter, sans-serif',
+        valueLineHeight: 42,
+      })
+      metaY += 20
+    }
+
+    if (moment.mood) {
+      metaY += drawMoodChip(ctx, metaX, metaY, moment.mood, {
+        font: '600 30px Inter, sans-serif',
+        color: COLOR.text,
+        background: '#F6EFE6',
+        border: 'rgba(160,94,44,0.08)',
+        paddingX: 24,
+        height: 64,
+        minWidth: 148,
+      })
+      metaY += 20
+    }
+
+    if (moment.location) {
+      drawHairline(ctx, metaX, metaY, metaWidth, 'rgba(160,94,44,0.08)')
+      metaY += 22
+      metaY = drawMetaItem(ctx, {
+        label: 'Место',
+        value: moment.location,
+        x: metaX,
+        y: metaY,
+        maxWidth: metaWidth,
+        labelColor: COLOR.soft,
+        valueColor: COLOR.text,
+        valueFont: '500 33px Inter, sans-serif',
+        valueLineHeight: 42,
+      })
+    }
   }
 }
 
@@ -496,80 +761,165 @@ async function drawMinimal(canvas, moment) {
   canvas.height = height
   const ctx = canvas.getContext('2d')
   const peopleNames = getMomentPeopleNames(moment)
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
 
   drawBackground(ctx, 'minimal', width, height)
 
-  const photoX = 72
-  const photoY = 164
-  const photoWidth = 936
-  const photoHeight = 826
-  const dateText = formatStoryDate(getMomentDisplayAt(moment))
-
-  drawCanvasHeader(ctx, {
-    logoX: 72,
-    logoY: 76,
-    dateX: 1008,
-    dateY: 88,
-    dateText,
+  drawElevatedPanel(ctx, {
+    x: 34,
+    y: 34,
+    width: 1012,
+    height: 1852,
+    radius: 58,
+    fill: 'rgba(255,255,255,0.68)',
+    border: 'rgba(160,94,44,0.08)',
+    shadowColor: 'rgba(80,50,30,0.12)',
+    shadowBlur: 44,
+    shadowOffsetY: 24,
   })
 
-  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 46)
+  ctx.textBaseline = 'top'
+  ctx.fillStyle = COLOR.text
+  ctx.font = '600 48px "Cormorant Garamond", Georgia, serif'
+  ctx.fillText('memi', 90, 88)
 
-  const contentX = 72
-  const contentWidth = width - contentX * 2
-  let y = photoY + photoHeight + 96
+  drawTopBadge(ctx, dateText, 986, 82, {
+    badgeBg: 'rgba(247,240,231,0.92)',
+    badgeText: COLOR.mid,
+    border: 'rgba(160,94,44,0.08)',
+    height: 48,
+    paddingX: 20,
+  })
+
+  const photoX = 78
+  const photoY = 164
+  const photoWidth = 924
+  const photoHeight = 780
+
+  drawElevatedPanel(ctx, {
+    x: photoX - 6,
+    y: photoY - 6,
+    width: photoWidth + 12,
+    height: photoHeight + 12,
+    radius: 44,
+    fill: 'rgba(255,255,255,0.55)',
+    border: 'rgba(160,94,44,0.08)',
+    shadowColor: 'rgba(80,50,30,0.1)',
+    shadowBlur: 28,
+    shadowOffsetY: 18,
+  })
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 40)
+
+  const contentX = 110
+  const contentWidth = 860
+  let y = 1016
+
+  y = drawSectionEyebrow(ctx, 'История', contentX, y, {
+    color: COLOR.mid,
+    lineColor: COLOR.accent,
+  })
 
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 76px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
+  y = drawTextBlock(ctx, titleLines, contentX, y + 20, 80)
 
   if (moment.description) {
     y += 28
     ctx.fillStyle = COLOR.mid
-    ctx.font = '500 40px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
+    ctx.font = '500 38px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 3)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 58)
   }
 
+  y += 30
+  drawHairline(ctx, contentX, y, contentWidth, COLOR.line)
+  y += 26
+
   if (moment.song_title) {
-    y += 34
-    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
+    y += await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: false,
-      songBg: '#F7ECDC',
+      height: 140,
+      radius: 30,
+      songBg: '#F8F0E5',
+      songBorder: 'rgba(160,94,44,0.08)',
       songIconBg: COLOR.accent,
       songIconStroke: '#FFFFFF',
       songTitle: COLOR.text,
       songSubtitle: COLOR.mid,
+      eyebrow: 'Саундтрек',
+      eyebrowColor: COLOR.accentStrong,
     })
-    y += songHeight
+    y += 28
   }
 
-  if (peopleNames.length > 0) {
-    y += 22
-    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
-      color: COLOR.mid,
-      font: '500 35px Inter, sans-serif',
-      lineHeight: 45,
-      maxLines: 2,
+  const columnGap = 32
+  const columnWidth = (contentWidth - columnGap) / 2
+
+  if (peopleNames.length > 0 && moment.location) {
+    const leftBottom = drawMetaItem(ctx, {
+      label: 'С кем',
+      value: peopleNames.join(', '),
+      x: contentX,
+      y,
+      maxWidth: columnWidth,
+      labelColor: COLOR.soft,
+      valueColor: COLOR.text,
+      valueFont: '500 31px Inter, sans-serif',
+      valueLineHeight: 40,
+      maxLines: 3,
     })
+    const rightBottom = drawMetaItem(ctx, {
+      label: 'Место',
+      value: moment.location,
+      x: contentX + columnWidth + columnGap,
+      y,
+      maxWidth: columnWidth,
+      labelColor: COLOR.soft,
+      valueColor: COLOR.text,
+      valueFont: '500 31px Inter, sans-serif',
+      valueLineHeight: 40,
+      maxLines: 3,
+    })
+    y = Math.max(leftBottom, rightBottom) + 22
+  } else if (peopleNames.length > 0) {
+    y = drawMetaItem(ctx, {
+      label: 'С кем',
+      value: peopleNames.join(', '),
+      x: contentX,
+      y,
+      maxWidth: contentWidth,
+      labelColor: COLOR.soft,
+      valueColor: COLOR.text,
+      valueFont: '500 32px Inter, sans-serif',
+      valueLineHeight: 40,
+      maxLines: 3,
+    }) + 22
+  } else if (moment.location) {
+    y = drawMetaItem(ctx, {
+      label: 'Место',
+      value: moment.location,
+      x: contentX,
+      y,
+      maxWidth: contentWidth,
+      labelColor: COLOR.soft,
+      valueColor: COLOR.text,
+      valueFont: '500 32px Inter, sans-serif',
+      valueLineHeight: 40,
+      maxLines: 3,
+    }) + 22
   }
 
   if (moment.mood) {
-    y += 22
-    y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 34px Inter, sans-serif',
+    drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 30px Inter, sans-serif',
       color: COLOR.text,
       background: '#F5EBDD',
-      paddingX: 26,
-      height: 68,
-      minWidth: 152,
+      border: 'rgba(160,94,44,0.08)',
+      paddingX: 24,
+      height: 64,
+      minWidth: 146,
     })
-  }
-
-  if (moment.location) {
-    y += 26
-    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, COLOR.mid)
   }
 }
 
@@ -580,90 +930,148 @@ async function drawDark(canvas, moment) {
   canvas.height = height
   const ctx = canvas.getContext('2d')
   const peopleNames = getMomentPeopleNames(moment)
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
 
   drawBackground(ctx, 'dark', width, height)
 
-  const dateText = formatStoryDate(getMomentDisplayAt(moment))
-  const photoHeight = 842
-  await drawPhoto(ctx, moment, 0, 0, width, photoHeight, 0, true)
+  const photoX = 24
+  const photoY = 24
+  const photoWidth = 1032
+  const photoHeight = 944
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 58, true)
 
-  const photoFade = ctx.createLinearGradient(0, 560, 0, 1040)
+  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 58)
+  const photoFade = ctx.createLinearGradient(0, photoY + 420, 0, photoY + photoHeight)
   photoFade.addColorStop(0, 'rgba(23,20,14,0)')
-  photoFade.addColorStop(0.62, 'rgba(23,20,14,0.68)')
-  photoFade.addColorStop(1, 'rgba(23,20,14,1)')
+  photoFade.addColorStop(0.74, 'rgba(23,20,14,0.54)')
+  photoFade.addColorStop(1, 'rgba(23,20,14,0.9)')
   ctx.fillStyle = photoFade
-  ctx.fillRect(0, 0, width, 1100)
+  ctx.fillRect(photoX, photoY, photoWidth, photoHeight)
+  ctx.restore()
 
-  const topShade = ctx.createLinearGradient(0, 0, 0, 220)
-  topShade.addColorStop(0, 'rgba(23,20,14,0.5)')
+  const topShade = ctx.createLinearGradient(0, 0, 0, 240)
+  topShade.addColorStop(0, 'rgba(23,20,14,0.54)')
   topShade.addColorStop(1, 'rgba(23,20,14,0)')
   ctx.fillStyle = topShade
-  ctx.fillRect(0, 0, width, 220)
+  ctx.fillRect(0, 0, width, 240)
 
   drawCanvasHeader(ctx, {
-    logoX: 84,
-    logoY: 82,
-    dateX: 996,
-    dateY: 94,
+    logoX: 86,
+    logoY: 84,
+    dateX: 994,
+    dateY: 96,
     dateText,
     dark: true,
   })
 
-  const contentX = 84
-  const contentWidth = width - contentX * 2
-  let y = photoHeight + 108
+  drawSoftGlow(ctx, 864, 876, 240, 'rgba(217,139,82,0.14)', 1)
+  const panelX = 36
+  const panelY = 760
+  const panelWidth = 1008
+  const panelHeight = 1080
+
+  drawElevatedPanel(ctx, {
+    x: panelX,
+    y: panelY,
+    width: panelWidth,
+    height: panelHeight,
+    radius: 52,
+    fill: 'rgba(28,21,16,0.88)',
+    border: 'rgba(255,244,230,0.08)',
+    shadowColor: 'rgba(0,0,0,0.34)',
+    shadowBlur: 48,
+    shadowOffsetY: 24,
+  })
+
+  const contentX = panelX + 48
+  const contentWidth = panelWidth - 96
+  let y = panelY + 58
+
+  y = drawSectionEyebrow(ctx, 'Момент', contentX, y, {
+    color: COLOR.accent,
+    lineColor: COLOR.accent,
+  })
 
   ctx.fillStyle = '#FFF4E6'
-  ctx.font = '700 86px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 82px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 84)
+  y = drawTextBlock(ctx, titleLines, contentX, y + 22, 84)
 
   if (moment.description) {
-    y += 28
-    ctx.fillStyle = 'rgba(245, 235, 221, 0.7)'
-    ctx.font = '500 40px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
+    y += 30
+    ctx.fillStyle = COLOR.darkTextSoft
+    ctx.font = '500 38px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 3)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 58)
   }
 
+  y += 30
+
   if (moment.song_title) {
-    y += 34
-    const songHeight = await drawSongChip(ctx, contentX, y, contentWidth, moment, {
+    y += await drawSongChip(ctx, contentX, y, contentWidth, moment, {
       dark: true,
-      songBg: COLOR.darkCardAlt,
+      height: 148,
+      radius: 32,
+      songBg: 'rgba(52,39,30,0.92)',
+      songBorder: 'rgba(255,244,230,0.08)',
       songIconBg: 'rgba(217,139,82,0.16)',
       songIconStroke: COLOR.accent,
       songTitle: '#FFF4E6',
-      songSubtitle: 'rgba(245, 235, 221, 0.62)',
+      songSubtitle: 'rgba(245,235,221,0.62)',
+      eyebrow: 'Саундтрек',
+      eyebrowColor: 'rgba(217,139,82,0.92)',
+      shadowColor: 'rgba(0,0,0,0.2)',
     })
-    y += songHeight
+    y += 28
   }
 
+  drawHairline(ctx, contentX, y, contentWidth, COLOR.darkLine)
+  y += 24
+
   if (peopleNames.length > 0) {
-    y += 24
-    y = drawPeopleBlock(ctx, contentX, y, contentWidth, peopleNames, {
-      color: 'rgba(245, 235, 221, 0.68)',
-      font: '500 35px Inter, sans-serif',
-      lineHeight: 45,
+    y = drawMetaItem(ctx, {
+      label: 'С кем',
+      value: peopleNames.join(', '),
+      x: contentX,
+      y,
+      maxWidth: contentWidth,
+      labelColor: 'rgba(245,235,221,0.4)',
+      valueColor: '#FFF4E6',
+      valueFont: '500 33px Inter, sans-serif',
+      valueLineHeight: 42,
       maxLines: 2,
     })
+    y += 22
   }
 
   if (moment.mood) {
-    y += 22
     y += drawMoodChip(ctx, contentX, y, moment.mood, {
-      font: '600 34px Inter, sans-serif',
+      font: '600 30px Inter, sans-serif',
       color: '#FFF4E6',
-      background: 'rgba(255, 244, 230, 0.1)',
-      paddingX: 26,
-      height: 68,
-      minWidth: 152,
+      background: 'rgba(255,244,230,0.08)',
+      border: 'rgba(255,244,230,0.1)',
+      paddingX: 24,
+      height: 64,
+      minWidth: 150,
     })
+    y += 22
   }
 
   if (moment.location) {
-    y += 28
-    drawLocationRow(ctx, contentX, y, contentWidth, moment.location, 'rgba(245, 235, 221, 0.65)')
+    drawHairline(ctx, contentX, y, contentWidth, COLOR.darkLine)
+    y += 22
+    drawMetaItem(ctx, {
+      label: 'Место',
+      value: moment.location,
+      x: contentX,
+      y,
+      maxWidth: contentWidth,
+      labelColor: 'rgba(245,235,221,0.4)',
+      valueColor: '#FFF4E6',
+      valueFont: '500 33px Inter, sans-serif',
+      valueLineHeight: 42,
+      maxLines: 2,
+    })
   }
 }
 
@@ -676,10 +1084,11 @@ async function drawCard(canvas, moment, template) {
 function TemplateToggle({ activeTemplate, onChange, dark }) {
   return (
     <div
-      className="grid grid-cols-3 gap-2 rounded-[22px] p-1"
+      className="grid grid-cols-3 gap-2 rounded-[24px] p-[6px]"
       style={{
-        backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'var(--surface)',
+        backgroundColor: dark ? 'rgba(255,244,231,0.05)' : 'rgba(255,255,255,0.72)',
         border: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(160,94,44,0.08)',
+        boxShadow: dark ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'inset 0 1px 0 rgba(255,255,255,0.72)',
       }}
     >
       {TEMPLATES.map((template) => {
@@ -694,11 +1103,17 @@ function TemplateToggle({ activeTemplate, onChange, dark }) {
             style={{
               border: 'none',
               borderRadius: 18,
-              backgroundColor: active ? 'var(--accent)' : 'transparent',
+              background: active
+                ? 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)'
+                : 'transparent',
               color: active ? '#fff' : (dark ? 'rgba(255,244,231,0.72)' : 'var(--mid)'),
               minHeight: 44,
               fontSize: 15,
               fontWeight: active ? 700 : 600,
+              boxShadow: active
+                ? (dark ? '0 10px 18px rgba(0,0,0,0.24)' : '0 10px 18px rgba(217,139,82,0.22)')
+                : 'none',
+              transform: active ? 'translateY(-1px)' : 'none',
             }}
           >
             {template.label}
@@ -753,6 +1168,7 @@ export default function StoryPreview() {
   const [sendError, setSendError] = useState(null)
 
   const dark = template === 'dark'
+  const activeTemplate = TEMPLATES.find((item) => item.id === template) ?? TEMPLATES[0]
 
   useEffect(() => {
     let cancelled = false
@@ -962,31 +1378,47 @@ export default function StoryPreview() {
 
       <div className="hide-scrollbar flex-1 overflow-y-auto">
         <div className="px-4 pt-6 pb-6">
-          <div className="mx-auto w-full" style={{ maxWidth: 'min(356px, calc((100vh - 300px) * 9 / 16))' }}>
+          <div className="mx-auto w-full" style={{ maxWidth: 'min(364px, calc((100vh - 300px) * 9 / 16))' }}>
             <div
-              className="relative rounded-[32px] p-2"
+              className="relative overflow-hidden rounded-[34px] p-[10px]"
               style={{
-                backgroundColor: dark ? 'rgba(255,244,231,0.04)' : 'rgba(255,255,255,0.56)',
+                background: dark
+                  ? 'linear-gradient(180deg, rgba(255,244,231,0.08) 0%, rgba(255,244,231,0.03) 100%)'
+                  : 'linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(247,240,232,0.68) 100%)',
                 border: dark ? '1px solid rgba(255,244,231,0.08)' : '1px solid rgba(160,94,44,0.08)',
-                boxShadow: dark ? '0 24px 48px rgba(0,0,0,0.26)' : '0 20px 44px rgba(80,50,30,0.12)',
+                boxShadow: dark ? '0 28px 56px rgba(0,0,0,0.28)' : '0 24px 52px rgba(80,50,30,0.14)',
                 backdropFilter: 'blur(18px)',
                 WebkitBackdropFilter: 'blur(18px)',
               }}
             >
+              <div
+                className="pointer-events-none absolute inset-x-10 top-0 h-16 rounded-full"
+                style={{
+                  background: dark ? 'rgba(217,139,82,0.08)' : 'rgba(255,255,255,0.74)',
+                  filter: 'blur(18px)',
+                }}
+              />
+
+              <div
+                className="relative overflow-hidden rounded-[28px]"
+                style={{
+                  border: dark ? '1px solid rgba(255,244,231,0.08)' : '1px solid rgba(160,94,44,0.08)',
+                }}
+              >
               <canvas
                 ref={canvasRef}
                 style={{
                   width: '100%',
                   aspectRatio: '9 / 16',
                   display: 'block',
-                  borderRadius: 26,
+                  borderRadius: 28,
                   backgroundColor: dark ? '#1F1712' : '#FBF7F0',
                 }}
               />
 
               {rendering && (
                 <div
-                  className="absolute inset-2 flex items-center justify-center rounded-[26px]"
+                  className="absolute inset-0 flex items-center justify-center rounded-[28px]"
                   style={{ backgroundColor: dark ? 'rgba(23,20,14,0.48)' : 'rgba(247,244,240,0.56)' }}
                 >
                   <span
@@ -1003,12 +1435,13 @@ export default function StoryPreview() {
               )}
 
               {error && (
-                <div className="absolute inset-2 flex items-center justify-center rounded-[26px]">
+                <div className="absolute inset-0 flex items-center justify-center rounded-[28px]">
                   <span className="font-sans" style={{ color: '#D94040', fontSize: 13, fontWeight: 600 }}>
                     {error}
                   </span>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </div>
@@ -1026,6 +1459,21 @@ export default function StoryPreview() {
       >
         <div className="mx-auto w-full max-w-[356px]">
           <TemplateToggle activeTemplate={template} onChange={handleTemplateChange} dark={dark} />
+
+          <p
+            className="font-sans text-center"
+            style={{
+              marginTop: 12,
+              marginBottom: 0,
+              color: dark ? 'rgba(245,235,221,0.68)' : 'var(--mid)',
+              fontSize: 13,
+              fontWeight: 500,
+              lineHeight: 1.45,
+              minHeight: 38,
+            }}
+          >
+            {activeTemplate.hint}
+          </p>
 
           {sendError && (
             <p
