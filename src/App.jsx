@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { Suspense, lazy, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import {
   saveUser,
@@ -21,16 +21,21 @@ import Home from './pages/Home'
 import Archive from './pages/Archive'
 import Profile from './pages/Profile'
 import People from './pages/People'
-import PersonDetail from './pages/PersonDetail'
-import MomentDetail from './pages/MomentDetail'
 import MomentSaved from './pages/MomentSaved'
-import StoryPreview from './pages/StoryPreview'
-import StoryPreviewScreen from './pages/StoryPreviewScreen'
-import EditMoment from './pages/EditMoment'
 import PublicProfile from './pages/PublicProfile'
 import { trackEvent } from './lib/analytics'
 
 let hasTrackedAppOpened = false
+
+const PersonDetail = lazy(() => import('./pages/PersonDetail'))
+const MomentDetail = lazy(() => import('./pages/MomentDetail'))
+const StoryPreview = lazy(() => import('./pages/StoryPreview'))
+const StoryPreviewScreen = lazy(() => import('./pages/StoryPreviewScreen'))
+const EditMoment = lazy(() => import('./pages/EditMoment'))
+
+function RouteFallback() {
+  return <div className="h-full w-full" style={{ backgroundColor: 'var(--base)' }} />
+}
 
 export default function App() {
   const navigate = useNavigate()
@@ -206,22 +211,24 @@ export default function App() {
 
   return (
     <React.Fragment>
-      <Routes>
-        <Route path="/" element={<Splash />} />
-        <Route path="/onboarding" element={<Onboarding />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/archive" element={<Archive />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/people" element={<People />} />
-        <Route path="/people/:id" element={<PersonDetail />} />
-        <Route path="/moment/:id" element={<MomentDetail />} />
-        <Route path="/moment-saved" element={<MomentSaved />} />
-        <Route path="/story/:id" element={<StoryPreview />} />
-        <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
-        <Route path="/edit-moment/:id" element={<EditMoment />} />
-        <Route path="/profile/:userId" element={<PublicProfile />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Splash />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/archive" element={<Archive />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/people" element={<People />} />
+          <Route path="/people/:id" element={<PersonDetail />} />
+          <Route path="/moment/:id" element={<MomentDetail />} />
+          <Route path="/moment-saved" element={<MomentSaved />} />
+          <Route path="/story/:id" element={<StoryPreview />} />
+          <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
+          <Route path="/edit-moment/:id" element={<EditMoment />} />
+          <Route path="/profile/:userId" element={<PublicProfile />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </React.Fragment>
   )
 }
