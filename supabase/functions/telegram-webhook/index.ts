@@ -13,6 +13,14 @@ const WELCOME_TEXT = [
   'Создай свою капсулу воспоминаний.',
 ].join('\n')
 
+const TUTORIAL_IMAGE_FILES = [
+  'tutorial-home.png',
+  'tutorial-add-basic.png',
+  'tutorial-add-social.png',
+  'tutorial-people.png',
+  'tutorial-profile.png',
+]
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -41,6 +49,39 @@ async function sendWelcomeMessage(chatId: number | string) {
   }
 }
 
+async function sendTutorialImage(chatId: number | string, fileName: string) {
+  let bytes: Uint8Array
+
+  try {
+    bytes = await Deno.readFile(new URL(`./assets/${fileName}`, import.meta.url))
+  } catch (error) {
+    console.warn(`[telegram-webhook] tutorial asset missing: ${fileName}`, error)
+    return
+  }
+
+  const formData = new FormData()
+  formData.append('chat_id', String(chatId))
+  formData.append('photo', new Blob([bytes], { type: 'image/png' }), fileName)
+  formData.append('disable_notification', 'true')
+
+  const tgRes = await fetch(`${TG_API}/sendPhoto`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  const tgJson = await tgRes.json().catch(() => null)
+
+  if (!tgRes.ok || !tgJson?.ok) {
+    throw new Error(tgJson?.description ?? `Telegram sendPhoto failed for ${fileName}`)
+  }
+}
+
+async function sendTutorial(chatId: number | string) {
+  for (const fileName of TUTORIAL_IMAGE_FILES) {
+    await sendTutorialImage(chatId, fileName)
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok')
 
@@ -63,6 +104,7 @@ serve(async (req: Request) => {
     }
 
     await sendWelcomeMessage(chatId)
+    await sendTutorial(chatId)
 
     return json({ ok: true })
   } catch (error) {

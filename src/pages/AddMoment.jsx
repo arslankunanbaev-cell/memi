@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { tgHaptic } from '../lib/telegram'
 import { proxifyCoverUrl } from '../lib/imageProxy'
@@ -132,7 +132,21 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
+export default function AddMoment({
+  onClose,
+  afterSave,
+  initialPeopleIds,
+  initialTitle = '',
+  initialBody = '',
+  initialMood = '',
+  initialLocation = '',
+  initialMomentDate,
+  initialSong = null,
+  initialPhotoPreview = null,
+  initialVisibility = 'friends',
+  initialTaggedFriendIds = [],
+  initialScrollTop = null,
+}) {
   const navigate = useNavigate()
   const currentUser  = useAppStore((s) => s.currentUser)
   const people       = useAppStore((s) => s.people)
@@ -140,29 +154,41 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
   const addMoment    = useAppStore((s) => s.addMoment)
   const addPerson    = useAppStore((s) => s.addPerson)
   const addRecentLocation = useAppStore((s) => s.addRecentLocation)
+  const scrollRef = useRef(null)
 
-  const [title, setTitle]       = useState('')
-  const [body, setBody]         = useState('')
-  const [mood, setMood]         = useState('')
-  const [location, setLocation] = useState('')
+  const [title, setTitle]       = useState(initialTitle)
+  const [body, setBody]         = useState(initialBody)
+  const [mood, setMood]         = useState(initialMood)
+  const [location, setLocation] = useState(initialLocation)
   const [selectedPeople, setSelectedPeople] = useState(initialPeopleIds ?? [])
-  const [momentDate, setMomentDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [momentDate, setMomentDate] = useState(() => initialMomentDate ?? new Date().toISOString().slice(0, 10))
 
-  const [song, setSong]           = useState(null)
+  const [song, setSong]           = useState(initialSong)
   const [showSongSheet, setShowSongSheet] = useState(false)
 
   const photoRef = useRef(null)
   const [photoFile, setPhotoFile]     = useState(null)
-  const [photoPreview, setPhotoPreview] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(initialPhotoPreview)
 
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
   const songCover = proxifyCoverUrl(song?.cover ?? null)
 
-  const [visibility, setVisibility] = useState('friends')
-  const [taggedFriends, setTaggedFriends] = useState([])
+  const [visibility, setVisibility] = useState(initialVisibility)
+  const [taggedFriends, setTaggedFriends] = useState(initialTaggedFriendIds)
   const [showAddPerson, setShowAddPerson] = useState(false)
   const outerSectionLabelClassName = 'mb-3'
+
+  useEffect(() => {
+    if (typeof initialScrollTop !== 'number' || !scrollRef.current) return
+
+    const node = scrollRef.current
+    const frame = requestAnimationFrame(() => {
+      node.scrollTop = initialScrollTop
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [initialScrollTop])
 
   function handlePersonCreated(person) {
     addPerson(person)
@@ -283,7 +309,7 @@ export default function AddMoment({ onClose, afterSave, initialPeopleIds }) {
         </button>
       </div>
 
-      <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10">
+      <div ref={scrollRef} className="hide-scrollbar flex-1 overflow-y-auto px-4 pt-6 pb-10">
         <div className="flex flex-col gap-7">
           {error && (
             <p className="font-sans type-meta text-center" style={{ color: '#E05252' }}>{error}</p>
