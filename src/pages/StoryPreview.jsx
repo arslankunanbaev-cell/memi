@@ -440,7 +440,7 @@ function drawMetaItem(ctx, {
 }
 
 function drawMoodChip(ctx, x, y, mood, theme) {
-  const paddingX = theme.paddingX ?? 20
+  const paddingX = theme.paddingX ?? 18
   const height = theme.height ?? 58
 
   ctx.font = theme.font
@@ -461,9 +461,12 @@ function drawMoodChip(ctx, x, y, mood, theme) {
     strokeRoundRect(ctx, x, y, width, height, height / 2, theme.border, theme.borderWidth ?? 1)
   }
 
+  ctx.save()
   ctx.fillStyle = theme.color
+  ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(mood, x + paddingX, y + height / 2)
+  ctx.fillText(mood, x + width / 2, y + height / 2 + (theme.textOffsetY ?? 0))
+  ctx.restore()
 
   return height
 }
@@ -551,10 +554,7 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
   ctx.fillRect(-width / 2, -height / 2, width, height)
   ctx.restore()
 
-  const frameGradient = ctx.createLinearGradient(0, -height / 2, 0, height / 2)
-  frameGradient.addColorStop(0, 'rgba(255,255,255,0.95)')
-  frameGradient.addColorStop(1, 'rgba(247,240,232,0.92)')
-  ctx.fillStyle = frameGradient
+  ctx.fillStyle = '#FFFFFF'
   ctx.fillRect(-width / 2, -height / 2, width, height)
   ctx.strokeStyle = 'rgba(23,20,14,0.06)'
   ctx.lineWidth = 2
@@ -569,8 +569,6 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
     photoHeight,
     0,
   )
-
-  fillRoundRect(ctx, -width / 2 + 30, height / 2 - 64, 132, 6, 3, 'rgba(160,94,44,0.14)')
   ctx.restore()
 }
 
@@ -634,24 +632,19 @@ async function drawPolaroid(canvas, moment) {
 
   const contentX = 102
   const contentWidth = width - contentX * 2
-  let y = 1086
-
-  y = drawSectionEyebrow(ctx, 'Личная заметка', contentX, y, {
-    color: COLOR.accentStrong,
-    lineColor: COLOR.accent,
-  })
+  let y = 1054
 
   ctx.fillStyle = COLOR.text
   ctx.font = '700 78px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth - 40, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y + 20, 82)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 78)
 
   if (moment.description) {
-    y += 26
+    y += 22
     ctx.fillStyle = COLOR.mid
-    ctx.font = '500 38px Inter, sans-serif'
-    const descriptionLines = wrapText(ctx, moment.description, contentWidth - 20, 3)
-    y = drawTextBlock(ctx, descriptionLines, contentX, y, 58)
+    ctx.font = '500 36px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth - 20, 2)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
   }
 
   const hasMeta = Boolean(moment.song_title || peopleNames.length || moment.mood || moment.location)
@@ -664,18 +657,19 @@ async function drawPolaroid(canvas, moment) {
     const locationHeight = moment.location
       ? getWrappedTextMetrics(ctx, moment.location, '500 33px Inter, sans-serif', contentWidth - 108, 2, 42).height + 28
       : 0
-    const panelHeight = 76
+    const panelHeight = 100
       + (moment.song_title ? 154 : 0)
       + (peopleNames.length ? peopleHeight + 18 : 0)
-      + (moment.mood ? 88 : 0)
+      + (moment.mood ? 76 : 0)
       + (moment.location ? locationHeight + 18 : 0)
 
-    y += 40
     const panelX = 86
     const panelWidth = 908
+    const panelY = height - 24 - panelHeight
+
     drawElevatedPanel(ctx, {
       x: panelX,
-      y,
+      y: panelY,
       width: panelWidth,
       height: panelHeight,
       radius: 42,
@@ -686,7 +680,7 @@ async function drawPolaroid(canvas, moment) {
       shadowOffsetY: 18,
     })
 
-    let metaY = y + 36
+    let metaY = panelY + 36
     const metaX = panelX + 34
     const metaWidth = panelWidth - 68
 
@@ -702,8 +696,6 @@ async function drawPolaroid(canvas, moment) {
         songTitle: COLOR.text,
         songSubtitle: COLOR.mid,
         shadowColor: 'rgba(160,94,44,0.08)',
-        eyebrow: 'Саундтрек',
-        eyebrowColor: COLOR.accentStrong,
       })
       metaY += 24
     }
@@ -729,9 +721,9 @@ async function drawPolaroid(canvas, moment) {
         color: COLOR.text,
         background: '#F6EFE6',
         border: 'rgba(160,94,44,0.08)',
-        paddingX: 24,
-        height: 64,
-        minWidth: 148,
+        paddingX: 16,
+        height: 56,
+        minWidth: 92,
       })
       metaY += 20
     }
@@ -847,8 +839,6 @@ async function drawMinimal(canvas, moment) {
       songIconStroke: '#FFFFFF',
       songTitle: COLOR.text,
       songSubtitle: COLOR.mid,
-      eyebrow: 'Саундтрек',
-      eyebrowColor: COLOR.accentStrong,
     })
     y += 28
   }
@@ -916,9 +906,9 @@ async function drawMinimal(canvas, moment) {
       color: COLOR.text,
       background: '#F5EBDD',
       border: 'rgba(160,94,44,0.08)',
-      paddingX: 24,
-      height: 64,
-      minWidth: 146,
+      paddingX: 16,
+      height: 56,
+      minWidth: 92,
     })
   }
 }
@@ -1018,8 +1008,6 @@ async function drawDark(canvas, moment) {
       songIconStroke: COLOR.accent,
       songTitle: '#FFF4E6',
       songSubtitle: 'rgba(245,235,221,0.62)',
-      eyebrow: 'Саундтрек',
-      eyebrowColor: 'rgba(217,139,82,0.92)',
       shadowColor: 'rgba(0,0,0,0.2)',
     })
     y += 28
@@ -1050,9 +1038,9 @@ async function drawDark(canvas, moment) {
       color: '#FFF4E6',
       background: 'rgba(255,244,230,0.08)',
       border: 'rgba(255,244,230,0.1)',
-      paddingX: 24,
-      height: 64,
-      minWidth: 150,
+      paddingX: 16,
+      height: 56,
+      minWidth: 92,
     })
     y += 22
   }
