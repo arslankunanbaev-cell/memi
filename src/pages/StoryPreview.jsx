@@ -635,9 +635,9 @@ async function drawPolaroid(canvas, moment) {
   let y = 1054
 
   ctx.fillStyle = COLOR.text
-  ctx.font = '700 78px "Cormorant Garamond", Georgia, serif'
+  ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth - 40, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 78)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 74)
 
   if (moment.description) {
     y += 22
@@ -650,6 +650,9 @@ async function drawPolaroid(canvas, moment) {
   const hasMeta = Boolean(moment.song_title || peopleNames.length || moment.mood || moment.location)
 
   if (hasMeta) {
+    const panelTopPadding = 36
+    const panelBottomPadding = 24
+    const panelBottomInset = 24
     const peopleValue = peopleNames.join(', ')
     const peopleHeight = peopleNames.length
       ? getWrappedTextMetrics(ctx, peopleValue, '500 33px Inter, sans-serif', contentWidth - 108, 2, 42).height + 28
@@ -657,15 +660,20 @@ async function drawPolaroid(canvas, moment) {
     const locationHeight = moment.location
       ? getWrappedTextMetrics(ctx, moment.location, '500 33px Inter, sans-serif', contentWidth - 108, 2, 42).height + 28
       : 0
-    const panelHeight = 100
-      + (moment.song_title ? 154 : 0)
-      + (peopleNames.length ? peopleHeight + 18 : 0)
-      + (moment.mood ? 76 : 0)
-      + (moment.location ? locationHeight + 18 : 0)
+    const songBlockHeight = moment.song_title ? 170 : 0
+    const peopleBlockHeight = peopleNames.length ? peopleHeight + 20 : 0
+    const moodBlockHeight = moment.mood ? 76 : 0
+    const locationBlockHeight = moment.location ? locationHeight + 22 : 0
+    const panelHeight = panelTopPadding
+      + panelBottomPadding
+      + songBlockHeight
+      + peopleBlockHeight
+      + moodBlockHeight
+      + locationBlockHeight
 
     const panelX = 86
     const panelWidth = 908
-    const panelY = height - 24 - panelHeight
+    const panelY = Math.max(y + 36, height - panelBottomInset - panelHeight)
 
     drawElevatedPanel(ctx, {
       x: panelX,
@@ -680,7 +688,7 @@ async function drawPolaroid(canvas, moment) {
       shadowOffsetY: 18,
     })
 
-    let metaY = panelY + 36
+    let metaY = panelY + panelTopPadding
     const metaX = panelX + 34
     const metaWidth = panelWidth - 68
 
