@@ -569,6 +569,28 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
     photoHeight,
     0,
   )
+
+  const frameTitle = moment.title || 'Момент'
+  const titleWidth = width - 124
+  const titleLineHeight = 46
+  const titleAreaY = height / 2 - photoBottomPad + 22
+  const titleAreaHeight = photoBottomPad - 34
+
+  ctx.save()
+  ctx.fillStyle = 'rgba(23,20,14,0.92)'
+  ctx.font = '600 52px "Cormorant Garamond", Georgia, serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+
+  const titleLines = wrapText(ctx, frameTitle, titleWidth, 2)
+  let titleY = titleAreaY + Math.max(0, (titleAreaHeight - titleLines.length * titleLineHeight) / 2) - 4
+
+  for (const line of titleLines) {
+    ctx.fillText(line, 0, titleY)
+    titleY += titleLineHeight
+  }
+
+  ctx.restore()
   ctx.restore()
 }
 
@@ -632,15 +654,9 @@ async function drawPolaroid(canvas, moment) {
 
   const contentX = 102
   const contentWidth = width - contentX * 2
-  let y = 1054
-
-  ctx.fillStyle = COLOR.text
-  ctx.font = '700 74px "Cormorant Garamond", Georgia, serif'
-  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth - 40, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 74)
+  let y = 1064
 
   if (moment.description) {
-    y += 22
     ctx.fillStyle = COLOR.mid
     ctx.font = '500 36px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth - 20, 2)
