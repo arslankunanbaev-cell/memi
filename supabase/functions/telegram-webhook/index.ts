@@ -173,6 +173,28 @@ serve(async (req: Request) => {
     return json({ ok: true, info: 'telegram-webhook expects Telegram updates via POST' })
   }
 
+  if (!BOT_TOKEN) {
+    return json({ error: 'Bot token not configured' }, 500)
+  }
+
+  const update = await req.json().catch(() => null) as Record<string, unknown> | null
+  if (!update) return json({ ok: true })
+
+  // ── pre_checkout_query — отвечаем ДО проверки секрета ─────────────────
+  // Telegram ждёт answerPreCheckoutQuery не более 10 сек. Отвечаем
+  // немедленно, не блокируясь на проверке WEBHOOK_SECRET, иначе оплата
+  // зависает если вебхук зарегистрирован без secret_token.
+  if (update?.pre_checkout_query) {
+    const pcq = update.pre_checkout_query as Record<string, unknown>
+    console.log('[pre_checkout_query] id=', pcq.id)
+    // Не await — возвращаем 200 немедленно, answerPreCheckout летит параллельно
+    answerPreCheckout(pcq.id as string, true).catch((err) =>
+      console.error('[pre_checkout_query] answerPreCheckout failed:', err),
+    )
+    return json({ ok: true })
+  }
+
+  // Проверка секрета для всех остальных апдейтов
   if (WEBHOOK_SECRET) {
     const incoming = req.headers.get('X-Telegram-Bot-Api-Secret-Token') ?? ''
     if (incoming !== WEBHOOK_SECRET) {
@@ -180,19 +202,7 @@ serve(async (req: Request) => {
     }
   }
 
-  if (!BOT_TOKEN) {
-    return json({ error: 'Bot token not configured' }, 500)
-  }
-
   try {
-    const update = await req.json()
-
-    // ── pre_checkout_query — подтвердить оплату ────────────────────────────
-    if (update?.pre_checkout_query) {
-      const pcq = update.pre_checkout_query
-      await answerPreCheckout(pcq.id, true)
-      return json({ ok: true })
-    }
 
     const message = update?.message
     const chatId  = message?.chat?.id
