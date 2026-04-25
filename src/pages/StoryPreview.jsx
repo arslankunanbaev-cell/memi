@@ -1761,6 +1761,7 @@ export default function StoryPreview() {
   }
 
   return (
+    <>
     <div
       className="flex h-full flex-col"
       style={{
@@ -1986,5 +1987,6 @@ export default function StoryPreview() {
         onPurchased={(themeId) => setTemplate(themeId)}
       />
     )}
+    </>
   )
 }
