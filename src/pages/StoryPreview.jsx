@@ -1453,12 +1453,14 @@ function ThemePurchaseSheet({ theme, onClose, onPurchased }) {
   const [error, setError] = useState(null)
 
   async function handleBuy() {
-    if (loading || !currentUser?.telegram_id) return
+    // telegram_id скрыт RLS — берём напрямую из Telegram WebApp
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    if (loading || !telegramId) return
     setLoading(true)
     setError(null)
     try {
       const productId = `theme_${theme.themeKey}`
-      const status = await openStarsPayment(productId, currentUser.telegram_id)
+      const status = await openStarsPayment(productId, telegramId)
       if (status === 'paid') {
         addOwnedTheme(theme.themeKey)
         onPurchased(theme.id)

@@ -659,11 +659,13 @@ function PremiumSheet({ onClose }) {
   const [error, setError] = useState(null)
 
   async function handleBuy() {
-    if (loading || !currentUser?.telegram_id) return
+    // telegram_id скрыт RLS — берём напрямую из Telegram WebApp
+    const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
+    if (loading || !telegramId) return
     setLoading(true)
     setError(null)
     try {
-      const status = await openStarsPayment('premium', currentUser.telegram_id)
+      const status = await openStarsPayment('premium', telegramId)
       if (status === 'paid') {
         // Подписка активирована — обновим стор оптимистично на 30 дней
         const expires = new Date()
