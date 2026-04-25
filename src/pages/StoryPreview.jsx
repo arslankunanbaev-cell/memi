@@ -1455,7 +1455,11 @@ function ThemePurchaseSheet({ theme, onClose, onPurchased }) {
   async function handleBuy() {
     // telegram_id скрыт RLS — берём напрямую из Telegram WebApp
     const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
-    if (loading || !telegramId) return
+    if (loading) return
+    if (!telegramId) {
+      setError('Открой приложение через Telegram — оплата недоступна в браузере')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -1467,7 +1471,7 @@ function ThemePurchaseSheet({ theme, onClose, onPurchased }) {
         onClose()
       }
     } catch (err) {
-      setError('Не удалось открыть оплату. Попробуй ещё раз.')
+      setError(err?.message || 'Не удалось открыть оплату. Попробуй ещё раз.')
       console.error('[ThemePurchaseSheet]', err)
     } finally {
       setLoading(false)
