@@ -113,7 +113,7 @@ const photos = {
 }
 
 const avatars = {
-  alina: avatar('Алина', '#D98B52', '#A05E2C'),
+  alina: avatar('Маша', '#D98B52', '#A05E2C'),
   maria: avatar('Мария', '#B46A4F', '#E8B17A'),
   ilya: avatar('Илья', '#4F7C6D', '#9CC6A8'),
   liza: avatar('Лиза', '#7A6B8A', '#C6B5D8'),
@@ -130,7 +130,7 @@ const covers = {
 const currentUser = {
   id: 'user-1',
   telegram_id: 123456789,
-  name: 'Алина',
+  name: 'Маша',
   photo_url: avatars.alina,
   created_at: '2024-09-12T10:00:00.000Z',
   public_profile_enabled: true,

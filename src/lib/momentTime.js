@@ -25,12 +25,7 @@ export function getMomentDisplayAt(moment) {
 
 export function getMomentAddedAt(moment) {
   if (!moment) return null
-
-  if (moment.moment_at) {
-    return moment.created_at ?? moment.moment_at
-  }
-
-  return inferAddedAtFromPhotoPath(moment) ?? moment.created_at ?? null
+  return moment.created_at ?? null
 }
 
 export function compareMomentsByAddedAt(left, right) {
