@@ -952,19 +952,20 @@ export async function openStarsPayment(productId, telegramId) {
   const invoiceUrl = data?.invoiceUrl
   if (!invoiceUrl) throw new Error('No invoice URL returned')
 
-  return new Promise((resolve, reject) => {
-    const tg = window?.Telegram?.WebApp
-    if (!tg?.openInvoice) {
-      // Fallback для дев-режима вне Telegram
-      window.open(invoiceUrl, '_blank')
-      resolve('opened')
-      return
-    }
+  const tg = window?.Telegram?.WebApp
+  if (!tg?.openInvoice) {
+    // Fallback для дев-режима вне Telegram
+    window.open(invoiceUrl, '_blank')
+    return 'opened'
+  }
+
+  return new Promise((resolve) => {
+    // Таймаут 60 сек — если callback не пришёл, резолвим как 'timeout'
+    const timer = setTimeout(() => resolve('timeout'), 60_000)
+
     tg.openInvoice(invoiceUrl, (status) => {
-      if (status === 'paid') resolve('paid')
-      else if (status === 'cancelled') resolve('cancelled')
-      else if (status === 'failed') reject(new Error('Payment failed'))
-      else resolve(status)
+      clearTimeout(timer)
+      resolve(status ?? 'unknown')
     })
   })
 }

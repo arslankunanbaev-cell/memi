@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
-import { deleteCapsuleSlot, openStarsPayment, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
+import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -670,12 +670,22 @@ function PremiumSheet({ onClose }) {
     setError(null)
     try {
       const status = await openStarsPayment('premium', telegramId)
-      if (status === 'paid') {
-        // Подписка активирована — обновим стор оптимистично на 30 дней
-        const expires = new Date()
-        expires.setDate(expires.getDate() + 30)
-        setIsPremium(true, expires.toISOString())
-        onClose()
+
+      // Проверяем реальный статус в БД — не доверяем только callback
+      if (status === 'paid' || status === 'timeout' || status === 'unknown') {
+        const freshStatus = await getPremiumStatus(currentUser.id).catch(() => null)
+        if (freshStatus?.isPremium) {
+          setIsPremium(true, freshStatus.premiumExpiresAt)
+          onClose()
+          return
+        }
+      }
+
+      // Оплата отменена или не прошла
+      if (status === 'cancelled') {
+        // тихо закрываем загрузку
+      } else if (status !== 'paid') {
+        setError('Оплата не завершена. Если звёзды списались — попробуй перезапустить приложение.')
       }
     } catch (err) {
       setError(err?.message || 'Не удалось открыть оплату. Попробуй ещё раз.')
