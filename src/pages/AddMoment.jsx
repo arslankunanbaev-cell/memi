@@ -233,7 +233,6 @@ export default function AddMoment({
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
-        created_at: now.toISOString(),
         moment_at: momentAt,
       }
       if (location.trim()) addRecentLocation(location.trim())
