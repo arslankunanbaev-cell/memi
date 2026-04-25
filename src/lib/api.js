@@ -908,6 +908,67 @@ export async function getUserMomentsStats(userId) {
   }
 }
 
+// ── Premium & Themes ──────────────────────────────────────────────────────────
+
+// Загрузить статус подписки и купленные темы
+export async function getPremiumStatus(userId) {
+  const sb = assertSupabase()
+
+  const [userResult, themesResult] = await Promise.all([
+    sb.from('users')
+      .select('is_premium, premium_expires_at')
+      .eq('id', userId)
+      .single(),
+    sb.from('user_themes')
+      .select('theme_id')
+      .eq('user_id', userId),
+  ])
+
+  if (userResult.error) throw userResult.error
+
+  const now = new Date()
+  const expiresAt = userResult.data?.premium_expires_at
+  const isPremium = userResult.data?.is_premium === true
+    && (expiresAt === null || expiresAt === undefined || new Date(expiresAt) > now)
+
+  const ownedThemes = (themesResult.data ?? []).map((row) => row.theme_id)
+
+  return { isPremium, premiumExpiresAt: expiresAt ?? null, ownedThemes }
+}
+
+// Создать invoice link и открыть оплату через Telegram WebApp
+// productId: 'premium' | 'theme_summer' | 'theme_cinema'
+export async function openStarsPayment(productId, telegramId) {
+  const sb = assertSupabase()
+
+  const { data, error } = await invokeEdgeFunction(sb, 'create-stars-invoice', {
+    productId,
+    telegramId,
+  })
+
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+
+  const invoiceUrl = data?.invoiceUrl
+  if (!invoiceUrl) throw new Error('No invoice URL returned')
+
+  return new Promise((resolve, reject) => {
+    const tg = window?.Telegram?.WebApp
+    if (!tg?.openInvoice) {
+      // Fallback для дев-режима вне Telegram
+      window.open(invoiceUrl, '_blank')
+      resolve('opened')
+      return
+    }
+    tg.openInvoice(invoiceUrl, (status) => {
+      if (status === 'paid') resolve('paid')
+      else if (status === 'cancelled') resolve('cancelled')
+      else if (status === 'failed') reject(new Error('Payment failed'))
+      else resolve(status)
+    })
+  })
+}
+
 export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
   const sb = assertSupabase()
   const { data: linkedPeople, error: peopleErr } = await sb

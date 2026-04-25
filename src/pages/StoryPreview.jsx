@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { canShareFiles, createCanvasFile, getCardFilename, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
+import { openStarsPayment } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
@@ -11,6 +12,8 @@ const TEMPLATES = [
   { id: 'polaroid', label: 'Полароид', hint: 'Тёплая бумага, мягкие тени и эффект личной заметки' },
   { id: 'minimal', label: 'Минимал', hint: 'Галерейная подача с воздухом и аккуратной типографикой' },
   { id: 'dark', label: 'Ночь', hint: 'Кинематографичный контраст с глубиной и мягким свечением' },
+  { id: 'summer', label: '🌅 Лето', hint: 'Солнечные оттенки и тёплое лето в каждой карточке', paid: true, themeKey: 'summer' },
+  { id: 'cinema', label: '🎬 Кино', hint: 'Плёночная эстетика и кинематографичный формат', paid: true, themeKey: 'cinema' },
 ]
 
 const COLOR = {
@@ -1088,51 +1091,453 @@ async function drawDark(canvas, moment) {
   }
 }
 
+// ── Тема «Лето» ───────────────────────────────────────────────────────────────
+async function drawSummer(canvas, moment) {
+  const width = 1080
+  const height = 1920
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  const peopleNames = getMomentPeopleNames(moment)
+
+  // Солнечный фон
+  const bg = ctx.createLinearGradient(0, 0, width, height)
+  bg.addColorStop(0, '#FFF8E1')
+  bg.addColorStop(0.45, '#FFE0B2')
+  bg.addColorStop(1, '#FFCCBC')
+  ctx.fillStyle = bg
+  ctx.fillRect(0, 0, width, height)
+
+  // Декоративные круги — солнце
+  ctx.save()
+  ctx.globalAlpha = 0.18
+  ctx.fillStyle = '#FFB300'
+  ctx.beginPath()
+  ctx.arc(width - 120, 140, 280, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.globalAlpha = 0.10
+  ctx.beginPath()
+  ctx.arc(width - 120, 140, 380, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
+  drawCanvasHeader(ctx, { logoX: 84, logoY: 82, dateX: 996, dateY: 94, dateText })
+
+  // Фото
+  const photoX = 64
+  const photoY = 180
+  const photoWidth = width - 128
+  const photoHeight = 840
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 48)
+
+  // Нижняя панель
+  const panelX = 48
+  const panelY = 1068
+  const panelWidth = width - 96
+  const panelHeight = 780
+
+  drawElevatedPanel(ctx, {
+    x: panelX,
+    y: panelY,
+    width: panelWidth,
+    height: panelHeight,
+    radius: 52,
+    fill: 'rgba(255,255,255,0.82)',
+    border: 'rgba(255,152,0,0.14)',
+    shadowColor: 'rgba(200,100,30,0.14)',
+    shadowBlur: 40,
+    shadowOffsetY: 20,
+  })
+
+  const contentX = panelX + 52
+  const contentWidth = panelWidth - 104
+  let y = panelY + 58
+
+  y = drawSectionEyebrow(ctx, 'Момент', contentX, y, {
+    color: '#E65100',
+    lineColor: '#FF6D00',
+  })
+
+  ctx.fillStyle = '#3E2723'
+  ctx.font = '700 80px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y + 18, 82)
+
+  if (moment.description) {
+    y += 28
+    ctx.fillStyle = '#6D4C41'
+    ctx.font = '500 36px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
+  }
+
+  y += 32
+  drawHairline(ctx, contentX, y, contentWidth, 'rgba(255,152,0,0.18)')
+  y += 26
+
+  if (moment.song_title) {
+    y += await drawSongChip(ctx, contentX, y, contentWidth, moment, {
+      dark: false,
+      height: 140,
+      radius: 28,
+      songBg: 'rgba(255,243,224,0.9)',
+      songBorder: 'rgba(255,152,0,0.14)',
+      songIconBg: 'rgba(255,152,0,0.16)',
+      songIconStroke: '#E65100',
+      songTitle: '#3E2723',
+      songSubtitle: '#8D6E63',
+      shadowColor: 'rgba(200,100,30,0.1)',
+    })
+    y += 28
+  }
+
+  if (peopleNames.length > 0) {
+    drawMetaItem(ctx, {
+      label: 'С кем',
+      value: peopleNames.join(', '),
+      x: contentX, y,
+      maxWidth: contentWidth,
+      labelColor: '#8D6E63',
+      valueColor: '#3E2723',
+      valueFont: '500 33px Inter, sans-serif',
+      valueLineHeight: 42,
+      maxLines: 2,
+    })
+    y += 80
+  }
+
+  if (moment.mood) {
+    drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 30px Inter, sans-serif',
+      color: '#E65100',
+      background: 'rgba(255,152,0,0.1)',
+      border: 'rgba(255,152,0,0.2)',
+      paddingX: 16, height: 56, minWidth: 92,
+    })
+  }
+}
+
+// ── Тема «Кино» ───────────────────────────────────────────────────────────────
+async function drawCinema(canvas, moment) {
+  const width = 1080
+  const height = 1920
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  const peopleNames = getMomentPeopleNames(moment)
+
+  // Чёрный фон
+  ctx.fillStyle = '#0A0A0A'
+  ctx.fillRect(0, 0, width, height)
+
+  // Лентопроперфорация — декор слева
+  ctx.save()
+  ctx.globalAlpha = 0.08
+  ctx.fillStyle = '#fff'
+  for (let i = 0; i < 24; i++) {
+    const hy = 80 + i * 78
+    roundRect(ctx, 18, hy, 36, 48, 6)
+    ctx.fill()
+    roundRect(ctx, width - 54, hy, 36, 48, 6)
+    ctx.fill()
+  }
+  ctx.restore()
+
+  // Letterbox bars
+  ctx.fillStyle = '#000'
+  ctx.fillRect(0, 0, width, 120)
+  ctx.fillRect(0, height - 120, width, 120)
+
+  const dateText = formatStoryDate(getMomentDisplayAt(moment))
+  drawCanvasHeader(ctx, { logoX: 84, logoY: 44, dateX: 996, dateY: 54, dateText, dark: true })
+
+  // Фото (ч/б через filter)
+  const photoX = 72
+  const photoY = 148
+  const photoWidth = width - 144
+  const photoHeight = 900
+  ctx.save()
+  ctx.filter = 'grayscale(80%) contrast(1.1)'
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 12)
+  ctx.restore()
+
+  // Виньетка
+  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 12)
+  const vignette = ctx.createRadialGradient(width / 2, photoY + photoHeight / 2, photoHeight * 0.28, width / 2, photoY + photoHeight / 2, photoHeight * 0.8)
+  vignette.addColorStop(0, 'rgba(0,0,0,0)')
+  vignette.addColorStop(1, 'rgba(0,0,0,0.5)')
+  ctx.fillStyle = vignette
+  ctx.fillRect(photoX, photoY, photoWidth, photoHeight)
+  ctx.restore()
+
+  // Кадровая рамка поверх фото
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255,255,255,0.12)'
+  ctx.lineWidth = 3
+  ctx.strokeRect(photoX + 1, photoY + 1, photoWidth - 2, photoHeight - 2)
+  ctx.restore()
+
+  // Нижняя панель
+  const panelX = 48
+  const panelY = 1092
+  const panelWidth = width - 96
+  const panelHeight = 718
+
+  drawElevatedPanel(ctx, {
+    x: panelX, y: panelY,
+    width: panelWidth, height: panelHeight,
+    radius: 32,
+    fill: 'rgba(18,14,12,0.95)',
+    border: 'rgba(255,255,255,0.06)',
+    shadowColor: 'rgba(0,0,0,0.5)',
+    shadowBlur: 48,
+    shadowOffsetY: 24,
+  })
+
+  const contentX = panelX + 52
+  const contentWidth = panelWidth - 104
+  let y = panelY + 52
+
+  // Eyebrow
+  ctx.fillStyle = 'rgba(255,255,255,0.28)'
+  ctx.font = '600 26px Inter, sans-serif'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'top'
+  ctx.fillText('— MOMENT', contentX, y)
+  y += 52
+
+  ctx.fillStyle = '#F5F5F5'
+  ctx.font = '700 76px "Cormorant Garamond", Georgia, serif'
+  const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 80)
+
+  if (moment.description) {
+    y += 26
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.font = '400 34px Inter, sans-serif'
+    const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
+    y = drawTextBlock(ctx, descriptionLines, contentX, y, 52)
+  }
+
+  y += 28
+  drawHairline(ctx, contentX, y, contentWidth, 'rgba(255,255,255,0.08)')
+  y += 24
+
+  if (moment.song_title) {
+    y += await drawSongChip(ctx, contentX, y, contentWidth, moment, {
+      dark: true,
+      height: 136,
+      radius: 24,
+      songBg: 'rgba(40,30,22,0.9)',
+      songBorder: 'rgba(255,255,255,0.06)',
+      songIconBg: 'rgba(255,255,255,0.06)',
+      songIconStroke: 'rgba(255,255,255,0.5)',
+      songTitle: '#F5F5F5',
+      songSubtitle: 'rgba(255,255,255,0.4)',
+      shadowColor: 'rgba(0,0,0,0.2)',
+    })
+    y += 24
+  }
+
+  if (peopleNames.length > 0) {
+    drawMetaItem(ctx, {
+      label: 'С кем',
+      value: peopleNames.join(', '),
+      x: contentX, y,
+      maxWidth: contentWidth,
+      labelColor: 'rgba(255,255,255,0.3)',
+      valueColor: '#F5F5F5',
+      valueFont: '500 33px Inter, sans-serif',
+      valueLineHeight: 42,
+      maxLines: 2,
+    })
+    y += 80
+  }
+
+  if (moment.mood) {
+    drawMoodChip(ctx, contentX, y, moment.mood, {
+      font: '600 30px Inter, sans-serif',
+      color: 'rgba(255,255,255,0.72)',
+      background: 'rgba(255,255,255,0.06)',
+      border: 'rgba(255,255,255,0.08)',
+      paddingX: 16, height: 56, minWidth: 92,
+    })
+  }
+}
+
 async function drawCard(canvas, moment, template) {
   if (template === 'minimal') return drawMinimal(canvas, moment)
   if (template === 'dark') return drawDark(canvas, moment)
+  if (template === 'summer') return drawSummer(canvas, moment)
+  if (template === 'cinema') return drawCinema(canvas, moment)
   return drawPolaroid(canvas, moment)
 }
 
-function TemplateToggle({ activeTemplate, onChange, dark }) {
+function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes }) {
+  const freeTemplates = TEMPLATES.filter((t) => !t.paid)
+  const paidTemplates = TEMPLATES.filter((t) => t.paid)
+
+  function renderBtn(template) {
+    const active = template.id === activeTemplate
+    const locked = template.paid && !ownedThemes?.includes(template.themeKey)
+
+    return (
+      <button
+        key={template.id}
+        type="button"
+        onClick={() => onChange(template.id)}
+        className="font-sans transition-all active:opacity-70 relative"
+        style={{
+          border: 'none',
+          borderRadius: 18,
+          background: active
+            ? 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)'
+            : 'transparent',
+          color: active ? '#fff' : (locked ? (dark ? 'rgba(255,244,231,0.38)' : 'rgba(23,20,14,0.35)') : (dark ? 'rgba(255,244,231,0.72)' : 'var(--mid)')),
+          minHeight: 44,
+          fontSize: 13,
+          fontWeight: active ? 700 : 600,
+          boxShadow: active
+            ? (dark ? '0 10px 18px rgba(0,0,0,0.24)' : '0 10px 18px rgba(217,139,82,0.22)')
+            : 'none',
+          transform: active ? 'translateY(-1px)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          paddingLeft: 6,
+          paddingRight: 6,
+        }}
+      >
+        {template.label}
+        {locked && <span style={{ fontSize: 10 }}>🔒</span>}
+      </button>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Бесплатные темы */}
+      <div
+        className="grid gap-2 rounded-[24px] p-[6px]"
+        style={{
+          gridTemplateColumns: `repeat(${freeTemplates.length}, 1fr)`,
+          backgroundColor: dark ? 'rgba(255,244,231,0.05)' : 'rgba(255,255,255,0.72)',
+          border: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(160,94,44,0.08)',
+          boxShadow: dark ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'inset 0 1px 0 rgba(255,255,255,0.72)',
+        }}
+      >
+        {freeTemplates.map(renderBtn)}
+      </div>
+
+      {/* Платные темы */}
+      <div
+        className="grid gap-2 rounded-[24px] p-[6px]"
+        style={{
+          gridTemplateColumns: `repeat(${paidTemplates.length}, 1fr)`,
+          backgroundColor: dark ? 'rgba(255,244,231,0.03)' : 'rgba(255,255,255,0.5)',
+          border: dark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(217,139,82,0.14)',
+        }}
+      >
+        {paidTemplates.map(renderBtn)}
+      </div>
+    </div>
+  )
+}
+
+function ThemePurchaseSheet({ theme, onClose, onPurchased }) {
+  const currentUser = useAppStore((s) => s.currentUser)
+  const addOwnedTheme = useAppStore((s) => s.addOwnedTheme)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleBuy() {
+    if (loading || !currentUser?.telegram_id) return
+    setLoading(true)
+    setError(null)
+    try {
+      const productId = `theme_${theme.themeKey}`
+      const status = await openStarsPayment(productId, currentUser.telegram_id)
+      if (status === 'paid') {
+        addOwnedTheme(theme.themeKey)
+        onPurchased(theme.id)
+        onClose()
+      }
+    } catch (err) {
+      setError('Не удалось открыть оплату. Попробуй ещё раз.')
+      console.error('[ThemePurchaseSheet]', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div
-      className="grid grid-cols-3 gap-2 rounded-[24px] p-[6px]"
-      style={{
-        backgroundColor: dark ? 'rgba(255,244,231,0.05)' : 'rgba(255,255,255,0.72)',
-        border: dark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(160,94,44,0.08)',
-        boxShadow: dark ? 'inset 0 1px 0 rgba(255,255,255,0.04)' : 'inset 0 1px 0 rgba(255,255,255,0.72)',
-      }}
+      className="fixed inset-0 z-50 flex flex-col justify-end"
+      style={{ backgroundColor: 'rgba(23,20,14,0.54)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
     >
-      {TEMPLATES.map((template) => {
-        const active = template.id === activeTemplate
+      <div
+        className="px-4 pb-safe pt-6 rounded-t-[28px]"
+        style={{ backgroundColor: 'var(--base)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col items-center gap-1" style={{ marginBottom: 24 }}>
+          <span style={{ fontSize: 40 }}>{theme.id === 'summer' ? '🌅' : '🎬'}</span>
+          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 18, fontWeight: 700, marginTop: 8 }}>
+            Тема «{theme.id === 'summer' ? 'Лето' : 'Кино'}»
+          </p>
+          <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, maxWidth: 260 }}>
+            {theme.hint}
+          </p>
+        </div>
 
-        return (
-          <button
-            key={template.id}
-            type="button"
-            onClick={() => onChange(template.id)}
-            className="font-sans transition-all active:opacity-70"
-            style={{
-              border: 'none',
-              borderRadius: 18,
-              background: active
-                ? 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)'
-                : 'transparent',
-              color: active ? '#fff' : (dark ? 'rgba(255,244,231,0.72)' : 'var(--mid)'),
-              minHeight: 44,
-              fontSize: 15,
-              fontWeight: active ? 700 : 600,
-              boxShadow: active
-                ? (dark ? '0 10px 18px rgba(0,0,0,0.24)' : '0 10px 18px rgba(217,139,82,0.22)')
-                : 'none',
-              transform: active ? 'translateY(-1px)' : 'none',
-            }}
-          >
-            {template.label}
-          </button>
-        )
-      })}
+        <div
+          className="font-sans text-center"
+          style={{
+            backgroundColor: 'rgba(217,139,82,0.08)',
+            borderRadius: 14,
+            color: 'var(--mid)',
+            fontSize: 13,
+            padding: '10px 16px',
+            marginBottom: 20,
+          }}
+        >
+          Покупка навсегда — без подписки
+        </div>
+
+        {error && (
+          <p className="font-sans text-center" style={{ color: '#E05252', fontSize: 13, marginBottom: 12 }}>{error}</p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleBuy}
+          disabled={loading}
+          className="w-full font-sans font-semibold transition-opacity active:opacity-70"
+          style={{
+            backgroundColor: loading ? 'var(--surface)' : 'var(--accent)',
+            color: loading ? 'var(--soft)' : '#fff',
+            borderRadius: 9999,
+            padding: '14px 0',
+            fontSize: 15,
+            border: 'none',
+            marginBottom: 10,
+          }}
+        >
+          {loading ? 'Открываю оплату...' : 'Купить · 79 ⭐'}
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full font-sans transition-opacity active:opacity-60"
+          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none', paddingBottom: 8 }}
+        >
+          Отмена
+        </button>
+      </div>
     </div>
   )
 }
@@ -1170,6 +1575,7 @@ export default function StoryPreview() {
   const { id } = useParams()
   const navigate = useNavigate()
   const moments = useAppStore((state) => state.moments)
+  const ownedThemes = useAppStore((state) => state.ownedThemes)
   const moment = moments.find((item) => item.id === id)
 
   const canvasRef = useRef(null)
@@ -1179,8 +1585,9 @@ export default function StoryPreview() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [sendError, setSendError] = useState(null)
+  const [purchaseTheme, setPurchaseTheme] = useState(null) // тема ожидающая покупки
 
-  const dark = template === 'dark'
+  const dark = template === 'dark' || template === 'cinema'
   const activeTemplate = TEMPLATES.find((item) => item.id === template) ?? TEMPLATES[0]
 
   useEffect(() => {
@@ -1217,6 +1624,13 @@ export default function StoryPreview() {
 
   function handleTemplateChange(nextTemplate) {
     if (nextTemplate === template) return
+    const tpl = TEMPLATES.find((t) => t.id === nextTemplate)
+    // Если тема платная и не куплена — показываем шит покупки
+    if (tpl?.paid && !ownedThemes?.includes(tpl.themeKey)) {
+      tgHaptic('light')
+      setPurchaseTheme(tpl)
+      return
+    }
     tgHaptic('light')
     setTemplate(nextTemplate)
   }
@@ -1471,7 +1885,7 @@ export default function StoryPreview() {
         }}
       >
         <div className="mx-auto w-full max-w-[356px]">
-          <TemplateToggle activeTemplate={template} onChange={handleTemplateChange} dark={dark} />
+          <TemplateToggle activeTemplate={template} onChange={handleTemplateChange} dark={dark} ownedThemes={ownedThemes} />
 
           <p
             className="font-sans text-center"
@@ -1564,5 +1978,13 @@ export default function StoryPreview() {
         </div>
       </div>
     </div>
+
+    {purchaseTheme && (
+      <ThemePurchaseSheet
+        theme={purchaseTheme}
+        onClose={() => setPurchaseTheme(null)}
+        onPurchased={(themeId) => setTemplate(themeId)}
+      />
+    )}
   )
 }

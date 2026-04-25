@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
-import { deleteCapsuleSlot, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
+import { deleteCapsuleSlot, openStarsPayment, saveCapsuleSlot, updatePublicProfile } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -640,6 +640,187 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   )
 }
 
+// ── Premium ────────────────────────────────────────────────────────────────────
+
+function StarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  )
+}
+
+function PremiumSheet({ onClose }) {
+  const currentUser = useAppStore((s) => s.currentUser)
+  const isPremium = useAppStore((s) => s.isPremium)
+  const premiumExpiresAt = useAppStore((s) => s.premiumExpiresAt)
+  const setIsPremium = useAppStore((s) => s.setIsPremium)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleBuy() {
+    if (loading || !currentUser?.telegram_id) return
+    setLoading(true)
+    setError(null)
+    try {
+      const status = await openStarsPayment('premium', currentUser.telegram_id)
+      if (status === 'paid') {
+        // Подписка активирована — обновим стор оптимистично на 30 дней
+        const expires = new Date()
+        expires.setDate(expires.getDate() + 30)
+        setIsPremium(true, expires.toISOString())
+        onClose()
+      }
+    } catch (err) {
+      setError('Не удалось открыть оплату. Попробуй ещё раз.')
+      console.error('[PremiumSheet]', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const expiresLabel = premiumExpiresAt
+    ? `до ${new Date(premiumExpiresAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
+    : null
+
+  const features = [
+    { icon: '⭐', text: 'Бейдж Premium на профиле' },
+    { icon: '📅', text: 'Экспорт альбома месяца' },
+    { icon: '🎨', text: 'Доступ ко всем купленным темам карточек' },
+  ]
+
+  return (
+    <BottomSheet onClose={onClose} title="Memi Premium">
+      <div className="px-4 pb-6">
+        {/* Hero */}
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{
+            background: 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 60%, #E8C9A0 100%)',
+            borderRadius: 20,
+            padding: '28px 20px',
+            marginBottom: 20,
+          }}
+        >
+          <div style={{ fontSize: 36, marginBottom: 8 }}>⭐</div>
+          <p className="font-sans" style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: 0 }}>
+            Memi Premium
+          </p>
+          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
+            Поддержи проект и получи особый статус
+          </p>
+        </div>
+
+        {/* Features */}
+        <div className="flex flex-col gap-3" style={{ marginBottom: 24 }}>
+          {features.map(({ icon, text }) => (
+            <div key={text} className="flex items-center gap-3">
+              <span style={{ fontSize: 20, width: 28, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+              <span className="font-sans" style={{ fontSize: 14, color: 'var(--text)' }}>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Статус если уже активен */}
+        {isPremium && expiresLabel && (
+          <div
+            className="font-sans text-center"
+            style={{
+              backgroundColor: 'rgba(217,139,82,0.1)',
+              borderRadius: 12,
+              color: 'var(--accent)',
+              fontSize: 13,
+              fontWeight: 500,
+              padding: '10px 16px',
+              marginBottom: 16,
+            }}
+          >
+            ✅ Подписка активна {expiresLabel}
+          </div>
+        )}
+
+        {error && (
+          <p className="font-sans text-center" style={{ color: '#E05252', fontSize: 13, marginBottom: 12 }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleBuy}
+          disabled={loading}
+          className="w-full font-sans font-semibold transition-opacity active:opacity-70"
+          style={{
+            backgroundColor: loading ? 'var(--surface)' : 'var(--accent)',
+            color: loading ? 'var(--soft)' : '#fff',
+            borderRadius: 9999,
+            padding: '14px 0',
+            fontSize: 15,
+            border: 'none',
+            marginBottom: 10,
+          }}
+        >
+          {loading ? 'Открываю оплату...' : isPremium ? 'Продлить · 99 ⭐' : 'Подписаться · 99 ⭐ / мес'}
+        </button>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-full font-sans transition-opacity active:opacity-60"
+          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}
+        >
+          Закрыть
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function PremiumCard({ onOpen }) {
+  const isPremium = useAppStore((s) => s.isPremium)
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="surface-card flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-60"
+      style={{
+        padding: '16px 18px',
+        marginBottom: 20,
+        border: 'none',
+        background: isPremium
+          ? 'linear-gradient(120deg, #A05E2C 0%, #D98B52 60%, #E8C9A0 100%)'
+          : 'var(--moment-surface)',
+      }}
+    >
+      <div
+        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
+        style={{
+          width: 40,
+          height: 40,
+          backgroundColor: isPremium ? 'rgba(255,255,255,0.2)' : 'var(--base)',
+          color: isPremium ? '#fff' : 'var(--accent)',
+        }}
+      >
+        <StarIcon />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="font-sans" style={{ color: isPremium ? '#fff' : 'var(--text)', fontSize: 15, fontWeight: 700 }}>
+          {isPremium ? 'Memi Premium ⭐' : 'Memi Premium'}
+        </p>
+        <p className="font-sans" style={{ color: isPremium ? 'rgba(255,255,255,0.75)' : 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+          {isPremium ? 'Подписка активна' : '99 ⭐ в месяц'}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-center flex-shrink-0" style={{ color: isPremium ? 'rgba(255,255,255,0.7)' : 'var(--soft)' }}>
+        <ChevronRightIcon color={isPremium ? 'rgba(255,255,255,0.7)' : 'var(--soft)'} />
+      </div>
+    </button>
+  )
+}
+
 function PublicProfileEntryCard({ onOpen }) {
   return (
     <button
@@ -736,9 +917,11 @@ export default function Profile() {
   const capsule = useAppStore((state) => state.capsule)
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
+  const isPremium = useAppStore((state) => state.isPremium)
 
   const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
+  const [showPremiumSheet, setShowPremiumSheet] = useState(false)
   const [showPublicProfileMenu, setShowPublicProfileMenu] = useState(false)
   const [showPublicProfileSheet, setShowPublicProfileSheet] = useState(false)
   const [savingPublicVisibility, setSavingPublicVisibility] = useState(false)
@@ -888,15 +1071,30 @@ export default function Profile() {
                   </div>
 
                   <div style={{ marginTop: 16 }}>
-                    <p
-                      className="font-sans type-sheet-title truncate"
-                      style={{
-                        color: 'var(--text)',
-                        margin: 0,
-                      }}
-                    >
-                      {name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p
+                        className="font-sans type-sheet-title truncate"
+                        style={{ color: 'var(--text)', margin: 0 }}
+                      >
+                        {name}
+                      </p>
+                      {isPremium && (
+                        <span
+                          className="font-sans flex-shrink-0"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#fff',
+                            backgroundColor: 'var(--accent)',
+                            borderRadius: 999,
+                            padding: '2px 8px',
+                            letterSpacing: '0.03em',
+                          }}
+                        >
+                          ⭐ Premium
+                        </span>
+                      )}
+                    </div>
 
                     {since && (
                       <p
@@ -960,6 +1158,7 @@ export default function Profile() {
                 </div>
               </section>
 
+              <PremiumCard onOpen={() => setShowPremiumSheet(true)} />
               <PublicProfileEntryCard onOpen={() => setActiveScreen(1)} />
 
               <section>
@@ -1056,6 +1255,10 @@ export default function Profile() {
       </div>
 
       <BottomNav active="profile" />
+
+      {showPremiumSheet && (
+        <PremiumSheet onClose={() => setShowPremiumSheet(false)} />
+      )}
 
       {pickSlot !== null && (
         <PickMomentSheet

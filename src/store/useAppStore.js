@@ -77,6 +77,17 @@ export const useAppStore = create((set) => ({
   setFriends: (friends) => set({ friends }),
   setIncomingRequests: (reqs) => set({ incomingRequests: reqs }),
 
+  // Premium
+  isPremium: false,
+  premiumExpiresAt: null,
+  ownedThemes: [],   // ['summer', 'cinema', ...]
+  setIsPremium: (isPremium, premiumExpiresAt = null) => set({ isPremium, premiumExpiresAt }),
+  setOwnedThemes: (ownedThemes) => set({ ownedThemes }),
+  addOwnedTheme: (themeId) =>
+    set((s) => ({
+      ownedThemes: s.ownedThemes.includes(themeId) ? s.ownedThemes : [...s.ownedThemes, themeId],
+    })),
+
   // UI
   isOnboarded: false,
   setOnboarded: (v) => set({ isOnboarded: v }),

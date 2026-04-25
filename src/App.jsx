@@ -12,6 +12,7 @@ import {
   getSharedMoments,
   getFriendsFeedMoments,
   mergeMomentCollections,
+  getPremiumStatus,
 } from './lib/api'
 import { supabase } from './lib/supabase'
 import { useAppStore } from './store/useAppStore'
@@ -45,6 +46,8 @@ export default function App() {
   const setInitResult = useAppStore((s) => s.setInitResult)
   const setFriends = useAppStore((s) => s.setFriends)
   const setIncomingRequests = useAppStore((s) => s.setIncomingRequests)
+  const setIsPremium = useAppStore((s) => s.setIsPremium)
+  const setOwnedThemes = useAppStore((s) => s.setOwnedThemes)
 
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
@@ -120,15 +123,18 @@ export default function App() {
 
         const { user, isNew } = await saveUser(tgUser)
 
-        const [fetchedPeople, fetchedMoments, fetchedCapsule] = await Promise.all([
+        const [fetchedPeople, fetchedMoments, fetchedCapsule, premiumStatus] = await Promise.all([
           getPeople(user.id),
           getMoments(user.id),
           getCapsule(user.id),
+          getPremiumStatus(user.id).catch(() => ({ isPremium: false, premiumExpiresAt: null, ownedThemes: [] })),
         ])
 
         setPeople(fetchedPeople)
         setMoments(fetchedMoments)
         setCapsule(fetchedCapsule)
+        setIsPremium(premiumStatus.isPremium, premiumStatus.premiumExpiresAt)
+        setOwnedThemes(premiumStatus.ownedThemes)
         setInitResult(user, isNew)
 
         if (!hasTrackedAppOpened) {

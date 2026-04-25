@@ -1,7 +1,15 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
-const TG_API = `https://api.telegram.org/bot${BOT_TOKEN}`
+const BOT_TOKEN       = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
+const WEBHOOK_SECRET  = Deno.env.get('TELEGRAM_WEBHOOK_SECRET') ?? ''
+const SUPABASE_URL    = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPABASE_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const TG_API          = `https://api.telegram.org/bot${BOT_TOKEN}`
+const ASSETS_BASE     = 'https://memi-sand.vercel.app/tut'
+
+// Длительность подписки — 30 дней
+const PREMIUM_DAYS = 30
 
 const WELCOME_TEXT = [
   'Привет 👋',
@@ -18,7 +26,6 @@ const TUTORIAL_IMAGE_FILES = [
   'tutorial-add-basic.png',
   'tutorial-add-social.png',
   'tutorial-people.png',
-  'tutorial-profile.png',
 ]
 
 function json(data: unknown, status = 200) {
@@ -36,49 +43,126 @@ async function sendWelcomeMessage(chatId: number | string) {
   const tgRes = await fetch(`${TG_API}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: WELCOME_TEXT,
-    }),
+    body: JSON.stringify({ chat_id: chatId, text: WELCOME_TEXT }),
   })
-
   const tgJson = await tgRes.json().catch(() => null)
-
   if (!tgRes.ok || !tgJson?.ok) {
     throw new Error(tgJson?.description ?? 'Telegram sendMessage failed')
   }
 }
 
-async function sendTutorialImage(chatId: number | string, fileName: string) {
-  let bytes: Uint8Array
+async function sendTutorial(chatId: number | string) {
+  const media = TUTORIAL_IMAGE_FILES.map(fileName => ({
+    type: 'photo',
+    media: `${ASSETS_BASE}/${fileName}`,
+  }))
 
-  try {
-    bytes = await Deno.readFile(new URL(`./assets/${fileName}`, import.meta.url))
-  } catch (error) {
-    console.warn(`[telegram-webhook] tutorial asset missing: ${fileName}`, error)
-    return
-  }
-
-  const formData = new FormData()
-  formData.append('chat_id', String(chatId))
-  formData.append('photo', new Blob([bytes], { type: 'image/png' }), fileName)
-  formData.append('disable_notification', 'true')
-
-  const tgRes = await fetch(`${TG_API}/sendPhoto`, {
+  const tgRes = await fetch(`${TG_API}/sendMediaGroup`, {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, media, disable_notification: true }),
   })
-
   const tgJson = await tgRes.json().catch(() => null)
-
   if (!tgRes.ok || !tgJson?.ok) {
-    throw new Error(tgJson?.description ?? `Telegram sendPhoto failed for ${fileName}`)
+    console.warn(`[telegram-webhook] sendMediaGroup failed: ${tgJson?.description}`)
   }
 }
 
-async function sendTutorial(chatId: number | string) {
-  for (const fileName of TUTORIAL_IMAGE_FILES) {
-    await sendTutorialImage(chatId, fileName)
+// ── Ответ на pre_checkout_query (обязательно в течение 10 сек) ─────────────
+async function answerPreCheckout(preCheckoutQueryId: string, ok: boolean, errorMessage?: string) {
+  const body: Record<string, unknown> = {
+    pre_checkout_query_id: preCheckoutQueryId,
+    ok,
+  }
+  if (!ok && errorMessage) body.error_message = errorMessage
+
+  const res = await fetch(`${TG_API}/answerPreCheckoutQuery`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const resJson = await res.json().catch(() => null)
+  if (!res.ok || !resJson?.ok) {
+    console.error('[telegram-webhook] answerPreCheckoutQuery failed:', resJson?.description)
+  }
+}
+
+// ── Обработка успешной оплаты ──────────────────────────────────────────────
+async function handleSuccessfulPayment(message: Record<string, unknown>) {
+  const payment   = message.successful_payment as Record<string, unknown>
+  const telegramId = (message.from as Record<string, unknown>)?.id
+
+  if (!payment || !telegramId) return
+
+  const payload    = payment.invoice_payload as string  // 'premium' | 'theme_summer' | 'theme_cinema'
+  const totalStars = payment.total_amount as number     // в Stars
+
+  console.log(`[payment] telegram_id=${telegramId} payload=${payload} stars=${totalStars}`)
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE)
+
+  // Найти юзера по telegram_id
+  const { data: user, error: userError } = await sb
+    .from('users')
+    .select('id, is_premium, premium_expires_at')
+    .eq('telegram_id', telegramId)
+    .single()
+
+  if (userError || !user) {
+    console.error('[payment] user not found for telegram_id:', telegramId, userError)
+    return
+  }
+
+  if (payload === 'premium') {
+    // Продлеваем подписку от текущей даты истечения или от сейчас
+    const base = user.premium_expires_at && new Date(user.premium_expires_at) > new Date()
+      ? new Date(user.premium_expires_at)
+      : new Date()
+
+    const expiresAt = new Date(base)
+    expiresAt.setDate(expiresAt.getDate() + PREMIUM_DAYS)
+
+    const { error } = await sb
+      .from('users')
+      .update({
+        is_premium: true,
+        premium_expires_at: expiresAt.toISOString(),
+      })
+      .eq('id', user.id)
+
+    if (error) {
+      console.error('[payment] failed to update premium:', error)
+    } else {
+      console.log(`[payment] ✅ premium activated until ${expiresAt.toISOString()} for user ${user.id}`)
+    }
+
+  } else if (payload.startsWith('theme_')) {
+    // Например payload = 'theme_summer' → themeId = 'summer'
+    const themeId = payload.replace('theme_', '')
+
+    const { error } = await sb
+      .from('user_themes')
+      .upsert({ user_id: user.id, theme_id: themeId }, { onConflict: 'user_id,theme_id' })
+
+    if (error) {
+      console.error('[payment] failed to save theme:', error)
+    } else {
+      console.log(`[payment] ✅ theme '${themeId}' purchased for user ${user.id}`)
+    }
+  }
+
+  // Отправить подтверждение юзеру в чат
+  const chatId = (message.chat as Record<string, unknown>)?.id
+  if (chatId) {
+    const text = payload === 'premium'
+      ? '⭐ Memi Premium активирован! Открой приложение, чтобы увидеть изменения.'
+      : `✅ Тема куплена! Открой редактор историй в memi.`
+
+    await fetch(`${TG_API}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text }),
+    }).catch(() => null)
   }
 }
 
@@ -89,16 +173,38 @@ serve(async (req: Request) => {
     return json({ ok: true, info: 'telegram-webhook expects Telegram updates via POST' })
   }
 
+  if (WEBHOOK_SECRET) {
+    const incoming = req.headers.get('X-Telegram-Bot-Api-Secret-Token') ?? ''
+    if (incoming !== WEBHOOK_SECRET) {
+      return json({ error: 'Unauthorized' }, 401)
+    }
+  }
+
   if (!BOT_TOKEN) {
     return json({ error: 'Bot token not configured' }, 500)
   }
 
   try {
     const update = await req.json()
-    const message = update?.message ?? update?.edited_message
-    const chatId = message?.chat?.id
-    const text = typeof message?.text === 'string' ? message.text : ''
 
+    // ── pre_checkout_query — подтвердить оплату ────────────────────────────
+    if (update?.pre_checkout_query) {
+      const pcq = update.pre_checkout_query
+      await answerPreCheckout(pcq.id, true)
+      return json({ ok: true })
+    }
+
+    const message = update?.message
+    const chatId  = message?.chat?.id
+
+    // ── successful_payment — обработать покупку ────────────────────────────
+    if (message?.successful_payment) {
+      await handleSuccessfulPayment(message)
+      return json({ ok: true })
+    }
+
+    // ── /start — приветствие ───────────────────────────────────────────────
+    const text = typeof message?.text === 'string' ? message.text : ''
     if (!chatId || !isStartCommand(text)) {
       return json({ ok: true, ignored: true })
     }
