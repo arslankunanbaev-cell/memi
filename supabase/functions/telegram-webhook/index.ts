@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const BOT_TOKEN       = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
 const WEBHOOK_SECRET  = Deno.env.get('TELEGRAM_WEBHOOK_SECRET') ?? ''
@@ -99,6 +98,7 @@ async function handleSuccessfulPayment(message: Record<string, unknown>) {
 
   console.log(`[payment] telegram_id=${telegramId} payload=${payload} stars=${totalStars}`)
 
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
   const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE)
 
   // Найти юзера по telegram_id
