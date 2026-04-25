@@ -938,7 +938,12 @@ export async function getPremiumStatus(userId) {
 
 // Создать invoice link и открыть оплату через Telegram WebApp
 // productId: 'premium' | 'theme_summer' | 'theme_cinema'
-export async function openStarsPayment(productId, telegramId) {
+//
+// options.pollActivated — async fn() => boolean
+//   Если передана, каждые 3 с проверяем активацию в БД.
+//   Это нужно потому что openInvoice callback может не прийти —
+//   мы не зависим от него и резолвимся сразу, как только БД подтвердит оплату.
+export async function openStarsPayment(productId, telegramId, { pollActivated } = {}) {
   const sb = assertSupabase()
 
   const { data, error } = await invokeEdgeFunction(sb, 'create-stars-invoice', {
@@ -960,12 +965,44 @@ export async function openStarsPayment(productId, telegramId) {
   }
 
   return new Promise((resolve) => {
-    // Таймаут 60 сек — если callback не пришёл, резолвим как 'timeout'
-    const timer = setTimeout(() => resolve('timeout'), 60_000)
+    let settled = false
+    let pollId   = null
+    let timerId  = null
 
-    tg.openInvoice(invoiceUrl, (status) => {
-      clearTimeout(timer)
-      resolve(status ?? 'unknown')
+    function finish(status) {
+      if (settled) return
+      settled = true
+      if (pollId)  clearInterval(pollId)
+      if (timerId) clearTimeout(timerId)
+      resolve(status)
+    }
+
+    // Поллим БД каждые 3 с — ловим оплату даже если callback не пришёл
+    if (typeof pollActivated === 'function') {
+      pollId = setInterval(async () => {
+        try {
+          const ok = await pollActivated()
+          if (ok) finish('paid')
+        } catch {
+          // игнорируем временные ошибки сети
+        }
+      }, 3000)
+    }
+
+    // Жёсткий таймаут — 3 минуты (на случай совсем зависшего состояния)
+    timerId = setTimeout(() => finish('timeout'), 3 * 60_000)
+
+    tg.openInvoice(invoiceUrl, (cbStatus) => {
+      // Отмена / ошибка — резолвим сразу, не ждём поллинг
+      if (cbStatus === 'cancelled' || cbStatus === 'failed') {
+        finish(cbStatus)
+        return
+      }
+      // Для 'paid': если есть поллинг — пусть он подтвердит через БД
+      // (избегаем гонки, где callback приходит раньше чем вебхук обновил БД)
+      if (!pollActivated) {
+        finish(cbStatus ?? 'unknown')
+      }
     })
   })
 }

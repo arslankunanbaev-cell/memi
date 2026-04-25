@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { canShareFiles, createCanvasFile, getCardFilename, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
-import { openStarsPayment } from '../lib/api'
+import { getPremiumStatus, openStarsPayment } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
@@ -1462,13 +1462,37 @@ function ThemePurchaseSheet({ theme, onClose, onPurchased }) {
     }
     setLoading(true)
     setError(null)
+
+    let activatedByPoll = false
+
     try {
       const productId = `theme_${theme.themeKey}`
-      const status = await openStarsPayment(productId, telegramId)
-      if (status === 'paid') {
-        addOwnedTheme(theme.themeKey)
+      const status = await openStarsPayment(productId, telegramId, {
+        // Поллим БД каждые 3 с — не зависим от ненадёжного callback
+        pollActivated: async () => {
+          const s = await getPremiumStatus(currentUser.id)
+          if (s.ownedThemes.includes(theme.themeKey)) {
+            activatedByPoll = true
+            addOwnedTheme(theme.themeKey)
+            return true
+          }
+          return false
+        },
+      })
+
+      if (status === 'paid' || activatedByPoll) {
+        if (!activatedByPoll) addOwnedTheme(theme.themeKey)
         onPurchased(theme.id)
         onClose()
+        return
+      }
+
+      if (status === 'cancelled') {
+        // тихо — пользователь сам закрыл
+      } else if (status === 'timeout') {
+        setError('Время ожидания истекло. Если звёзды списались — перезапусти приложение.')
+      } else {
+        setError('Оплата не завершена. Если звёзды списались — попробуй перезапустить приложение.')
       }
     } catch (err) {
       setError(err?.message || 'Не удалось открыть оплату. Попробуй ещё раз.')

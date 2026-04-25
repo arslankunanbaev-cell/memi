@@ -668,23 +668,34 @@ function PremiumSheet({ onClose }) {
     }
     setLoading(true)
     setError(null)
-    try {
-      const status = await openStarsPayment('premium', telegramId)
 
-      // Проверяем реальный статус в БД — не доверяем только callback
-      if (status === 'paid' || status === 'timeout' || status === 'unknown') {
-        const freshStatus = await getPremiumStatus(currentUser.id).catch(() => null)
-        if (freshStatus?.isPremium) {
-          setIsPremium(true, freshStatus.premiumExpiresAt)
-          onClose()
-          return
-        }
+    // Флаг, чтобы не дублировать закрытие если поллинг сработал внутри промиса
+    let activatedByPoll = false
+
+    try {
+      const status = await openStarsPayment('premium', telegramId, {
+        // Поллим БД каждые 3 с — не зависим от ненадёжного callback
+        pollActivated: async () => {
+          const s = await getPremiumStatus(currentUser.id)
+          if (s.isPremium) {
+            activatedByPoll = true
+            setIsPremium(true, s.premiumExpiresAt)
+            return true
+          }
+          return false
+        },
+      })
+
+      if (status === 'paid' || activatedByPoll) {
+        onClose()
+        return
       }
 
-      // Оплата отменена или не прошла
       if (status === 'cancelled') {
-        // тихо закрываем загрузку
-      } else if (status !== 'paid') {
+        // тихо — пользователь сам закрыл
+      } else if (status === 'timeout') {
+        setError('Время ожидания истекло. Если звёзды списались — перезапусти приложение.')
+      } else {
         setError('Оплата не завершена. Если звёзды списались — попробуй перезапустить приложение.')
       }
     } catch (err) {
