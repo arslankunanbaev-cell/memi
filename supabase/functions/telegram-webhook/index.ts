@@ -169,6 +169,15 @@ async function handleSuccessfulPayment(message: Record<string, unknown>) {
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok')
 
+  // ── Диагностика: GET /telegram-webhook ────────────────────────────────────
+  if (req.method === 'GET') {
+    const [webhookInfo, botInfo] = await Promise.all([
+      fetch(`${TG_API}/getWebhookInfo`).then(r => r.json()).catch((e) => ({ error: String(e) })),
+      fetch(`${TG_API}/getMe`).then(r => r.json()).catch((e) => ({ error: String(e) })),
+    ])
+    return json({ botTokenSet: BOT_TOKEN.length > 0, webhookInfo, botInfo })
+  }
+
   if (req.method !== 'POST') {
     return json({ ok: true, info: 'telegram-webhook expects Telegram updates via POST' })
   }
@@ -180,21 +189,37 @@ serve(async (req: Request) => {
   const update = await req.json().catch(() => null) as Record<string, unknown> | null
   if (!update) return json({ ok: true })
 
-  // ── pre_checkout_query — отвечаем ДО проверки секрета ─────────────────
-  // Telegram ждёт answerPreCheckoutQuery не более 10 сек. Отвечаем
-  // немедленно, не блокируясь на проверке WEBHOOK_SECRET, иначе оплата
-  // зависает если вебхук зарегистрирован без secret_token.
+  // ── Платёжные события — ДО проверки секрета ──────────────────────────────
+  // Webhook был зарегистрирован БЕЗ secret_token, поэтому Telegram не шлёт
+  // X-Telegram-Bot-Api-Secret-Token. Все payment-critical события обрабатываем
+  // до секрет-чека чтобы они не блокировались 401.
+
   if (update?.pre_checkout_query) {
     const pcq = update.pre_checkout_query as Record<string, unknown>
     console.log('[pre_checkout_query] id=', pcq.id)
-    // Не await — возвращаем 200 немедленно, answerPreCheckout летит параллельно
-    answerPreCheckout(pcq.id as string, true).catch((err) =>
-      console.error('[pre_checkout_query] answerPreCheckout failed:', err),
-    )
+    try {
+      await answerPreCheckout(pcq.id as string, true)
+      console.log('[pre_checkout_query] answered OK')
+    } catch (err) {
+      console.error('[pre_checkout_query] answerPreCheckout failed:', err)
+    }
     return json({ ok: true })
   }
 
-  // Проверка секрета для всех остальных апдейтов
+  const message = update?.message as Record<string, unknown> | undefined
+
+  if (message?.successful_payment) {
+    console.log('[successful_payment] processing...')
+    try {
+      await handleSuccessfulPayment(message)
+      console.log('[successful_payment] done')
+    } catch (err) {
+      console.error('[successful_payment] failed:', err)
+    }
+    return json({ ok: true })
+  }
+
+  // Проверка секрета для всех остальных апдейтов (/start, прочие команды)
   if (WEBHOOK_SECRET) {
     const incoming = req.headers.get('X-Telegram-Bot-Api-Secret-Token') ?? ''
     if (incoming !== WEBHOOK_SECRET) {
@@ -203,15 +228,7 @@ serve(async (req: Request) => {
   }
 
   try {
-
-    const message = update?.message
-    const chatId  = message?.chat?.id
-
-    // ── successful_payment — обработать покупку ────────────────────────────
-    if (message?.successful_payment) {
-      await handleSuccessfulPayment(message)
-      return json({ ok: true })
-    }
+    const chatId = message?.chat ? (message.chat as Record<string, unknown>).id : undefined
 
     // ── /start — приветствие ───────────────────────────────────────────────
     const text = typeof message?.text === 'string' ? message.text : ''
@@ -219,8 +236,8 @@ serve(async (req: Request) => {
       return json({ ok: true, ignored: true })
     }
 
-    await sendWelcomeMessage(chatId)
-    await sendTutorial(chatId)
+    await sendWelcomeMessage(chatId as number)
+    await sendTutorial(chatId as number)
 
     return json({ ok: true })
   } catch (error) {
