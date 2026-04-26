@@ -421,7 +421,7 @@ const BANNER_TEMPLATES = [
   { id: 'garden', src: '/banners/garden.png', label: 'Сад в Живерни' },
 ]
 
-function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
+function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, onSaved }) {
   const [enabled, setEnabled] = useState(currentUser?.public_profile_enabled === true)
   const [bio, setBio] = useState(currentUser?.bio ?? '')
   const [featuredMomentId, setFeaturedMomentId] = useState(() => (
@@ -448,7 +448,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
         publicProfileEnabled: enabled,
         bio,
         featuredMomentId: selectedFeaturedMomentId,
-        bannerUrl,
+        bannerUrl: isPremium ? bannerUrl : undefined,
       })
 
       onSaved(updated)
@@ -517,20 +517,22 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
           <div className="flex gap-2 overflow-x-auto" style={{ paddingBottom: 4, scrollbarWidth: 'none' }}>
             <button
               type="button"
-              onClick={() => setBannerUrl(null)}
+              onClick={() => isPremium && setBannerUrl(null)}
+              disabled={!isPremium}
               className="flex-shrink-0 flex items-center justify-center transition-opacity active:opacity-60"
               style={{
                 width: 72,
                 height: 36,
                 borderRadius: 10,
-                border: !bannerUrl ? '2px solid var(--accent)' : '2px solid transparent',
+                border: !bannerUrl && isPremium ? '2px solid var(--accent)' : '2px solid transparent',
                 background: `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
                   linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)`,
-                boxShadow: !bannerUrl ? '0 0 0 1px var(--accent)' : 'none',
+                boxShadow: !bannerUrl && isPremium ? '0 0 0 1px var(--accent)' : 'none',
+                opacity: isPremium ? 1 : 0.45,
                 flexShrink: 0,
               }}
             >
-              {!bannerUrl && (
+              {!bannerUrl && isPremium && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M5 12l5 5L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -543,7 +545,8 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
                 <button
                   key={tmpl.id}
                   type="button"
-                  onClick={() => setBannerUrl(tmpl.src)}
+                  onClick={() => isPremium && setBannerUrl(tmpl.src)}
+                  disabled={!isPremium}
                   className="flex-shrink-0 relative overflow-hidden transition-opacity active:opacity-60"
                   style={{
                     width: 72,
@@ -551,6 +554,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
                     borderRadius: 10,
                     border: isSelected ? '2px solid var(--accent)' : '2px solid transparent',
                     boxShadow: isSelected ? '0 0 0 1px var(--accent)' : 'none',
+                    opacity: isPremium ? 1 : 0.55,
                     padding: 0,
                   }}
                 >
@@ -559,7 +563,18 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
                     alt={tmpl.label}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                   />
-                  {isSelected && (
+                  {!isPremium && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.30)' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <rect x="5" y="11" width="14" height="10" rx="2" fill="rgba(255,255,255,0.9)" />
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="rgba(255,255,255,0.9)" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  )}
+                  {isSelected && isPremium && (
                     <div
                       className="absolute inset-0 flex items-center justify-center"
                       style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
@@ -573,6 +588,13 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
               )
             })}
           </div>
+
+          {!isPremium && (
+            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 8 }}>
+              Баннер доступен для подписчиков{' '}
+              <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Memi Premium ⭐</span>
+            </p>
+          )}
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -1430,6 +1452,7 @@ export default function Profile() {
         <PublicProfileSheet
           currentUser={currentUser}
           publicMoments={publicMoments}
+          isPremium={isPremium}
           onClose={() => setShowPublicProfileSheet(false)}
           onSaved={(updatedUser) => {
             setCurrentUser(updatedUser)
