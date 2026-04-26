@@ -30,6 +30,20 @@
 - Backend: Supabase
 - Target: Telegram WebApp (mobile-first, touch-friendly)
 
+## Supabase Edge Functions deployment
+
+### telegram-webhook — MUST use --no-verify-jwt
+```
+npx supabase functions deploy telegram-webhook --project-ref emzrhwfjovjlxncwbptl --no-verify-jwt
+```
+Telegram does not send a Supabase Authorization header. Without `--no-verify-jwt`
+the Supabase gateway returns 401 before our code runs — payments completely break.
+
+### All other functions (normal deploy)
+```
+npx supabase functions deploy <name> --project-ref emzrhwfjovjlxncwbptl
+```
+
 ## Rules
 - Always commit changes before ending a session — uncommitted changes get lost across sessions
 - When changing fonts or colors, do NOT rewrite surrounding layout/spacing
