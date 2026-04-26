@@ -5,7 +5,7 @@ import FAB from '../components/FAB'
 import MomentCard from '../components/MomentCard'
 import PageHeader from '../components/PageHeader'
 import SectionLabel from '../components/SectionLabel'
-import { getMomentDisplayAt, compareMomentsByDisplayAt } from '../lib/momentTime'
+import { getMomentAddedAt, compareMomentsByAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 
@@ -41,7 +41,7 @@ function groupByDay(moments) {
   const groups = new Map()
 
   for (const moment of moments) {
-    const date = new Date(getMomentDisplayAt(moment))
+    const date = new Date(getMomentAddedAt(moment))
     date.setHours(0, 0, 0, 0)
 
     const key = date.toISOString()
@@ -54,7 +54,7 @@ function groupByDay(moments) {
   }
 
   return Array.from(groups.values()).map((items) => ({
-    label: dayLabel(getMomentDisplayAt(items[0])),
+    label: dayLabel(getMomentAddedAt(items[0])),
     items,
   }))
 }
@@ -71,7 +71,7 @@ export default function Home() {
   const moments = useAppStore((state) => state.moments)
   const [showAdd, setShowAdd] = useState(false)
 
-  const groups = groupByDay([...moments].sort(compareMomentsByDisplayAt))
+  const groups = groupByDay([...moments].sort(compareMomentsByAddedAt))
   const isEmpty = moments.length === 0
   const topbarDate = formatTopbarDate()
   const topbarAside = (

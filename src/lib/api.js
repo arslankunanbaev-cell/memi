@@ -371,10 +371,7 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     .single()
 
   if (momentError && isMissingMomentAtColumn(momentError) && normalizedFields?.moment_at) {
-    const legacyFields = {
-      ...normalizedFields,
-      created_at: normalizedFields.moment_at,
-    }
+    const legacyFields = { ...normalizedFields }
     delete legacyFields.moment_at
 
     ;({ data: moment, error: momentError } = await sb
