@@ -574,12 +574,22 @@ export function PublicProfileContent({
         <div
           style={{
             height: 96,
-            background: `
-              radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
-              linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)
-            `,
+            overflow: 'hidden',
+            background: profileUser.banner_url
+              ? 'none'
+              : `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
+                 linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)`,
           }}
-        />
+        >
+          {profileUser.banner_url && (
+            <img
+              src={profileUser.banner_url}
+              alt=""
+              aria-hidden="true"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
+        </div>
 
         <div style={{ padding: '0 20px 20px' }}>
           <div className="flex items-end gap-3" style={{ marginTop: -34 }}>

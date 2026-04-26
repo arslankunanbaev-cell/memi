@@ -414,6 +414,13 @@ function PublicProfileIcon() {
   )
 }
 
+const BANNER_TEMPLATES = [
+  { id: 'almond', src: '/banners/almond.png', label: 'Цветущий миндаль' },
+  { id: 'starry', src: '/banners/starry.png', label: 'Звёздная ночь' },
+  { id: 'storm', src: '/banners/storm.png', label: 'Буря' },
+  { id: 'garden', src: '/banners/garden.png', label: 'Сад в Живерни' },
+]
+
 function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
   const [enabled, setEnabled] = useState(currentUser?.public_profile_enabled === true)
   const [bio, setBio] = useState(currentUser?.bio ?? '')
@@ -422,6 +429,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
       ? currentUser.featured_moment_id
       : null
   ))
+  const [bannerUrl, setBannerUrl] = useState(currentUser?.banner_url ?? null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
@@ -440,6 +448,7 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
         publicProfileEnabled: enabled,
         bio,
         featuredMomentId: selectedFeaturedMomentId,
+        bannerUrl,
       })
 
       onSaved(updated)
@@ -495,6 +504,75 @@ function PublicProfileSheet({ currentUser, publicMoments, onClose, onSaved }) {
               boxShadow: 'inset 0 0 0 1px rgba(160, 94, 44, 0.08)',
             }}
           />
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <p
+            className="font-sans font-semibold"
+            style={{ color: 'var(--soft)', fontSize: 12, letterSpacing: '0.14em', marginBottom: 10, textTransform: 'uppercase' }}
+          >
+            Баннер профиля
+          </p>
+
+          <div className="flex gap-2 overflow-x-auto" style={{ paddingBottom: 4, scrollbarWidth: 'none' }}>
+            <button
+              type="button"
+              onClick={() => setBannerUrl(null)}
+              className="flex-shrink-0 flex items-center justify-center transition-opacity active:opacity-60"
+              style={{
+                width: 72,
+                height: 36,
+                borderRadius: 10,
+                border: !bannerUrl ? '2px solid var(--accent)' : '2px solid transparent',
+                background: `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
+                  linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)`,
+                boxShadow: !bannerUrl ? '0 0 0 1px var(--accent)' : 'none',
+                flexShrink: 0,
+              }}
+            >
+              {!bannerUrl && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12l5 5L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+
+            {BANNER_TEMPLATES.map((tmpl) => {
+              const isSelected = bannerUrl === tmpl.src
+              return (
+                <button
+                  key={tmpl.id}
+                  type="button"
+                  onClick={() => setBannerUrl(tmpl.src)}
+                  className="flex-shrink-0 relative overflow-hidden transition-opacity active:opacity-60"
+                  style={{
+                    width: 72,
+                    height: 36,
+                    borderRadius: 10,
+                    border: isSelected ? '2px solid var(--accent)' : '2px solid transparent',
+                    boxShadow: isSelected ? '0 0 0 1px var(--accent)' : 'none',
+                    padding: 0,
+                  }}
+                >
+                  <img
+                    src={tmpl.src}
+                    alt={tmpl.label}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                  {isSelected && (
+                    <div
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12l5 5L19 7" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div style={{ marginBottom: 20 }}>
@@ -1058,12 +1136,22 @@ export default function Profile() {
                 <div
                   style={{
                     height: 96,
-                    background: `
-                      radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
-                      linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)
-                    `,
+                    overflow: 'hidden',
+                    background: currentUser?.banner_url
+                      ? 'none'
+                      : `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
+                         linear-gradient(180deg, var(--deep) 0%, var(--accent) 56%, var(--accent-light) 100%)`,
                   }}
-                />
+                >
+                  {currentUser?.banner_url && (
+                    <img
+                      src={currentUser.banner_url}
+                      alt=""
+                      aria-hidden="true"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  )}
+                </div>
 
                 <div style={{ padding: '0 20px 20px' }}>
                   <div className="flex items-end gap-3" style={{ marginTop: -34 }}>

@@ -256,13 +256,14 @@ export async function saveUser(tgUser) {
   return { user: normalizePhotoEntity(newUser), isNew: true }
 }
 
-export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId } = {}) {
+export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId, bannerUrl } = {}) {
   const sb = assertSupabase()
   const payload = {}
 
   if (publicProfileEnabled !== undefined) payload.public_profile_enabled = Boolean(publicProfileEnabled)
   if (bio !== undefined) payload.bio = bio?.trim() ? bio.trim() : null
   if (featuredMomentId !== undefined) payload.featured_moment_id = featuredMomentId || null
+  if (bannerUrl !== undefined) payload.banner_url = bannerUrl || null
 
   const { data, error } = await sb
     .from('users')
@@ -275,7 +276,7 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
   return normalizePhotoEntity(data)
 }
 
-const PUBLIC_PROFILE_RPC_FIELDS = ['public_profile_enabled', 'bio', 'featured_moment_id']
+const PUBLIC_PROFILE_RPC_FIELDS = ['public_profile_enabled', 'bio', 'featured_moment_id', 'banner_url']
 
 function hasPublicProfileRpcFields(user) {
   return PUBLIC_PROFILE_RPC_FIELDS.every((field) => Object.prototype.hasOwnProperty.call(user ?? {}, field))
@@ -294,7 +295,7 @@ async function getUserPublicRecord(sb, userId) {
 
   const { data: directUser, error: directUserError } = await sb
     .from('users')
-    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id')
+    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url')
     .eq('id', userId)
     .maybeSingle()
 
