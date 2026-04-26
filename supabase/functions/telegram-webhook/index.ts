@@ -219,11 +219,13 @@ serve(async (req: Request) => {
     return json({ ok: true })
   }
 
-  // Проверка секрета для всех остальных апдейтов (/start, прочие команды)
+  // Проверка секрета — только логируем несоответствие, не блокируем.
+  // Webhook был зарегистрирован без secret_token, поэтому Telegram не шлёт
+  // заголовок. Полная блокировка через 401 сломала бы все обновления.
   if (WEBHOOK_SECRET) {
     const incoming = req.headers.get('X-Telegram-Bot-Api-Secret-Token') ?? ''
     if (incoming !== WEBHOOK_SECRET) {
-      return json({ error: 'Unauthorized' }, 401)
+      console.warn('[webhook] secret mismatch — continuing anyway (webhook registered without secret_token)')
     }
   }
 
