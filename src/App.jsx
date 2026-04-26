@@ -21,6 +21,7 @@ import Onboarding from './pages/Onboarding'
 import Home from './pages/Home'
 import Archive from './pages/Archive'
 import Profile from './pages/Profile'
+import ProfilePreview from './pages/ProfilePreview'
 import People from './pages/People'
 import MomentSaved from './pages/MomentSaved'
 import PublicProfile from './pages/PublicProfile'
@@ -224,6 +225,7 @@ export default function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/archive" element={<Archive />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/preview" element={<ProfilePreview />} />
           <Route path="/people" element={<People />} />
           <Route path="/people/:id" element={<PersonDetail />} />
           <Route path="/moment/:id" element={<MomentDetail />} />
