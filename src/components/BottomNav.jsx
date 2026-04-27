@@ -57,18 +57,26 @@ export default function BottomNav({ active }) {
 
   return (
     <nav
-      className="bottom-nav-bar fixed bottom-0 left-0 right-0 z-40"
+      className="bottom-nav-bar fixed z-40 flex justify-center"
       style={{
-        background: 'rgba(251, 247, 240, 0.92)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid var(--divider)',
-        boxShadow: '0 -8px 32px rgba(80, 50, 30, 0.06)',
-        paddingTop: 8,
-        paddingBottom: 'max(0.9rem, env(safe-area-inset-bottom))',
+        left: 0,
+        right: 0,
+        bottom: 'max(0.75rem, calc(env(safe-area-inset-bottom) + 0.5rem))',
       }}
     >
-      <div className="flex items-center">
+      <div
+        className="bottom-nav-pill flex items-center"
+        style={{
+          background: 'rgba(251, 247, 240, 0.94)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          borderRadius: 48,
+          boxShadow:
+            '0 8px 32px rgba(80, 50, 30, 0.13), 0 2px 6px rgba(80, 50, 30, 0.07), 0 0 0 1px rgba(180, 150, 120, 0.13)',
+          padding: '10px 16px',
+          gap: 8,
+        }}
+      >
         {TABS.map((tab) => {
           const isActive = tab.id === active
           const color = isActive ? 'var(--accent)' : 'var(--soft)'
@@ -78,11 +86,11 @@ export default function BottomNav({ active }) {
               key={tab.id}
               type="button"
               onClick={() => navigate(tab.path)}
-              className="flex flex-1 flex-col items-center gap-1 transition-opacity active:opacity-60"
+              className="flex flex-col items-center gap-1 transition-opacity active:opacity-60"
               style={{
                 border: 'none',
                 background: 'none',
-                padding: '4px 0',
+                padding: '10px 22px',
               }}
             >
               <span style={{ color }}>{tab.icon(color)}</span>
