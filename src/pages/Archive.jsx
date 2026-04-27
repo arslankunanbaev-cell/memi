@@ -191,7 +191,7 @@ function GridCell({ moment }) {
             WebkitBackdropFilter: 'blur(8px)',
             borderRadius: 999,
             boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
-            color: 'var(--text)',
+            color: '#17140E',
             fontSize: 11,
             fontWeight: 500,
             overflow: 'hidden',

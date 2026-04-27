@@ -386,7 +386,7 @@ function FeaturedMomentCard({ moment, onClick }) {
               alignItems: 'center',
               borderRadius: 999,
               background: 'rgba(255,255,255,0.9)',
-              color: 'var(--text)',
+              color: '#17140E',
               fontSize: 12,
               fontWeight: 600,
               padding: '5px 11px',
