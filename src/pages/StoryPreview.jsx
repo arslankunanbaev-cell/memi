@@ -1100,42 +1100,97 @@ async function drawSummer(canvas, moment) {
   const ctx = canvas.getContext('2d')
   const peopleNames = getMomentPeopleNames(moment)
 
-  // Солнечный фон
-  const bg = ctx.createLinearGradient(0, 0, width, height)
-  bg.addColorStop(0, '#FFF8E1')
-  bg.addColorStop(0.45, '#FFE0B2')
-  bg.addColorStop(1, '#FFCCBC')
+  // Закатный градиент — крем → золото → коралл → терракота
+  const bg = ctx.createLinearGradient(0, 0, 0, height)
+  bg.addColorStop(0, '#FFF3E0')
+  bg.addColorStop(0.28, '#FFCC80')
+  bg.addColorStop(0.58, '#FF8A65')
+  bg.addColorStop(1, '#BF360C')
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, width, height)
 
-  // Декоративные круги — солнце
+  // Солнечное свечение — большой радиальный градиент в правом верхнем углу
+  const sunGlow = ctx.createRadialGradient(width - 60, 60, 0, width - 60, 60, 560)
+  sunGlow.addColorStop(0, 'rgba(255,255,200,0.55)')
+  sunGlow.addColorStop(0.28, 'rgba(255,220,80,0.28)')
+  sunGlow.addColorStop(1, 'rgba(255,150,40,0)')
+  ctx.fillStyle = sunGlow
+  ctx.fillRect(0, 0, width, height)
+
+  // Диск солнца
   ctx.save()
-  ctx.globalAlpha = 0.18
-  ctx.fillStyle = '#FFB300'
+  const sunDisk = ctx.createRadialGradient(width - 90, 90, 0, width - 90, 90, 240)
+  sunDisk.addColorStop(0, 'rgba(255,255,220,0.95)')
+  sunDisk.addColorStop(0.45, 'rgba(255,210,60,0.65)')
+  sunDisk.addColorStop(1, 'rgba(255,150,30,0)')
+  ctx.fillStyle = sunDisk
   ctx.beginPath()
-  ctx.arc(width - 120, 140, 280, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.globalAlpha = 0.10
-  ctx.beginPath()
-  ctx.arc(width - 120, 140, 380, 0, Math.PI * 2)
+  ctx.arc(width - 90, 90, 240, 0, Math.PI * 2)
   ctx.fill()
   ctx.restore()
+
+  // Лучи солнца (тонкие)
+  ctx.save()
+  ctx.globalAlpha = 0.045
+  ctx.fillStyle = '#FFE082'
+  for (let i = 0; i < 14; i++) {
+    const angle = (i / 14) * Math.PI * 2 - 0.22
+    ctx.beginPath()
+    ctx.moveTo(width - 90, 90)
+    ctx.arc(width - 90, 90, 700, angle - 0.028, angle + 0.028)
+    ctx.closePath()
+    ctx.fill()
+  }
+  ctx.restore()
+
+  // Декоративная горизонтальная черта (горизонт)
+  ctx.save()
+  ctx.globalAlpha = 0.13
+  const horizon = ctx.createLinearGradient(0, 0, width, 0)
+  horizon.addColorStop(0, 'rgba(230,74,25,0)')
+  horizon.addColorStop(0.5, 'rgba(230,74,25,1)')
+  horizon.addColorStop(1, 'rgba(230,74,25,0)')
+  ctx.strokeStyle = horizon
+  ctx.lineWidth = 3
+  ctx.setLineDash([18, 14])
+  ctx.beginPath()
+  ctx.moveTo(64, 1052)
+  ctx.lineTo(width - 64, 1052)
+  ctx.stroke()
+  ctx.setLineDash([])
+  ctx.restore()
+
+  // Мягкое нижнее свечение фона
+  const bottomGlow = ctx.createRadialGradient(width * 0.3, height * 0.88, 0, width * 0.3, height * 0.88, 400)
+  bottomGlow.addColorStop(0, 'rgba(255,100,30,0.18)')
+  bottomGlow.addColorStop(1, 'rgba(255,100,30,0)')
+  ctx.fillStyle = bottomGlow
+  ctx.fillRect(0, 0, width, height)
 
   const dateText = formatStoryDate(getMomentDisplayAt(moment))
   drawCanvasHeader(ctx, { logoX: 84, logoY: 82, dateX: 996, dateY: 94, dateText })
 
-  // Фото
+  // Фото с тёплым оверлеем
   const photoX = 64
-  const photoY = 180
+  const photoY = 182
   const photoWidth = width - 128
-  const photoHeight = 840
-  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 48)
+  const photoHeight = 830
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 52)
+
+  // Тёплый цветовой оверлей поверх фото
+  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 52)
+  const warmOverlay = ctx.createLinearGradient(0, photoY, 0, photoY + photoHeight)
+  warmOverlay.addColorStop(0, 'rgba(255,180,60,0.06)')
+  warmOverlay.addColorStop(1, 'rgba(200,60,10,0.24)')
+  ctx.fillStyle = warmOverlay
+  ctx.fillRect(photoX, photoY, photoWidth, photoHeight)
+  ctx.restore()
 
   // Нижняя панель
   const panelX = 48
-  const panelY = 1068
+  const panelY = 1060
   const panelWidth = width - 96
-  const panelHeight = 780
+  const panelHeight = 796
 
   drawElevatedPanel(ctx, {
     x: panelX,
@@ -1143,20 +1198,31 @@ async function drawSummer(canvas, moment) {
     width: panelWidth,
     height: panelHeight,
     radius: 52,
-    fill: 'rgba(255,255,255,0.82)',
-    border: 'rgba(255,152,0,0.14)',
-    shadowColor: 'rgba(200,100,30,0.14)',
-    shadowBlur: 40,
-    shadowOffsetY: 20,
+    fill: 'rgba(255,252,244,0.90)',
+    border: 'rgba(230,80,20,0.14)',
+    shadowColor: 'rgba(160,50,10,0.22)',
+    shadowBlur: 52,
+    shadowOffsetY: 26,
   })
+
+  // Акцентная полоска вверху панели
+  ctx.save()
+  const stripe = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY)
+  stripe.addColorStop(0, 'rgba(255,100,30,0)')
+  stripe.addColorStop(0.5, 'rgba(255,100,30,0.28)')
+  stripe.addColorStop(1, 'rgba(255,100,30,0)')
+  ctx.fillStyle = stripe
+  roundRect(ctx, panelX, panelY, panelWidth, 5, 3)
+  ctx.fill()
+  ctx.restore()
 
   const contentX = panelX + 52
   const contentWidth = panelWidth - 104
-  let y = panelY + 58
+  let y = panelY + 60
 
   y = drawSectionEyebrow(ctx, 'Момент', contentX, y, {
-    color: '#E65100',
-    lineColor: '#FF6D00',
+    color: '#BF360C',
+    lineColor: '#E64A19',
   })
 
   ctx.fillStyle = '#3E2723'
@@ -1166,14 +1232,14 @@ async function drawSummer(canvas, moment) {
 
   if (moment.description) {
     y += 28
-    ctx.fillStyle = '#6D4C41'
+    ctx.fillStyle = '#5D4037'
     ctx.font = '500 36px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
     y = drawTextBlock(ctx, descriptionLines, contentX, y, 54)
   }
 
   y += 32
-  drawHairline(ctx, contentX, y, contentWidth, 'rgba(255,152,0,0.18)')
+  drawHairline(ctx, contentX, y, contentWidth, 'rgba(230,80,20,0.16)')
   y += 26
 
   if (moment.song_title) {
@@ -1181,13 +1247,13 @@ async function drawSummer(canvas, moment) {
       dark: false,
       height: 140,
       radius: 28,
-      songBg: 'rgba(255,243,224,0.9)',
-      songBorder: 'rgba(255,152,0,0.14)',
-      songIconBg: 'rgba(255,152,0,0.16)',
-      songIconStroke: '#E65100',
+      songBg: 'rgba(255,238,220,0.92)',
+      songBorder: 'rgba(230,80,20,0.16)',
+      songIconBg: 'rgba(230,80,20,0.16)',
+      songIconStroke: '#BF360C',
       songTitle: '#3E2723',
       songSubtitle: '#8D6E63',
-      shadowColor: 'rgba(200,100,30,0.1)',
+      shadowColor: 'rgba(160,50,10,0.1)',
     })
     y += 28
   }
@@ -1210,9 +1276,9 @@ async function drawSummer(canvas, moment) {
   if (moment.mood) {
     drawMoodChip(ctx, contentX, y, moment.mood, {
       font: '600 30px Inter, sans-serif',
-      color: '#E65100',
-      background: 'rgba(255,152,0,0.1)',
-      border: 'rgba(255,152,0,0.2)',
+      color: '#BF360C',
+      background: 'rgba(230,80,20,0.09)',
+      border: 'rgba(230,80,20,0.2)',
       paddingX: 16, height: 56, minWidth: 92,
     })
   }
@@ -1227,101 +1293,156 @@ async function drawCinema(canvas, moment) {
   const ctx = canvas.getContext('2d')
   const peopleNames = getMomentPeopleNames(moment)
 
-  // Чёрный фон
-  ctx.fillStyle = '#0A0A0A'
+  // Тёмный фон с тонким градиентом
+  const bg = ctx.createLinearGradient(0, 0, 0, height)
+  bg.addColorStop(0, '#080808')
+  bg.addColorStop(0.5, '#0E0B07')
+  bg.addColorStop(1, '#050505')
+  ctx.fillStyle = bg
   ctx.fillRect(0, 0, width, height)
 
-  // Лентопроперфорация — декор слева
+  // Перфорация плёнки — оба края, контрастные прямоугольники
   ctx.save()
-  ctx.globalAlpha = 0.08
-  ctx.fillStyle = '#fff'
-  for (let i = 0; i < 24; i++) {
-    const hy = 80 + i * 78
-    roundRect(ctx, 18, hy, 36, 48, 6)
+  const perfW = 44
+  const perfH = 58
+  const perfGap = 28
+  const perfRadius = 9
+  for (let i = 0; ; i++) {
+    const hy = 50 + i * (perfH + perfGap)
+    if (hy > height - 40) break
+    ctx.globalAlpha = 0.11
+    ctx.fillStyle = '#fff'
+    roundRect(ctx, 12, hy, perfW, perfH, perfRadius)
     ctx.fill()
-    roundRect(ctx, width - 54, hy, 36, 48, 6)
+    roundRect(ctx, width - 12 - perfW, hy, perfW, perfH, perfRadius)
     ctx.fill()
   }
   ctx.restore()
 
-  // Letterbox bars
+  // Вертикальные линии границы плёнки
+  ctx.save()
+  ctx.strokeStyle = 'rgba(255,255,255,0.055)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(70, 0)
+  ctx.lineTo(70, height)
+  ctx.moveTo(width - 70, 0)
+  ctx.lineTo(width - 70, height)
+  ctx.stroke()
+  ctx.restore()
+
+  // Верхняя letterbox полоса
   ctx.fillStyle = '#000'
-  ctx.fillRect(0, 0, width, 120)
-  ctx.fillRect(0, height - 120, width, 120)
+  ctx.fillRect(0, 0, width, 148)
+
+  // Нижняя letterbox полоса
+  ctx.fillStyle = '#000'
+  ctx.fillRect(0, height - 148, width, 148)
+
+  // Текст в нижней полосе — как на кинокадре
+  ctx.save()
+  ctx.fillStyle = 'rgba(255,255,255,0.16)'
+  ctx.font = '500 20px "Courier New", monospace'
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('FRAME 001 · KODAK 5219 · 24fps', 84, height - 74)
+  ctx.textAlign = 'right'
+  ctx.fillText('◉ REC', width - 84, height - 74)
+  ctx.restore()
 
   const dateText = formatStoryDate(getMomentDisplayAt(moment))
-  drawCanvasHeader(ctx, { logoX: 84, logoY: 44, dateX: 996, dateY: 54, dateText, dark: true })
+  drawCanvasHeader(ctx, { logoX: 84, logoY: 58, dateX: 996, dateY: 70, dateText, dark: true })
 
-  // Фото (ч/б через filter)
+  // Фото: небольшое обесцвечивание + янтарный оттенок вместо полного ч/б
   const photoX = 72
-  const photoY = 148
+  const photoY = 168
   const photoWidth = width - 144
   const photoHeight = 900
   ctx.save()
-  ctx.filter = 'grayscale(80%) contrast(1.1)'
-  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 12)
+  ctx.filter = 'grayscale(55%) contrast(1.12) brightness(0.90) sepia(18%)'
+  await drawPhoto(ctx, moment, photoX, photoY, photoWidth, photoHeight, 18)
+  ctx.restore()
+
+  // Янтарный тоновый оверлей
+  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 18)
+  ctx.fillStyle = 'rgba(160,110,40,0.10)'
+  ctx.fillRect(photoX, photoY, photoWidth, photoHeight)
   ctx.restore()
 
   // Виньетка
-  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 12)
-  const vignette = ctx.createRadialGradient(width / 2, photoY + photoHeight / 2, photoHeight * 0.28, width / 2, photoY + photoHeight / 2, photoHeight * 0.8)
+  clipRoundRect(ctx, photoX, photoY, photoWidth, photoHeight, 18)
+  const vignette = ctx.createRadialGradient(
+    width / 2, photoY + photoHeight / 2, photoHeight * 0.18,
+    width / 2, photoY + photoHeight / 2, photoHeight * 0.74,
+  )
   vignette.addColorStop(0, 'rgba(0,0,0,0)')
-  vignette.addColorStop(1, 'rgba(0,0,0,0.5)')
+  vignette.addColorStop(1, 'rgba(0,0,0,0.64)')
   ctx.fillStyle = vignette
   ctx.fillRect(photoX, photoY, photoWidth, photoHeight)
   ctx.restore()
 
   // Кадровая рамка поверх фото
   ctx.save()
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)'
+  ctx.strokeStyle = 'rgba(255,255,255,0.10)'
   ctx.lineWidth = 3
-  ctx.strokeRect(photoX + 1, photoY + 1, photoWidth - 2, photoHeight - 2)
+  roundRect(ctx, photoX + 1, photoY + 1, photoWidth - 2, photoHeight - 2, 18)
+  ctx.stroke()
   ctx.restore()
 
   // Нижняя панель
   const panelX = 48
-  const panelY = 1092
+  const panelY = 1116
   const panelWidth = width - 96
-  const panelHeight = 718
+  const panelHeight = 708
 
   drawElevatedPanel(ctx, {
     x: panelX, y: panelY,
     width: panelWidth, height: panelHeight,
-    radius: 32,
-    fill: 'rgba(18,14,12,0.95)',
-    border: 'rgba(255,255,255,0.06)',
-    shadowColor: 'rgba(0,0,0,0.5)',
-    shadowBlur: 48,
-    shadowOffsetY: 24,
+    radius: 36,
+    fill: 'rgba(11,8,5,0.97)',
+    border: 'rgba(200,160,80,0.10)',
+    shadowColor: 'rgba(0,0,0,0.65)',
+    shadowBlur: 60,
+    shadowOffsetY: 30,
   })
+
+  // Янтарная линия акцента вверху панели
+  ctx.save()
+  const accentLine = ctx.createLinearGradient(panelX, panelY, panelX + panelWidth, panelY)
+  accentLine.addColorStop(0, 'rgba(190,140,50,0)')
+  accentLine.addColorStop(0.5, 'rgba(190,140,50,0.42)')
+  accentLine.addColorStop(1, 'rgba(190,140,50,0)')
+  ctx.fillStyle = accentLine
+  ctx.fillRect(panelX, panelY, panelWidth, 2)
+  ctx.restore()
 
   const contentX = panelX + 52
   const contentWidth = panelWidth - 104
   let y = panelY + 52
 
-  // Eyebrow
-  ctx.fillStyle = 'rgba(255,255,255,0.28)'
-  ctx.font = '600 26px Inter, sans-serif'
+  // Eyebrow в янтарном стиле
+  ctx.fillStyle = 'rgba(190,150,70,0.65)'
+  ctx.font = '600 24px Inter, sans-serif'
   ctx.textAlign = 'left'
   ctx.textBaseline = 'top'
   ctx.fillText('— MOMENT', contentX, y)
-  y += 52
+  y += 50
 
-  ctx.fillStyle = '#F5F5F5'
-  ctx.font = '700 76px "Cormorant Garamond", Georgia, serif'
+  ctx.fillStyle = '#EDE8E0'
+  ctx.font = '700 78px "Cormorant Garamond", Georgia, serif'
   const titleLines = wrapText(ctx, moment.title || 'Момент', contentWidth, 2)
-  y = drawTextBlock(ctx, titleLines, contentX, y, 80)
+  y = drawTextBlock(ctx, titleLines, contentX, y, 82)
 
   if (moment.description) {
     y += 26
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.fillStyle = 'rgba(255,255,255,0.42)'
     ctx.font = '400 34px Inter, sans-serif'
     const descriptionLines = wrapText(ctx, moment.description, contentWidth, 2)
     y = drawTextBlock(ctx, descriptionLines, contentX, y, 52)
   }
 
   y += 28
-  drawHairline(ctx, contentX, y, contentWidth, 'rgba(255,255,255,0.08)')
+  drawHairline(ctx, contentX, y, contentWidth, 'rgba(190,150,70,0.16)')
   y += 24
 
   if (moment.song_title) {
@@ -1329,13 +1450,13 @@ async function drawCinema(canvas, moment) {
       dark: true,
       height: 136,
       radius: 24,
-      songBg: 'rgba(40,30,22,0.9)',
-      songBorder: 'rgba(255,255,255,0.06)',
-      songIconBg: 'rgba(255,255,255,0.06)',
-      songIconStroke: 'rgba(255,255,255,0.5)',
-      songTitle: '#F5F5F5',
-      songSubtitle: 'rgba(255,255,255,0.4)',
-      shadowColor: 'rgba(0,0,0,0.2)',
+      songBg: 'rgba(22,16,8,0.97)',
+      songBorder: 'rgba(190,150,70,0.10)',
+      songIconBg: 'rgba(190,150,70,0.12)',
+      songIconStroke: 'rgba(190,155,70,0.75)',
+      songTitle: '#EDE8E0',
+      songSubtitle: 'rgba(255,255,255,0.36)',
+      shadowColor: 'rgba(0,0,0,0.3)',
     })
     y += 24
   }
@@ -1346,8 +1467,8 @@ async function drawCinema(canvas, moment) {
       value: peopleNames.join(', '),
       x: contentX, y,
       maxWidth: contentWidth,
-      labelColor: 'rgba(255,255,255,0.3)',
-      valueColor: '#F5F5F5',
+      labelColor: 'rgba(255,255,255,0.26)',
+      valueColor: '#EDE8E0',
       valueFont: '500 33px Inter, sans-serif',
       valueLineHeight: 42,
       maxLines: 2,
@@ -1358,9 +1479,9 @@ async function drawCinema(canvas, moment) {
   if (moment.mood) {
     drawMoodChip(ctx, contentX, y, moment.mood, {
       font: '600 30px Inter, sans-serif',
-      color: 'rgba(255,255,255,0.72)',
-      background: 'rgba(255,255,255,0.06)',
-      border: 'rgba(255,255,255,0.08)',
+      color: 'rgba(190,155,70,0.92)',
+      background: 'rgba(190,150,60,0.09)',
+      border: 'rgba(190,150,60,0.18)',
       paddingX: 16, height: 56, minWidth: 92,
     })
   }
@@ -1381,6 +1502,19 @@ function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes }) {
   function renderBtn(template) {
     const active = template.id === activeTemplate
     const locked = template.paid && !ownedThemes?.includes(template.themeKey)
+    const activePreview = active && locked
+
+    let bg = 'transparent'
+    if (active && !locked) bg = 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)'
+    if (activePreview) bg = dark
+      ? 'linear-gradient(135deg, rgba(217,139,82,0.22) 0%, rgba(190,109,52,0.18) 100%)'
+      : 'linear-gradient(135deg, rgba(217,139,82,0.18) 0%, rgba(190,109,52,0.14) 100%)'
+
+    let color
+    if (active && !locked) color = '#fff'
+    else if (activePreview) color = dark ? 'rgba(255,200,130,0.9)' : '#BE6D34'
+    else if (locked) color = dark ? 'rgba(255,244,231,0.38)' : 'rgba(23,20,14,0.35)'
+    else color = dark ? 'rgba(255,244,231,0.72)' : 'var(--mid)'
 
     return (
       <button
@@ -1389,16 +1523,16 @@ function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes }) {
         onClick={() => onChange(template.id)}
         className="font-sans transition-all active:opacity-70 relative"
         style={{
-          border: 'none',
+          border: activePreview
+            ? (dark ? '1px solid rgba(217,139,82,0.22)' : '1px solid rgba(190,109,52,0.22)')
+            : 'none',
           borderRadius: 18,
-          background: active
-            ? 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)'
-            : 'transparent',
-          color: active ? '#fff' : (locked ? (dark ? 'rgba(255,244,231,0.38)' : 'rgba(23,20,14,0.35)') : (dark ? 'rgba(255,244,231,0.72)' : 'var(--mid)')),
+          background: bg,
+          color,
           minHeight: 44,
           fontSize: 13,
           fontWeight: active ? 700 : 600,
-          boxShadow: active
+          boxShadow: active && !locked
             ? (dark ? '0 10px 18px rgba(0,0,0,0.24)' : '0 10px 18px rgba(217,139,82,0.22)')
             : 'none',
           transform: active ? 'translateY(-1px)' : 'none',
@@ -1411,7 +1545,18 @@ function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes }) {
         }}
       >
         {template.label}
-        {locked && <span style={{ fontSize: 10 }}>🔒</span>}
+        {locked && !active && <span style={{ fontSize: 10 }}>🔒</span>}
+        {activePreview && (
+          <span style={{
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: '0.04em',
+            opacity: 0.8,
+            paddingLeft: 2,
+          }}>
+            ПРЕВЬЮ
+          </span>
+        )}
       </button>
     )
   }
@@ -1619,6 +1764,7 @@ export default function StoryPreview() {
 
   const dark = template === 'dark' || template === 'cinema'
   const activeTemplate = TEMPLATES.find((item) => item.id === template) ?? TEMPLATES[0]
+  const isPreview = !!(activeTemplate.paid && !ownedThemes?.includes(activeTemplate.themeKey))
 
   useEffect(() => {
     let cancelled = false
@@ -1654,13 +1800,6 @@ export default function StoryPreview() {
 
   function handleTemplateChange(nextTemplate) {
     if (nextTemplate === template) return
-    const tpl = TEMPLATES.find((t) => t.id === nextTemplate)
-    // Если тема платная и не куплена — показываем шит покупки
-    if (tpl?.paid && !ownedThemes?.includes(tpl.themeKey)) {
-      tgHaptic('light')
-      setPurchaseTheme(tpl)
-      return
-    }
     tgHaptic('light')
     setTemplate(nextTemplate)
   }
@@ -1899,6 +2038,35 @@ export default function StoryPreview() {
                   </span>
                 </div>
               )}
+
+              {isPreview && !rendering && (
+                <div
+                  className="absolute bottom-0 inset-x-0 rounded-b-[28px] flex flex-col items-center justify-end"
+                  style={{
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0) 100%)',
+                    paddingBottom: 18,
+                    paddingTop: 60,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span
+                    className="font-sans"
+                    style={{
+                      color: 'rgba(255,255,255,0.72)',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      letterSpacing: '0.1em',
+                      background: 'rgba(0,0,0,0.38)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      borderRadius: 10,
+                      padding: '5px 12px',
+                    }}
+                  >
+                    ПРЕВЬЮ
+                  </span>
+                </div>
+              )}
               </div>
             </div>
           </div>
@@ -1933,7 +2101,7 @@ export default function StoryPreview() {
             {activeTemplate.hint}
           </p>
 
-          {sendError && (
+          {!isPreview && sendError && (
             <p
               className="font-sans text-center"
               style={{
@@ -1952,60 +2120,114 @@ export default function StoryPreview() {
             </p>
           )}
 
-          <button
-            type="button"
-            onClick={handleSendToTelegram}
-            disabled={rendering || sending}
-            className="mt-3 w-full font-sans transition-opacity active:opacity-70"
-            style={{
-              border: 'none',
-              borderRadius: 20,
-              minHeight: 56,
-              backgroundColor: sent ? '#4CAF82' : (rendering || sending ? 'rgba(217,139,82,0.45)' : 'var(--accent)'),
-              color: '#fff',
-              fontSize: 17,
-              fontWeight: 700,
-              boxShadow: sent || rendering || sending ? 'none' : 'var(--shadow-accent)',
-            }}
-          >
-            {sent ? '✓ Отправлено в Telegram' : sending ? 'Отправляем...' : 'Получить в Telegram'}
-          </button>
+          {isPreview ? (
+            <>
+              <p
+                className="font-sans text-center"
+                style={{
+                  marginTop: 4,
+                  marginBottom: 0,
+                  color: dark ? 'rgba(245,235,221,0.5)' : 'var(--soft)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  lineHeight: 1.45,
+                  minHeight: 38,
+                }}
+              >
+                Примерь тему — скачать можно после покупки
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  tgHaptic('light')
+                  setPurchaseTheme(activeTemplate)
+                }}
+                className="mt-3 w-full font-sans font-bold transition-opacity active:opacity-70"
+                style={{
+                  border: 'none',
+                  borderRadius: 20,
+                  minHeight: 56,
+                  background: 'linear-gradient(135deg, #D98B52 0%, #BE6D34 100%)',
+                  color: '#fff',
+                  fontSize: 17,
+                  boxShadow: '0 12px 28px rgba(190,109,52,0.38)',
+                }}
+              >
+                {activeTemplate.id === 'summer' ? '🌅' : '🎬'} Купить тему · 79 ⭐
+              </button>
+              <button
+                type="button"
+                onClick={() => setTemplate('polaroid')}
+                className="mt-2 w-full font-sans transition-opacity active:opacity-60"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: dark ? 'rgba(245,235,221,0.4)' : 'var(--soft)',
+                  fontSize: 14,
+                  paddingBottom: 2,
+                }}
+              >
+                Вернуться к бесплатным темам
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleSendToTelegram}
+                disabled={rendering || sending}
+                className="mt-3 w-full font-sans transition-opacity active:opacity-70"
+                style={{
+                  border: 'none',
+                  borderRadius: 20,
+                  minHeight: 56,
+                  backgroundColor: sent ? '#4CAF82' : (rendering || sending ? 'rgba(217,139,82,0.45)' : 'var(--accent)'),
+                  color: '#fff',
+                  fontSize: 17,
+                  fontWeight: 700,
+                  boxShadow: sent || rendering || sending ? 'none' : 'var(--shadow-accent)',
+                }}
+              >
+                {sent ? '✓ Отправлено в Telegram' : sending ? 'Отправляем...' : 'Получить в Telegram'}
+              </button>
 
-          <div className="mt-3 grid grid-cols-[1fr_56px] gap-3">
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={rendering}
-              className="font-sans transition-opacity active:opacity-70"
-              style={{
-                border: 'none',
-                borderRadius: 18,
-                minHeight: 52,
-                backgroundColor: dark ? 'rgba(255,244,231,0.92)' : 'var(--surface)',
-                color: rendering ? 'rgba(23,20,14,0.32)' : 'var(--text)',
-                fontSize: 16,
-                fontWeight: 700,
-              }}
-            >
-              Скачать
-            </button>
+              <div className="mt-3 grid grid-cols-[1fr_56px] gap-3">
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={rendering}
+                  className="font-sans transition-opacity active:opacity-70"
+                  style={{
+                    border: 'none',
+                    borderRadius: 18,
+                    minHeight: 52,
+                    backgroundColor: dark ? 'rgba(255,244,231,0.92)' : 'var(--surface)',
+                    color: rendering ? 'rgba(23,20,14,0.32)' : 'var(--text)',
+                    fontSize: 16,
+                    fontWeight: 700,
+                  }}
+                >
+                  Скачать
+                </button>
 
-            <button
-              type="button"
-              onClick={handleShare}
-              disabled={rendering}
-              className="flex items-center justify-center transition-opacity active:opacity-60"
-              style={{
-                border: 'none',
-                borderRadius: 18,
-                minHeight: 52,
-                backgroundColor: dark ? 'rgba(255,244,231,0.92)' : 'var(--surface)',
-              }}
-              aria-label="Поделиться"
-            >
-              <ShareIcon disabled={rendering} dark={dark} />
-            </button>
-          </div>
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  disabled={rendering}
+                  className="flex items-center justify-center transition-opacity active:opacity-60"
+                  style={{
+                    border: 'none',
+                    borderRadius: 18,
+                    minHeight: 52,
+                    backgroundColor: dark ? 'rgba(255,244,231,0.92)' : 'var(--surface)',
+                  }}
+                  aria-label="Поделиться"
+                >
+                  <ShareIcon disabled={rendering} dark={dark} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
