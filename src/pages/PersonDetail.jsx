@@ -855,6 +855,38 @@ export default function PersonDetail() {
                   </div>
                 ))}
               </div>
+
+              {momentCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { tgHaptic('light'); navigate(`/collection/person/${id}`) }}
+                  className="flex w-full items-center justify-between font-sans transition-opacity active:opacity-70"
+                  style={{
+                    border: 'none',
+                    borderTop: '1px solid rgba(160, 94, 44, 0.1)',
+                    borderRadius: '0 0 20px 20px',
+                    background: 'linear-gradient(90deg, rgba(217,139,82,0.07) 0%, rgba(217,139,82,0.03) 100%)',
+                    color: 'var(--deep)',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: '13px 18px',
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <rect x="2" y="3" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <rect x="13" y="3" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <rect x="2" y="14" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
+                      <rect x="13" y="14" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
+                    </svg>
+                    Наши моменты — создать коллаж
+                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700 }}>⭐</span>
+                  </span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18l6-6-6-6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         </div>

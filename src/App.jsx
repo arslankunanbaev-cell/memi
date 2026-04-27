@@ -33,6 +33,7 @@ const PersonDetail = lazy(() => import('./pages/PersonDetail'))
 const MomentDetail = lazy(() => import('./pages/MomentDetail'))
 const StoryPreview = lazy(() => import('./pages/StoryPreview'))
 const StoryPreviewScreen = lazy(() => import('./pages/StoryPreviewScreen'))
+const CollectionExport = lazy(() => import('./pages/CollectionExport'))
 const EditMoment = lazy(() => import('./pages/EditMoment'))
 
 function RouteFallback() {
@@ -237,6 +238,7 @@ export default function App() {
           <Route path="/moment-saved" element={<MomentSaved />} />
           <Route path="/story/:id" element={<StoryPreview />} />
           <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
+          <Route path="/collection/:type/:key" element={<CollectionExport />} />
           <Route path="/edit-moment/:id" element={<EditMoment />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="*" element={<Navigate to="/" replace />} />

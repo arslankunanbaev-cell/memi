@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
+import { tgHaptic } from '../lib/telegram'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
@@ -229,10 +230,14 @@ export default function Archive() {
     return keys
   }, [moments])
 
+  const navigate = useNavigate()
+
   const [activeMonth, setActiveMonth] = useState(monthKeys[0])
   const [showFilter, setShowFilter] = useState(false)
   const [filterPeople, setFilterPeople] = useState([])
   const resolvedActiveMonth = monthKeys.includes(activeMonth) ? activeMonth : monthKeys[0]
+
+  const activeYear = resolvedActiveMonth.split('-')[0]
 
   const monthMoments = useMemo(() => {
     let list = moments.filter((moment) => monthKey(getMomentDisplayAt(moment)) === resolvedActiveMonth)
@@ -266,40 +271,60 @@ export default function Archive() {
               {moments.length} {moments.length === 1 ? 'момент' : 'момента'}
             </p>
 
-            <button
-              type="button"
-              onClick={() => setShowFilter(true)}
-              className="flex items-center gap-2 whitespace-nowrap font-sans type-topbar-meta transition-opacity active:opacity-60"
-              style={{
-                border: 'none',
-                background: 'none',
-                color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
-                padding: 0,
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M3 6h18M7 12h10M11 18h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              Фильтр
-              {filterPeople.length > 0 && (
-                <span
-                  className="font-sans type-meta"
+            <div className="flex items-center gap-2">
+              {moments.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => { tgHaptic('light'); navigate(`/collection/year/${activeYear}`) }}
+                  className="font-sans whitespace-nowrap transition-opacity active:opacity-60"
                   style={{
-                    minWidth: 18,
-                    height: 18,
+                    border: 'none',
                     borderRadius: 999,
-                    backgroundColor: 'var(--accent-pale)',
-                    color: 'var(--accent)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0 5px',
+                    backgroundColor: 'rgba(217,139,82,0.1)',
+                    color: 'var(--deep)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '5px 10px',
                   }}
                 >
-                  {filterPeople.length}
-                </span>
+                  Мой {activeYear} ⭐
+                </button>
               )}
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowFilter(true)}
+                className="flex items-center gap-2 whitespace-nowrap font-sans type-topbar-meta transition-opacity active:opacity-60"
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
+                  padding: 0,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 6h18M7 12h10M11 18h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Фильтр
+                {filterPeople.length > 0 && (
+                  <span
+                    className="font-sans type-meta"
+                    style={{
+                      minWidth: 18,
+                      height: 18,
+                      borderRadius: 999,
+                      backgroundColor: 'var(--accent-pale)',
+                      color: 'var(--accent)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 5px',
+                    }}
+                  >
+                    {filterPeople.length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -419,6 +444,37 @@ export default function Archive() {
               </div>
             ))}
           </div>
+
+          {stats.count > 0 && (
+            <button
+              type="button"
+              onClick={() => { tgHaptic('light'); navigate(`/collection/month/${resolvedActiveMonth}`) }}
+              className="flex w-full items-center justify-between font-sans transition-opacity active:opacity-70"
+              style={{
+                border: 'none',
+                borderTop: '1px solid rgba(160, 94, 44, 0.1)',
+                borderRadius: '0 0 20px 20px',
+                background: 'linear-gradient(90deg, rgba(217,139,82,0.07) 0%, rgba(217,139,82,0.03) 100%)',
+                color: 'var(--deep)',
+                fontSize: 13,
+                fontWeight: 600,
+                padding: '13px 18px',
+              }}
+            >
+              <span className="flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
+                  <path d="M3 9h18" stroke="currentColor" strokeWidth="2" />
+                  <path d="M9 3v6M15 3v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Альбом {RU_MONTHS[Number(resolvedActiveMonth.split('-')[1]) - 1]?.toLowerCase()}
+                <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>⭐ Premium</span>
+              </span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 18l6-6-6-6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
