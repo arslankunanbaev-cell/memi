@@ -520,6 +520,7 @@ export function PublicProfileContent({
   onMomentPress,
   onSharedMomentPress,
   canViewFriendMoments = false,
+  profileUserIsPremium = false,
 }) {
   if (!profileUser) return null
 
@@ -573,7 +574,7 @@ export function PublicProfileContent({
       >
         <div
           style={{
-            height: 96,
+            height: 130,
             overflow: 'hidden',
             background: profileUser.banner_url
               ? 'none'
@@ -627,15 +628,25 @@ export function PublicProfileContent({
           </div>
 
           <div style={{ marginTop: 16 }}>
-            <p
-              className="font-sans type-sheet-title"
-              style={{
-                margin: 0,
-                color: 'var(--text)',
-              }}
-            >
-              {name}
-            </p>
+            <div className="flex items-center gap-2">
+              <p
+                className="font-sans type-sheet-title truncate"
+                style={{
+                  margin: 0,
+                  color: 'var(--text)',
+                }}
+              >
+                {name}
+              </p>
+              {profileUserIsPremium && (
+                <span
+                  className="font-sans flex-shrink-0"
+                  style={{ fontSize: 11, fontWeight: 700, color: '#fff', backgroundColor: 'var(--accent)', borderRadius: 999, padding: '2px 8px', letterSpacing: '0.03em' }}
+                >
+                  ⭐ Premium
+                </span>
+              )}
+            </div>
 
             {since && (
               <p
@@ -1258,6 +1269,10 @@ export default function PublicProfile() {
           friends: publicFriendsCount,
         }}
         displayName={friendEntry?.name || linkedPerson?.name || profileUser.name || 'Пользователь'}
+        profileUserIsPremium={
+          profileUser.is_premium === true &&
+          (!profileUser.premium_expires_at || new Date(profileUser.premium_expires_at) > new Date())
+        }
         people={people}
         linkedPerson={linkedPerson}
         onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}

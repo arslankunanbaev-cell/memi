@@ -295,7 +295,7 @@ async function getUserPublicRecord(sb, userId) {
 
   const { data: directUser, error: directUserError } = await sb
     .from('users')
-    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url')
+    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url, is_premium, premium_expires_at')
     .eq('id', userId)
     .maybeSingle()
 

@@ -479,6 +479,7 @@ export default function ProfilePreview() {
         stats={publicProfileStats}
         displayName={name}
         contentPaddingBottom={40}
+        profileUserIsPremium={isPremium}
       />
 
       {showPublicProfileMenu && (
