@@ -321,38 +321,90 @@ function PremiumSheet({ onClose }) {
   ]
 
   return (
-    <BottomSheet onClose={onClose} title="Memi Premium">
-      <div className="px-4 pb-6">
+    <BottomSheet onClose={onClose}>
+      {/* Hero */}
+      <div
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'linear-gradient(170deg, #3D1A06 0%, #7A3D18 30%, #C06830 62%, #E8A55A 85%, #F5CC88 100%)',
+          padding: '32px 24px 36px',
+          textAlign: 'center',
+        }}
+      >
+        {/* top shimmer */}
         <div
-          className="flex flex-col items-center justify-center"
-          style={{ background: 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 60%, #E8C9A0 100%)', borderRadius: 20, padding: '28px 20px', marginBottom: 20 }}
+          aria-hidden="true"
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: '55%',
+            background: 'radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.22) 0%, transparent 68%)',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* icon circle */}
+        <div
+          style={{
+            width: 80, height: 80, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.14)',
+            border: '1.5px solid rgba(255,255,255,0.28)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 20px',
+            boxShadow: '0 0 32px rgba(255,200,100,0.25)',
+          }}
         >
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ marginBottom: 8 }}>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
-          <p className="font-sans" style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: 0 }}>Memi Premium</p>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 6, textAlign: 'center' }}>
-            Поддержи проект и получи особый статус
-          </p>
         </div>
+        <h2 className="font-sans" style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.3 }}>
+          Memi Premium
+        </h2>
+        <p className="font-sans" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 10, lineHeight: 1.4 }}>
+          Поддержи проект и получи особый статус
+        </p>
+      </div>
 
-        <div className="flex flex-col gap-3" style={{ marginBottom: 24 }}>
-          {features.map(({ icon, text }) => (
-            <div key={text} className="flex items-center gap-3">
-              <span className="flex items-center justify-center flex-shrink-0" style={{ width: 28, color: 'var(--accent)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">{icon}</svg>
-              </span>
-              <span className="font-sans" style={{ fontSize: 14, color: 'var(--text)' }}>{text}</span>
+      {/* Content */}
+      <div className="px-4" style={{ paddingTop: 24, paddingBottom: 8 }}>
+        {/* Features */}
+        <div style={{ marginBottom: 24 }}>
+          {features.map(({ icon, text }, i) => (
+            <div
+              key={text}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '13px 0',
+                borderBottom: i < features.length - 1 ? '1px solid var(--surface)' : 'none',
+              }}
+            >
+              <div
+                style={{
+                  width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+                  background: 'rgba(217,139,82,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--accent)',
+                }}
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">{icon}</svg>
+              </div>
+              <span className="font-sans" style={{ fontSize: 15, color: 'var(--text)', fontWeight: 500 }}>{text}</span>
             </div>
           ))}
         </div>
 
         {isPremium && expiresLabel && (
           <div
-            className="font-sans text-center"
-            style={{ backgroundColor: 'rgba(217,139,82,0.1)', borderRadius: 12, color: 'var(--accent)', fontSize: 13, fontWeight: 500, padding: '10px 16px', marginBottom: 16 }}
+            style={{
+              background: 'rgba(34,197,94,0.08)',
+              border: '1px solid rgba(34,197,94,0.22)',
+              borderRadius: 14, padding: '12px 16px', marginBottom: 20,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}
           >
-            ✅ Подписка активна {expiresLabel}
+            <span style={{ fontSize: 17 }}>✅</span>
+            <span className="font-sans" style={{ fontSize: 13, color: '#15a34a', fontWeight: 600 }}>
+              Подписка активна {expiresLabel}
+            </span>
           </div>
         )}
 
@@ -364,8 +416,16 @@ function PremiumSheet({ onClose }) {
           type="button"
           onClick={handleBuy}
           disabled={loading}
-          className="w-full font-sans font-semibold transition-opacity active:opacity-70"
-          style={{ backgroundColor: loading ? 'var(--surface)' : 'var(--accent)', color: loading ? 'var(--soft)' : '#fff', borderRadius: 9999, padding: '14px 0', fontSize: 15, border: 'none', marginBottom: 10 }}
+          className="w-full font-sans font-bold transition-opacity active:opacity-75"
+          style={{
+            background: loading
+              ? 'var(--surface)'
+              : 'linear-gradient(135deg, #7A3D18 0%, #C06830 50%, #E8A55A 100%)',
+            color: loading ? 'var(--soft)' : '#fff',
+            borderRadius: 9999, padding: '16px 0', fontSize: 17,
+            border: 'none', marginBottom: 12, letterSpacing: -0.2,
+            boxShadow: loading ? 'none' : '0 6px 24px rgba(192,104,48,0.38)',
+          }}
         >
           {loading ? 'Открываю оплату...' : isPremium ? 'Продлить · 99 ⭐' : 'Подписаться · 99 ⭐ / мес'}
         </button>
@@ -374,7 +434,7 @@ function PremiumSheet({ onClose }) {
           type="button"
           onClick={onClose}
           className="w-full font-sans transition-opacity active:opacity-60"
-          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none' }}
+          style={{ color: 'var(--mid)', fontSize: 14, background: 'none', border: 'none', paddingBottom: 4 }}
         >
           Закрыть
         </button>
@@ -392,32 +452,50 @@ function PremiumCard({ onOpen }) {
     <button
       type="button"
       onClick={onOpen}
-      className="surface-card flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-60"
+      className="flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-70"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         padding: '16px 18px',
         marginBottom: 20,
         border: 'none',
         background: isPremium
-          ? 'linear-gradient(120deg, #A05E2C 0%, #D98B52 60%, #E8C9A0 100%)'
+          ? 'linear-gradient(125deg, #5C2D0E 0%, #9A4E20 35%, #D07838 65%, #EAA85C 100%)'
           : 'var(--moment-surface)',
+        boxShadow: isPremium ? '0 4px 20px rgba(160,94,44,0.35)' : undefined,
       }}
     >
+      {isPremium && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'radial-gradient(ellipse at 80% 50%, rgba(255,220,140,0.18) 0%, transparent 60%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
       <div
         className="flex items-center justify-center rounded-[14px] flex-shrink-0"
-        style={{ width: 40, height: 40, backgroundColor: isPremium ? 'rgba(255,255,255,0.2)' : 'var(--base)', color: isPremium ? '#fff' : 'var(--accent)' }}
+        style={{
+          width: 42, height: 42,
+          background: isPremium ? 'rgba(255,255,255,0.18)' : 'var(--base)',
+          border: isPremium ? '1px solid rgba(255,255,255,0.22)' : 'none',
+          color: isPremium ? '#fff' : 'var(--accent)',
+        }}
       >
         <StarIcon />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
         <p className="font-sans" style={{ color: isPremium ? '#fff' : 'var(--text)', fontSize: 15, fontWeight: 700 }}>
           {isPremium ? 'Memi Premium ⭐' : 'Memi Premium'}
         </p>
-        <p className="font-sans" style={{ color: isPremium ? 'rgba(255,255,255,0.75)' : 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+        <p className="font-sans" style={{ color: isPremium ? 'rgba(255,255,255,0.72)' : 'var(--mid)', fontSize: 13, marginTop: 2 }}>
           {isPremium ? 'Подписка активна' : '99 ⭐ в месяц'}
         </p>
       </div>
-      <div className="flex items-center justify-center flex-shrink-0" style={{ color: isPremium ? 'rgba(255,255,255,0.7)' : 'var(--soft)' }}>
-        <ChevronRightIcon color={isPremium ? 'rgba(255,255,255,0.7)' : 'var(--soft)'} />
+      <div className="flex items-center justify-center flex-shrink-0" style={{ position: 'relative', color: isPremium ? 'rgba(255,255,255,0.6)' : 'var(--soft)' }}>
+        <ChevronRightIcon color={isPremium ? 'rgba(255,255,255,0.6)' : 'var(--soft)'} />
       </div>
     </button>
   )
