@@ -1777,6 +1777,9 @@ export default function StoryPreview() {
 
       try {
         await document.fonts?.ready
+        // Принудительно загружаем Caveat — браузер не тянет его сам,
+        // пока шрифт не встречается в DOM, и canvas получает фолбек.
+        await document.fonts?.load('700 64px "Caveat"')
         if (cancelled || !canvasRef.current) return
         await drawCard(canvasRef.current, moment, template)
         if (!cancelled) {
