@@ -112,7 +112,7 @@ function PhotoChip({ children, center = false }) {
         borderRadius: 999,
         padding: '5px 12px',
         boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
-        color: 'var(--text)',
+        color: '#17140E',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',

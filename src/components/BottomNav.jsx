@@ -57,7 +57,7 @@ export default function BottomNav({ active }) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40"
+      className="bottom-nav-bar fixed bottom-0 left-0 right-0 z-40"
       style={{
         background: 'rgba(251, 247, 240, 0.92)',
         backdropFilter: 'blur(20px)',

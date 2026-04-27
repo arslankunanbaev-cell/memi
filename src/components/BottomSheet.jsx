@@ -56,6 +56,7 @@ export default function BottomSheet({ onClose, title, children }) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        className="bottom-sheet-panel"
         style={{
           position: 'relative',
           background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--card) 48%, #F6EFE7 100%)',
@@ -73,6 +74,7 @@ export default function BottomSheet({ onClose, title, children }) {
       >
         <div
           aria-hidden="true"
+          className="bottom-sheet-shimmer"
           style={{
             position: 'absolute',
             inset: 0,

@@ -192,6 +192,27 @@
     position: relative;
   }
 
+  html[data-theme="dark"] .bottom-sheet-panel {
+    background: var(--card) !important;
+    border-top-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 -18px 56px rgba(0, 0, 0, 0.55);
+  }
+
+  html[data-theme="dark"] .bottom-sheet-shimmer {
+    display: none;
+  }
+
+  html[data-theme="dark"] .bottom-nav-bar {
+    background: rgba(14, 13, 12, 0.96) !important;
+    box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  html[data-theme="dark"] .status-badge {
+    background-color: rgba(217, 139, 82, 0.18) !important;
+    border-color: rgba(217, 139, 82, 0.38) !important;
+    color: #E8A96B !important;
+  }
+
   html[data-theme="dark"] .stats-panel-surface {
     background: linear-gradient(135deg, rgba(217, 139, 82, 0.08) 0%, rgba(30, 28, 26, 0.96) 62%, rgba(35, 33, 32, 0.72) 100%);
     border-color: rgba(255, 255, 255, 0.05);

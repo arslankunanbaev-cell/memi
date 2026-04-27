@@ -109,14 +109,15 @@ function Avatar({ person, size = 56 }) {
 function StatusBadge({ label }) {
   return (
     <div
-      className="font-sans"
+      className="font-sans status-badge"
       style={{
         borderRadius: 10,
         backgroundColor: 'var(--accent-pale)',
         color: 'var(--accent)',
         fontSize: 12,
-        fontWeight: 500,
+        fontWeight: 600,
         padding: '4px 10px',
+        border: '1px solid var(--accent-light)',
       }}
     >
       {label}
@@ -152,10 +153,10 @@ function FriendsHeader({ count, onInvite }) {
         onClick={onInvite}
         className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans type-meta transition-opacity active:opacity-70"
         style={{
-          border: '1px solid rgba(217, 139, 82, 0.18)',
+          border: '1px solid var(--accent-light)',
           borderRadius: 999,
-          backgroundColor: 'rgba(255, 254, 253, 0.92)',
-          boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08)',
+          backgroundColor: 'var(--moment-surface)',
+          boxShadow: 'var(--shadow-card)',
           color: 'var(--accent)',
           padding: '7px 12px',
         }}
