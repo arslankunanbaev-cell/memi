@@ -99,48 +99,6 @@ function PublicProfileToggle({ checked, disabled, onChange, label }) {
   )
 }
 
-// ── Settings card (top of preview) ────────────────────────────────────────────
-
-function PublicPreviewSettingsCard({ checked, disabled, onChange, error }) {
-  return (
-    <section
-      className="surface-card rounded-[24px]"
-      style={{ padding: 16, backgroundColor: 'var(--moment-surface)' }}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className="flex items-center justify-center rounded-[14px] flex-shrink-0"
-          style={{ width: 40, height: 40, backgroundColor: 'var(--base)', color: 'var(--accent)' }}
-        >
-          <PublicProfileIcon />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
-            Показывать профиль другим
-          </p>
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
-            Профиль виден всем
-          </p>
-        </div>
-
-        <PublicProfileToggle
-          checked={checked}
-          disabled={disabled}
-          onChange={onChange}
-          label="Показывать профиль другим"
-        />
-      </div>
-
-      {error && (
-        <p className="font-sans" style={{ color: '#E05252', fontSize: 12, marginTop: 12 }}>
-          {error}
-        </p>
-      )}
-    </section>
-  )
-}
-
 // ── Banner templates ───────────────────────────────────────────────────────────
 
 const BANNER_TEMPLATES = [
@@ -442,8 +400,6 @@ export default function ProfilePreview() {
   const friends = useAppStore((state) => state.friends) ?? []
   const isPremium = useAppStore((state) => state.isPremium)
 
-  const [savingPublicVisibility, setSavingPublicVisibility] = useState(false)
-  const [publicProfileError, setPublicProfileError] = useState(null)
   const [showPublicProfileMenu, setShowPublicProfileMenu] = useState(false)
   const [showPublicProfileSheet, setShowPublicProfileSheet] = useState(false)
 
@@ -460,7 +416,6 @@ export default function ProfilePreview() {
     [ownMoments],
   )
 
-  const publicProfileEnabled = currentUser?.public_profile_enabled === true
   const name = currentUser?.name || 'Пользователь'
   const publicProfileStats = {
     moments: publicMoments.length,
@@ -469,28 +424,8 @@ export default function ProfilePreview() {
   }
 
   function handleOpenEditor() {
-    setPublicProfileError(null)
     setShowPublicProfileMenu(false)
     setShowPublicProfileSheet(true)
-  }
-
-  async function handleTogglePublicProfile() {
-    if (!currentUser?.id || savingPublicVisibility) return
-
-    setSavingPublicVisibility(true)
-    setPublicProfileError(null)
-
-    try {
-      const updated = await updatePublicProfile(currentUser.id, {
-        publicProfileEnabled: !publicProfileEnabled,
-      })
-      setCurrentUser(updated)
-    } catch (error) {
-      console.error('[ProfilePreview] toggle error:', error)
-      setPublicProfileError('Не удалось обновить настройки.')
-    } finally {
-      setSavingPublicVisibility(false)
-    }
   }
 
   return (
@@ -543,14 +478,6 @@ export default function ProfilePreview() {
         publicMomentsTotal={publicMoments.length}
         stats={publicProfileStats}
         displayName={name}
-        topContent={(
-          <PublicPreviewSettingsCard
-            checked={publicProfileEnabled}
-            disabled={savingPublicVisibility}
-            onChange={handleTogglePublicProfile}
-            error={publicProfileError}
-          />
-        )}
         contentPaddingBottom={40}
       />
 

@@ -522,29 +522,74 @@ function ThemeSheet({ onClose }) {
   )
 }
 
-// ── Cards ──────────────────────────────────────────────────────────────────────
+// ── Settings components ────────────────────────────────────────────────────────
 
-function PremiumCard({ onOpen }) {
-  const isPremium = useAppStore((s) => s.isPremium)
+function SettingsGroup({ label, children }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {label && (
+        <p
+          className="font-sans"
+          style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 4 }}
+        >
+          {label}
+        </p>
+      )}
+      <div style={{ backgroundColor: 'var(--moment-surface)', borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-card)' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
+function SettingsRow({ icon, title, subtitle, onPress, isFirst, isLast, accent, testId }) {
   return (
     <button
       type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-70"
+      onClick={onPress}
+      data-testid={testId}
+      className="flex w-full items-center gap-3 text-left transition-opacity active:opacity-60"
       style={{
-        position: 'relative',
-        overflow: 'hidden',
-        padding: '16px 18px',
-        marginBottom: 20,
+        padding: '14px 16px',
         border: 'none',
-        background: isPremium
-          ? 'linear-gradient(125deg, #5C2D0E 0%, #9A4E20 35%, #D07838 65%, #EAA85C 100%)'
-          : 'var(--moment-surface)',
-        boxShadow: isPremium ? '0 4px 20px rgba(160,94,44,0.35)' : undefined,
+        background: 'none',
+        borderBottom: isLast ? 'none' : '1px solid var(--divider)',
       }}
     >
-      {isPremium && (
+      <div
+        className="flex items-center justify-center rounded-[12px] flex-shrink-0"
+        style={{ width: 38, height: 38, backgroundColor: accent ? 'var(--accent-light)' : 'var(--base)', color: 'var(--accent)' }}
+      >
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600, margin: 0 }}>{title}</p>
+        {subtitle && (
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>{subtitle}</p>
+        )}
+      </div>
+      <ChevronRightIcon />
+    </button>
+  )
+}
+
+function PremiumRow({ onOpen }) {
+  const isPremium = useAppStore((s) => s.isPremium)
+
+  if (isPremium) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-3 text-left transition-opacity active:opacity-60"
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          padding: '14px 16px',
+          border: 'none',
+          background: 'linear-gradient(125deg, #5C2D0E 0%, #9A4E20 35%, #D07838 65%, #EAA85C 100%)',
+        }}
+      >
         <div
           aria-hidden="true"
           style={{
@@ -553,101 +598,29 @@ function PremiumCard({ onOpen }) {
             pointerEvents: 'none',
           }}
         />
-      )}
-      <div
-        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
-        style={{
-          width: 42, height: 42,
-          background: isPremium ? 'rgba(255,255,255,0.18)' : 'var(--base)',
-          border: isPremium ? '1px solid rgba(255,255,255,0.22)' : 'none',
-          color: isPremium ? '#fff' : 'var(--accent)',
-        }}
-      >
-        <StarIcon />
-      </div>
-      <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
-        <p className="font-sans" style={{ color: isPremium ? '#fff' : 'var(--text)', fontSize: 15, fontWeight: 700 }}>
-          {isPremium ? 'Memi Premium ⭐' : 'Memi Premium'}
-        </p>
-        <p className="font-sans" style={{ color: isPremium ? 'rgba(255,255,255,0.72)' : 'var(--mid)', fontSize: 13, marginTop: 2 }}>
-          {isPremium ? 'Подписка активна' : '99 ⭐ в месяц'}
-        </p>
-      </div>
-      <div className="flex items-center justify-center flex-shrink-0" style={{ position: 'relative', color: isPremium ? 'rgba(255,255,255,0.6)' : 'var(--soft)' }}>
-        <ChevronRightIcon color={isPremium ? 'rgba(255,255,255,0.6)' : 'var(--soft)'} />
-      </div>
-    </button>
-  )
-}
-
-function ThemeCard({ onOpen }) {
-  const currentTheme = useAppStore((s) => s.currentTheme)
-  const isPremium = useAppStore((s) => s.isPremium)
-  const isDark = currentTheme === 'dark'
+        <div
+          className="flex items-center justify-center rounded-[12px] flex-shrink-0"
+          style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.22)', color: '#fff' }}
+        >
+          <StarIcon />
+        </div>
+        <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
+          <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi Premium ⭐</p>
+          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
+        </div>
+        <ChevronRightIcon color="rgba(255,255,255,0.6)" />
+      </button>
+    )
+  }
 
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-70"
-      style={{ padding: '16px 18px', marginBottom: 20, backgroundColor: 'var(--moment-surface)', border: 'none', boxShadow: 'var(--shadow-card)' }}
-    >
-      <div
-        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
-        style={{
-          width: 42, height: 42,
-          background: isDark
-            ? 'linear-gradient(135deg, #1E1C1A 0%, #3D2A18 100%)'
-            : 'linear-gradient(135deg, #F7F4F0 0%, #EDE6DC 100%)',
-          border: '1px solid var(--divider)',
-        }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" fill={isDark ? '#D98B52' : '#17140E'} />
-          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-            stroke={isDark ? '#D98B52' : '#17140E'} strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
-          Тема приложения
-        </p>
-        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
-          {isPremium
-            ? (isDark ? 'Тёмная' : 'Светлая')
-            : 'Только для Premium'}
-        </p>
-      </div>
-      <div className="flex items-center justify-center flex-shrink-0" style={{ color: 'var(--soft)' }}>
-        <ChevronRightIcon />
-      </div>
-    </button>
-  )
-}
-
-function PublicProfileEntryCard({ onOpen }) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="surface-card flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-60"
-      style={{ padding: '16px 18px', marginBottom: 20, backgroundColor: 'var(--moment-surface)', border: 'none' }}
-      data-testid="profile-public-entry"
-    >
-      <div
-        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
-        style={{ width: 40, height: 40, backgroundColor: 'var(--base)', color: 'var(--accent)' }}
-      >
-        <PublicProfileIcon />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>Публичный профиль</p>
-        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>Что видят другие</p>
-      </div>
-      <div className="flex items-center justify-center flex-shrink-0" style={{ color: 'var(--soft)' }}>
-        <ChevronRightIcon />
-      </div>
-    </button>
+    <SettingsRow
+      icon={<StarIcon />}
+      title="Memi Premium"
+      subtitle="99 ⭐ в месяц"
+      onPress={onOpen}
+      isLast
+    />
   )
 }
 
@@ -662,6 +635,7 @@ export default function Profile() {
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
   const isPremium = useAppStore((state) => state.isPremium)
+  const currentTheme = useAppStore((state) => state.currentTheme)
 
   const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
@@ -706,20 +680,16 @@ export default function Profile() {
   const name = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
 
+  const filledSlots = capsule.filter(Boolean).length
+
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       <div className="flex-1 overflow-hidden">
         <div className="flex h-full min-w-0 flex-col overflow-hidden" data-testid="profile-main-screen">
-          <div className="px-4 pt-topbar" style={{ paddingBottom: 22 }}>
-            <h1 className="type-page-title" style={{ color: 'var(--text)', margin: 0 }}>
-              Профиль
-            </h1>
-          </div>
-
-          <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-nav-clearance">
+          <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-nav-clearance pt-topbar">
             {/* Profile card */}
             <section
-              style={{ marginBottom: 16, backgroundColor: 'var(--moment-surface)', borderRadius: 28, overflow: 'hidden', boxShadow: '0 10px 28px rgba(80,50,30,0.14)' }}
+              style={{ marginBottom: 24, backgroundColor: 'var(--moment-surface)', borderRadius: 28, overflow: 'hidden', boxShadow: '0 10px 28px rgba(80,50,30,0.14)' }}
             >
               <div
                 style={{
@@ -818,15 +788,19 @@ export default function Profile() {
               </div>
             </section>
 
-            <PublicProfileEntryCard onOpen={() => navigate('/profile/preview')} />
-            <PremiumCard onOpen={() => setShowPremiumSheet(true)} />
-            <ThemeCard onOpen={() => isPremium ? setShowThemeSheet(true) : setShowPremiumSheet(true)} />
-
             {/* Capsule */}
-            <section>
-              <div className="flex items-baseline gap-2" style={{ marginBottom: 16 }}>
-                <span className="font-sans type-card-title" style={{ color: 'var(--text)' }}>Капсула</span>
-                <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>· моменты на всю жизнь</span>
+            <section style={{ marginBottom: 24 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-sans type-card-title" style={{ color: 'var(--text)' }}>Капсула</span>
+                  <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>· моменты на всю жизнь</span>
+                </div>
+                <span
+                  className="font-sans"
+                  style={{ fontSize: 12, fontWeight: 600, color: filledSlots === capsule.length ? 'var(--accent)' : 'var(--soft)', background: 'var(--moment-surface)', borderRadius: 999, padding: '3px 10px' }}
+                >
+                  {filledSlots} / {capsule.length}
+                </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 {capsule.map((slot, index) => (
@@ -840,6 +814,36 @@ export default function Profile() {
                 ))}
               </div>
             </section>
+
+            {/* Settings groups */}
+            <SettingsGroup label="Аккаунт">
+              <SettingsRow
+                icon={<PublicProfileIcon />}
+                title="Публичный профиль"
+                subtitle="Что видят другие"
+                onPress={() => navigate('/profile/preview')}
+                isFirst
+                testId="profile-public-entry"
+              />
+              <PremiumRow onOpen={() => setShowPremiumSheet(true)} />
+            </SettingsGroup>
+
+            <SettingsGroup label="Настройки">
+              <SettingsRow
+                icon={
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" fill="var(--accent)" />
+                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                      stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                }
+                title="Тема приложения"
+                subtitle={isPremium ? (currentTheme === 'dark' ? 'Тёмная' : 'Светлая') : 'Только для Premium'}
+                onPress={() => isPremium ? setShowThemeSheet(true) : setShowPremiumSheet(true)}
+                isFirst
+                isLast
+              />
+            </SettingsGroup>
           </div>
         </div>
       </div>
