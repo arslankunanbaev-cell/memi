@@ -88,6 +88,13 @@ export const useAppStore = create((set) => ({
       ownedThemes: s.ownedThemes.includes(themeId) ? s.ownedThemes : [...s.ownedThemes, themeId],
     })),
 
+  // Theme (persisted in localStorage)
+  currentTheme: localStorage.getItem('memi_theme') || 'light',
+  setCurrentTheme: (theme) => {
+    localStorage.setItem('memi_theme', theme)
+    set({ currentTheme: theme })
+  },
+
   // UI
   isOnboarded: false,
   setOnboarded: (v) => set({ isOnboarded: v }),

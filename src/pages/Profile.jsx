@@ -443,6 +443,85 @@ function PremiumSheet({ onClose }) {
   )
 }
 
+// ── Theme sheet ────────────────────────────────────────────────────────────────
+
+const THEMES = [
+  {
+    id: 'light',
+    label: 'Светлая',
+    description: 'Классическая тёплая тема',
+    swatch: ['#F7F4F0', '#EDE6DC', '#D98B52'],
+  },
+  {
+    id: 'dark',
+    label: 'Тёмная',
+    description: 'Как у Locket — глубокий и сдержанный',
+    swatch: ['#0E0D0C', '#1E1C1A', '#D98B52'],
+  },
+]
+
+function ThemeSheet({ onClose }) {
+  const currentTheme = useAppStore((s) => s.currentTheme)
+  const setCurrentTheme = useAppStore((s) => s.setCurrentTheme)
+
+  return (
+    <BottomSheet onClose={onClose} title="Тема приложения">
+      <div className="px-4" style={{ paddingBottom: 24, paddingTop: 8 }}>
+        {THEMES.map((theme) => {
+          const active = currentTheme === theme.id
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              onClick={() => { setCurrentTheme(theme.id); onClose() }}
+              className="flex w-full items-center gap-4 transition-opacity active:opacity-70"
+              style={{
+                border: active ? '2px solid var(--accent)' : '2px solid transparent',
+                borderRadius: 20,
+                background: active ? 'var(--accent-pale)' : 'var(--moment-surface)',
+                padding: '14px 16px',
+                marginBottom: 10,
+                textAlign: 'left',
+                boxShadow: active ? 'var(--shadow-accent)' : 'var(--shadow-card)',
+              }}
+            >
+              {/* Colour swatches */}
+              <div className="flex flex-shrink-0" style={{ gap: 4 }}>
+                {theme.swatch.map((color, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      width: i === 0 ? 28 : 18,
+                      height: 42,
+                      borderRadius: 8,
+                      background: color,
+                      border: '1px solid rgba(0,0,0,0.08)',
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700, margin: 0 }}>
+                  {theme.label}
+                </p>
+                <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 3 }}>
+                  {theme.description}
+                </p>
+              </div>
+              {active && (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" fill="var(--accent)" />
+                  <path d="M7.5 12l3 3 6-6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </BottomSheet>
+  )
+}
+
 // ── Cards ──────────────────────────────────────────────────────────────────────
 
 function PremiumCard({ onOpen }) {
@@ -501,6 +580,51 @@ function PremiumCard({ onOpen }) {
   )
 }
 
+function ThemeCard({ onOpen }) {
+  const currentTheme = useAppStore((s) => s.currentTheme)
+  const isPremium = useAppStore((s) => s.isPremium)
+  const isDark = currentTheme === 'dark'
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-3 rounded-[24px] text-left transition-opacity active:opacity-70"
+      style={{ padding: '16px 18px', marginBottom: 20, backgroundColor: 'var(--moment-surface)', border: 'none', boxShadow: 'var(--shadow-card)' }}
+    >
+      <div
+        className="flex items-center justify-center rounded-[14px] flex-shrink-0"
+        style={{
+          width: 42, height: 42,
+          background: isDark
+            ? 'linear-gradient(135deg, #1E1C1A 0%, #3D2A18 100%)'
+            : 'linear-gradient(135deg, #F7F4F0 0%, #EDE6DC 100%)',
+          border: '1px solid var(--divider)',
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" fill={isDark ? '#D98B52' : '#17140E'} />
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+            stroke={isDark ? '#D98B52' : '#17140E'} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
+          Тема приложения
+        </p>
+        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>
+          {isPremium
+            ? (isDark ? 'Тёмная' : 'Светлая')
+            : 'Только для Premium'}
+        </p>
+      </div>
+      <div className="flex items-center justify-center flex-shrink-0" style={{ color: 'var(--soft)' }}>
+        <ChevronRightIcon />
+      </div>
+    </button>
+  )
+}
+
 function PublicProfileEntryCard({ onOpen }) {
   return (
     <button
@@ -542,6 +666,7 @@ export default function Profile() {
   const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
   const [showPremiumSheet, setShowPremiumSheet] = useState(false)
+  const [showThemeSheet, setShowThemeSheet] = useState(false)
 
   const ownMoments = useMemo(
     () => moments
@@ -695,6 +820,7 @@ export default function Profile() {
 
             <PublicProfileEntryCard onOpen={() => navigate('/profile/preview')} />
             <PremiumCard onOpen={() => setShowPremiumSheet(true)} />
+            <ThemeCard onOpen={() => isPremium ? setShowThemeSheet(true) : setShowPremiumSheet(true)} />
 
             {/* Capsule */}
             <section>
@@ -722,6 +848,10 @@ export default function Profile() {
 
       {showPremiumSheet && (
         <PremiumSheet onClose={() => setShowPremiumSheet(false)} />
+      )}
+
+      {showThemeSheet && (
+        <ThemeSheet onClose={() => setShowThemeSheet(false)} />
       )}
 
       {pickSlot !== null && (

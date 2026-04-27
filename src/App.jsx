@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from 'react'
+import React, { Suspense, lazy, useEffect, useLayoutEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import {
   saveUser,
@@ -49,6 +49,11 @@ export default function App() {
   const setIncomingRequests = useAppStore((s) => s.setIncomingRequests)
   const setIsPremium = useAppStore((s) => s.setIsPremium)
   const setOwnedThemes = useAppStore((s) => s.setOwnedThemes)
+  const currentTheme = useAppStore((s) => s.currentTheme)
+
+  useLayoutEffect(() => {
+    document.documentElement.setAttribute('data-theme', currentTheme)
+  }, [currentTheme])
 
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
