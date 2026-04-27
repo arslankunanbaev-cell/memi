@@ -6,7 +6,7 @@ export default function FAB({ onClick }) {
       className="fixed z-40 flex items-center justify-center transition-transform active:scale-95"
       style={{
         right: 20,
-        bottom: 'calc(max(1rem, env(safe-area-inset-bottom)) + 72px)',
+        bottom: 'calc(max(1rem, env(safe-area-inset-bottom)) + 96px)',
         width: 52,
         height: 52,
         border: 'none',
