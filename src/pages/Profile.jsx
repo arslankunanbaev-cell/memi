@@ -693,7 +693,7 @@ export default function Profile() {
             >
               <div
                 style={{
-                  height: 96,
+                  height: 130,
                   overflow: 'hidden',
                   background: currentUser?.banner_url
                     ? 'none'
