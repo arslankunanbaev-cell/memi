@@ -581,7 +581,7 @@ async function drawPolaroidPhotoFrame(ctx, moment, frame) {
 
   ctx.save()
   ctx.fillStyle = 'rgba(23,20,14,0.88)'
-  ctx.font = '600 58px "Caveat", cursive'
+  ctx.font = '700 64px "Caveat", cursive'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
 
