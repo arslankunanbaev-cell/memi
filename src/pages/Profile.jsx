@@ -114,7 +114,7 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
         <div style={{ position: 'absolute', left: 10, right: 10, bottom: 10 }}>
           <div
             className="font-sans"
-            style={{ display: 'inline-flex', maxWidth: '100%', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: 999, boxShadow: '0 1px 6px rgba(0,0,0,0.14)', color: 'var(--text)', fontSize: 12, fontWeight: 500, overflow: 'hidden', padding: '4px 10px', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            style={{ display: 'inline-flex', maxWidth: '100%', background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderRadius: 999, boxShadow: '0 1px 6px rgba(0,0,0,0.14)', color: '#17140E', fontSize: 12, fontWeight: 500, overflow: 'hidden', padding: '4px 10px', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
           >
             {slot.title || 'Без названия'}
           </div>
