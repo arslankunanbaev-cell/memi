@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
+import PremiumBadge from '../components/PremiumBadge'
 import {
   getUserProfile,
   linkPersonToUser,
@@ -638,14 +639,7 @@ export function PublicProfileContent({
               >
                 {name}
               </p>
-              {profileUserIsPremium && (
-                <span
-                  className="font-sans flex-shrink-0"
-                  style={{ fontSize: 11, fontWeight: 700, color: '#fff', backgroundColor: 'var(--accent)', borderRadius: 999, padding: '2px 8px', letterSpacing: '0.03em' }}
-                >
-                  ⭐ Premium
-                </span>
-              )}
+              {profileUserIsPremium && <PremiumBadge compact />}
             </div>
 
             {since && (

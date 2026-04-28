@@ -122,6 +122,17 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes premiumBadgeGlint {
+  0%, 30% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  42% { opacity: 0.85; }
+  58%, 100% { transform: translateX(140%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes premiumBadgePulse {
+  0%, 100% { transform: scale(1); opacity: 0.68; }
+  50% { transform: scale(1.16); opacity: 0.28; }
+}
+
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
@@ -192,6 +203,102 @@
     position: relative;
   }
 
+  .premium-badge {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 25px;
+    overflow: hidden;
+    border-radius: 999px;
+    padding: 3px 9px 3px 4px;
+    border: 1px solid rgba(255, 226, 163, 0.72);
+    background:
+      linear-gradient(135deg, rgba(255, 248, 220, 0.95) 0%, rgba(245, 184, 99, 0.96) 44%, rgba(160, 94, 44, 0.98) 100%);
+    box-shadow:
+      0 7px 18px rgba(160, 94, 44, 0.26),
+      inset 0 1px 0 rgba(255, 255, 255, 0.62),
+      inset 0 -1px 0 rgba(92, 45, 14, 0.22);
+    color: #FFF8DF;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .premium-badge::before {
+    content: '';
+    position: absolute;
+    inset: -40% 20%;
+    z-index: -1;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.62), transparent);
+    animation: premiumBadgeGlint 4.8s ease-in-out infinite;
+  }
+
+  .premium-badge::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: -2;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle at 24% 18%, rgba(255,255,255,0.82), transparent 26%),
+      linear-gradient(160deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
+    pointer-events: none;
+  }
+
+  .premium-badge-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 35% 26%, #FFFFFF 0%, #FFE7A5 29%, #E9A54E 62%, #A05E2C 100%);
+    color: #8E4D17;
+    box-shadow:
+      0 1px 4px rgba(80, 50, 30, 0.28),
+      inset 0 1px 0 rgba(255,255,255,0.82);
+  }
+
+  .premium-badge-orbit {
+    position: absolute;
+    left: 4px;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: rgba(255, 236, 175, 0.55);
+    animation: premiumBadgePulse 2.8s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .premium-badge-mark {
+    filter: drop-shadow(0 1px 0 rgba(255,255,255,0.45));
+  }
+
+  .premium-badge-label {
+    position: relative;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    text-shadow: 0 1px 2px rgba(80, 50, 30, 0.32);
+  }
+
+  .premium-badge-compact {
+    min-height: 23px;
+    padding-right: 8px;
+  }
+
+  .premium-badge-compact .premium-badge-icon,
+  .premium-badge-compact .premium-badge-orbit {
+    width: 18px;
+    height: 18px;
+  }
+
   html[data-theme="dark"] .bottom-sheet-panel {
     background: var(--card) !important;
     border-top-color: rgba(255, 255, 255, 0.06);
@@ -223,6 +330,16 @@
 
   html[data-theme="dark"] .stats-panel-surface::before {
     background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 72%);
+  }
+
+  html[data-theme="dark"] .premium-badge {
+    border-color: rgba(255, 211, 132, 0.46);
+    background:
+      linear-gradient(135deg, rgba(255, 222, 145, 0.98) 0%, rgba(211, 126, 55, 0.98) 46%, rgba(92, 45, 14, 0.98) 100%);
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.28),
+      0 0 18px rgba(217, 139, 82, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.46);
   }
 
   .animate-fade-in {

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import PremiumBadge from '../components/PremiumBadge'
 import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
@@ -605,7 +606,10 @@ function PremiumRow({ onOpen }) {
           <StarIcon />
         </div>
         <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
-          <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi Premium ⭐</p>
+          <div className="flex items-center gap-2">
+            <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi Premium</p>
+            <PremiumBadge label="активен" compact />
+          </div>
           <p className="font-sans" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
         </div>
         <ChevronRightIcon color="rgba(255,255,255,0.6)" />
@@ -739,14 +743,7 @@ export default function Profile() {
                     <p className="font-sans type-sheet-title truncate" style={{ color: 'var(--text)', margin: 0 }}>
                       {name}
                     </p>
-                    {isPremium && (
-                      <span
-                        className="font-sans flex-shrink-0"
-                        style={{ fontSize: 11, fontWeight: 700, color: '#fff', backgroundColor: 'var(--accent)', borderRadius: 999, padding: '2px 8px', letterSpacing: '0.03em' }}
-                      >
-                        ⭐ Premium
-                      </span>
-                    )}
+                    {isPremium && <PremiumBadge compact />}
                   </div>
 
                   {since && (
