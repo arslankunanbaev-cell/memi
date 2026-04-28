@@ -126,10 +126,6 @@ function StatusBadge({ label }) {
 }
 
 function SectionHeader({ label, count, compact = false }) {
-  if (label === 'Друзья' && !compact) {
-    return null
-  }
-
   return (
     <SectionLabel
       style={{
@@ -145,7 +141,7 @@ function SectionHeader({ label, count, compact = false }) {
 function FriendsHeader({ count, onInvite }) {
   return (
     <div className="flex items-center justify-between gap-3" style={{ marginTop: 10, marginBottom: 12 }}>
-      <SectionHeader label="Друзья" count={count} compact />
+      <SectionHeader label="Друзья в memi" count={count} compact />
 
       <button
         type="button"
@@ -525,6 +521,7 @@ export default function People() {
   const friendsList = mergedPeople.filter((person) => person.isFriend)
   const inMemiList = mergedPeople.filter((person) => person.isInMemi && !person.isFriend)
   const othersList = mergedPeople.filter((person) => !person.isInMemi && !person.isFriend)
+  const localPeopleList = [...inMemiList, ...othersList]
 
   function momentCountFor(personId) {
     return momentCountMap.get(personId) ?? 0
@@ -682,29 +679,6 @@ export default function People() {
 
         <section className="flex flex-col gap-3">
           {friendsList.length > 0 && <FriendsHeader count={friendsList.length} onInvite={handleInvite} />}
-          {friendsList.length > 0 && <SectionHeader label="Друзья" count={friendsList.length} />}
-          {friendsList.length > 0 && (
-            <button
-              type="button"
-              aria-label="Пригласить друга"
-              onClick={handleInvite}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap font-sans transition-opacity active:opacity-70"
-              style={{
-                display: 'none',
-                border: '1px solid rgba(217, 139, 82, 0.18)',
-                borderRadius: 999,
-                backgroundColor: 'rgba(255, 254, 253, 0.92)',
-                boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08)',
-                color: 'var(--accent)',
-                fontSize: 12,
-                fontWeight: 700,
-                padding: '7px 12px',
-              }}
-            >
-              <ShareIcon />
-              Пригласить
-            </button>
-          )}
           {friendsList.map((person, index) => (
             <div
               key={person._fromFriend ? `friend-${person.id}` : person.id}
@@ -722,31 +696,13 @@ export default function People() {
             </div>
           ))}
 
-          {inMemiList.length > 0 && <SectionHeader label="В memi" count={inMemiList.length} />}
-          {inMemiList.map((person, index) => (
+          {localPeopleList.length > 0 && <SectionHeader label="Люди в моментах" count={localPeopleList.length} />}
+          {localPeopleList.map((person, index) => (
             <div
               key={person.id}
               style={{
                 animation: 'fadeSlideUp 0.28s ease both',
                 animationDelay: `${(friendsList.length + index) * 50}ms`,
-              }}
-            >
-              <PersonRow
-                person={person}
-                momentCount={momentCountFor(person.id)}
-                onClick={() => cardClick(person)}
-                {...rowProps(person)}
-              />
-            </div>
-          ))}
-
-          {othersList.length > 0 && <SectionHeader label="Остальные" count={othersList.length} />}
-          {othersList.map((person, index) => (
-            <div
-              key={person.id}
-              style={{
-                animation: 'fadeSlideUp 0.28s ease both',
-                animationDelay: `${(friendsList.length + inMemiList.length + index) * 50}ms`,
               }}
             >
               <PersonRow
@@ -785,7 +741,10 @@ export default function People() {
         {mergedPeople.length === 0 && incomingRequests.length === 0 && (
           <div className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 52 }}>
             <p className="font-sans" style={{ color: 'var(--soft)', fontSize: 15 }}>
-              Пока нет друзей
+              Пока нет людей
+            </p>
+            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, lineHeight: 1.45, marginTop: 8, maxWidth: 260 }}>
+              Добавь близких в моменты или пригласи друзей в memi.
             </p>
             <button
               type="button"

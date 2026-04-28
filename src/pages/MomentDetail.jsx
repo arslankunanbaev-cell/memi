@@ -415,6 +415,62 @@ export default function MomentDetail() {
   }))
 
   const allPeople = [...people, ...taggedFriends]
+  const reactionBlock = (
+    <div style={{ marginBottom: 24 }}>
+      <p
+        className="font-sans font-semibold"
+        style={{
+          color: 'var(--soft)',
+          fontSize: 12,
+          letterSpacing: '0.14em',
+          marginBottom: 12,
+          textTransform: 'uppercase',
+        }}
+      >
+        Реакции
+      </p>
+
+      <div className="flex flex-wrap gap-2">
+        {REACTION_EMOJIS.map((emoji) => {
+          const isSelected = myReaction?.emoji === emoji
+          const count = reactionCounts[emoji] ?? 0
+
+          return (
+            <button
+              key={emoji}
+              type="button"
+              aria-label={`Реакция ${emoji}`}
+              aria-pressed={isSelected}
+              disabled={!currentUser?.id || loadingReactions || Boolean(reactingEmoji)}
+              onClick={() => handleReact(emoji)}
+              className="inline-flex items-center gap-2 rounded-[20px] transition-opacity active:opacity-60"
+              style={{
+                border: 'none',
+                padding: '10px 14px',
+                backgroundColor: isSelected ? 'rgba(217,139,82,0.16)' : 'var(--moment-surface)',
+                color: 'var(--text)',
+                boxShadow: isSelected ? 'inset 0 0 0 1px rgba(217,139,82,0.38)' : 'none',
+                opacity: reactingEmoji && reactingEmoji !== emoji ? 0.72 : 1,
+              }}
+            >
+              <span style={{ fontSize: 20, lineHeight: 1 }}>{emoji}</span>
+              <span
+                className="font-sans"
+                style={{
+                  color: isSelected ? 'var(--deep)' : 'var(--mid)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  minWidth: count > 0 ? 10 : 'auto',
+                }}
+              >
+                {count > 0 ? count : ''}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
@@ -480,61 +536,6 @@ export default function MomentDetail() {
             {formatFull(momentDisplayAt)}
           </p>
 
-          <div style={{ marginBottom: 24 }}>
-            <p
-              className="font-sans font-semibold"
-              style={{
-                color: 'var(--soft)',
-                fontSize: 12,
-                letterSpacing: '0.14em',
-                marginBottom: 12,
-                textTransform: 'uppercase',
-              }}
-            >
-              Реакции
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              {REACTION_EMOJIS.map((emoji) => {
-                const isSelected = myReaction?.emoji === emoji
-                const count = reactionCounts[emoji] ?? 0
-
-                return (
-                  <button
-                    key={emoji}
-                    type="button"
-                    aria-label={`Реакция ${emoji}`}
-                    aria-pressed={isSelected}
-                    disabled={!currentUser?.id || loadingReactions || Boolean(reactingEmoji)}
-                    onClick={() => handleReact(emoji)}
-                    className="inline-flex items-center gap-2 rounded-[20px] transition-opacity active:opacity-60"
-                    style={{
-                      border: 'none',
-                      padding: '10px 14px',
-                      backgroundColor: isSelected ? 'rgba(217,139,82,0.16)' : 'var(--moment-surface)',
-                      color: 'var(--text)',
-                      boxShadow: isSelected ? 'inset 0 0 0 1px rgba(217,139,82,0.38)' : 'none',
-                      opacity: reactingEmoji && reactingEmoji !== emoji ? 0.72 : 1,
-                    }}
-                  >
-                    <span style={{ fontSize: 20, lineHeight: 1 }}>{emoji}</span>
-                    <span
-                      className="font-sans"
-                      style={{
-                        color: isSelected ? 'var(--deep)' : 'var(--mid)',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        minWidth: count > 0 ? 10 : 'auto',
-                      }}
-                    >
-                      {count > 0 ? count : ''}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
           {moment.description && (
             <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.6, marginBottom: 24 }}>
               {moment.description}
@@ -597,6 +598,8 @@ export default function MomentDetail() {
               )}
             </>
           )}
+
+          {reactionBlock}
 
           {isOwn && (
             <div className="flex gap-3">

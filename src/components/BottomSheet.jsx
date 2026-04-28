@@ -52,11 +52,10 @@ export default function BottomSheet({ onClose, title, children }) {
     >
       <div
         ref={sheetRef}
-        className="flex w-full flex-col"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="bottom-sheet-panel"
+        className="bottom-sheet-panel flex w-full flex-col"
         style={{
           position: 'relative',
           background: 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--card) 48%, #F6EFE7 100%)',

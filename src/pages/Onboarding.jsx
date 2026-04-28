@@ -194,8 +194,8 @@ export default function Onboarding() {
       <div className="flex-1 flex flex-col overflow-y-auto px-4 pt-topbar pb-6">
         {/* Heading */}
         <h1
-          className="font-serif"
-          style={{ fontSize: 30, color: 'var(--text)', fontWeight: 400, lineHeight: 1.25 }}
+          className="type-page-title"
+          style={{ color: 'var(--text)', lineHeight: 1.08 }}
         >
           Добавь людей,<br />которых любишь
         </h1>
@@ -232,7 +232,6 @@ export default function Onboarding() {
       {/* Bottom actions */}
       <div
         className="flex flex-col gap-3 px-4 pb-safe"
-        style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
       >
         <button
           onClick={() => setShowSheet(true)}

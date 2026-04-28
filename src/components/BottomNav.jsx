@@ -90,7 +90,8 @@ export default function BottomNav({ active }) {
               style={{
                 border: 'none',
                 background: 'none',
-                padding: '10px 22px',
+                minWidth: 62,
+                padding: '9px 14px',
               }}
             >
               <span style={{ color }}>{tab.icon(color)}</span>

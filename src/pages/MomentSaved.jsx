@@ -27,7 +27,7 @@ export default function MomentSaved() {
       </div>
 
       <div className="flex flex-col items-center gap-2 text-center">
-        <h2 className="font-serif" style={{ fontSize: 26, color: 'var(--text)', fontWeight: 400 }}>
+        <h2 className="type-page-title" style={{ color: 'var(--text)' }}>
           Момент сохранён
         </h2>
         {moment?.title && (

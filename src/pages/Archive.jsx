@@ -5,6 +5,7 @@ import { tgHaptic } from '../lib/telegram'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
@@ -272,24 +273,6 @@ export default function Archive() {
             </p>
 
             <div className="flex items-center gap-2">
-              {moments.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => { tgHaptic('light'); navigate(`/collection/year/${activeYear}`) }}
-                  className="font-sans whitespace-nowrap transition-opacity active:opacity-60"
-                  style={{
-                    border: 'none',
-                    borderRadius: 999,
-                    backgroundColor: 'rgba(217,139,82,0.1)',
-                    color: 'var(--deep)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    padding: '5px 10px',
-                  }}
-                >
-                  Мой {activeYear} ⭐
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => setShowFilter(true)}
@@ -401,83 +384,6 @@ export default function Archive() {
         </div>
       )}
 
-      <div className="px-4" style={{ paddingBottom: 24 }}>
-        <div
-          className="stats-panel-surface"
-          style={{
-            marginTop: filterPeople.length > 0 ? 0 : 8,
-          }}
-        >
-          <div className="grid grid-cols-2" style={{ position: 'relative' }}>
-            {[
-              { label: 'Моментов', value: stats.count },
-              { label: 'Людей', value: stats.people },
-            ].map((card, index) => (
-              <div
-                key={card.label}
-                className="flex flex-col items-center justify-center"
-                style={{
-                  minHeight: 94,
-                  padding: '16px 10px 14px',
-                  borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
-                }}
-              >
-                <span
-                  className="font-sans type-stat-value"
-                  style={{
-                    color: 'var(--accent)',
-                    textAlign: 'center',
-                  }}
-                >
-                  {card.value}
-                </span>
-                <span
-                  className="font-sans type-stat-label"
-                  style={{
-                    marginTop: 8,
-                    color: 'var(--deep)',
-                    textAlign: 'center',
-                  }}
-                >
-                  {card.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {stats.count > 0 && (
-            <button
-              type="button"
-              onClick={() => { tgHaptic('light'); navigate(`/collection/month/${resolvedActiveMonth}`) }}
-              className="flex w-full items-center justify-between font-sans transition-opacity active:opacity-70"
-              style={{
-                border: 'none',
-                borderTop: '1px solid rgba(160, 94, 44, 0.1)',
-                borderRadius: '0 0 20px 20px',
-                background: 'linear-gradient(90deg, rgba(217,139,82,0.07) 0%, rgba(217,139,82,0.03) 100%)',
-                color: 'var(--deep)',
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '13px 18px',
-              }}
-            >
-              <span className="flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
-                  <path d="M3 9h18" stroke="currentColor" strokeWidth="2" />
-                  <path d="M9 3v6M15 3v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                Альбом {RU_MONTHS[Number(resolvedActiveMonth.split('-')[1]) - 1]?.toLowerCase()}
-                <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, letterSpacing: '0.02em' }}>⭐ Premium</span>
-              </span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M9 18l6-6-6-6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
         {monthMoments.length === 0 ? (
           <div
@@ -498,19 +404,68 @@ export default function Archive() {
             </p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-            {monthMoments.map((moment, index) => (
-              <div
-                key={moment.id}
+          <>
+            <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
+              <p className="font-sans type-support" style={{ color: 'var(--mid)', margin: 0 }}>
+                {stats.count} {pluralRu(stats.count, 'момент', 'момента', 'моментов')} · {stats.people} {pluralRu(stats.people, 'человек', 'человека', 'человек')}
+              </p>
+              <button
+                type="button"
+                onClick={() => { tgHaptic('light'); navigate(`/collection/year/${activeYear}`) }}
+                className="font-sans type-meta transition-opacity active:opacity-60"
                 style={{
-                  animation: 'fadeSlideUp 0.25s ease both',
-                  animationDelay: `${index * 40}ms`,
+                  border: 'none',
+                  background: 'none',
+                  color: 'var(--mid)',
+                  padding: 0,
                 }}
               >
-                <GridCell moment={moment} />
-              </div>
-            ))}
-          </div>
+                {activeYear}
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+              {monthMoments.map((moment, index) => (
+                <div
+                  key={moment.id}
+                  style={{
+                    animation: 'fadeSlideUp 0.25s ease both',
+                    animationDelay: `${index * 40}ms`,
+                  }}
+                >
+                  <GridCell moment={moment} />
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { tgHaptic('light'); navigate(`/collection/month/${resolvedActiveMonth}`) }}
+              className="flex w-full items-center justify-between font-sans transition-opacity active:opacity-70"
+              style={{
+                marginTop: 18,
+                border: '1px solid var(--divider)',
+                borderRadius: 18,
+                backgroundColor: 'var(--moment-surface)',
+                color: 'var(--text)',
+                fontSize: 14,
+                fontWeight: 600,
+                padding: '14px 16px',
+              }}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <rect x="3" y="3" width="18" height="18" rx="4" stroke="var(--accent)" strokeWidth="2" />
+                  <path d="M3 9h18" stroke="var(--accent)" strokeWidth="2" />
+                  <path d="M9 3v6M15 3v6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span className="truncate">Собрать альбом месяца</span>
+              </span>
+              <span className="font-sans type-meta" style={{ color: 'var(--accent)', flexShrink: 0 }}>
+                Premium
+              </span>
+            </button>
+          </>
         )}
       </div>
 
