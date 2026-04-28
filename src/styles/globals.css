@@ -216,6 +216,11 @@
     pointer-events: none;
   }
 
+  .stats-panel-surface.music-panel-surface::before,
+  .stats-panel-surface.music-panel-surface::after {
+    display: none;
+  }
+
   .stats-panel-surface .type-stat-value {
     color: var(--accent);
     font-size: 29px;

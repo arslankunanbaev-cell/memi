@@ -44,7 +44,7 @@ function MusicBlock({ title, artist, cover }) {
 
   return (
     <div
-      className="stats-panel-surface flex items-center gap-3"
+      className="stats-panel-surface music-panel-surface flex items-center gap-3"
       style={{
         marginTop: 14,
         padding: '12px 14px',

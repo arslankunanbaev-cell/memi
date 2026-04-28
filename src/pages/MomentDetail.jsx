@@ -118,7 +118,7 @@ function MusicCard({ title, artist, cover }) {
 
   return (
     <div
-      className="stats-panel-surface flex items-center gap-3"
+      className="stats-panel-surface music-panel-surface flex items-center gap-3"
       style={{ padding: '12px 14px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }}
     >
       {safeCover ? (

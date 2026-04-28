@@ -433,7 +433,7 @@ export default function AddMoment({
           <SectionLabel className={outerSectionLabelClassName}>Трек</SectionLabel>
           {song ? (
             <div
-              className="stats-panel-surface flex items-center gap-3"
+              className="stats-panel-surface music-panel-surface flex items-center gap-3"
               style={{ padding: '12px 14px' }}
             >
               {songCover ? (
