@@ -389,6 +389,13 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     if (linkError) throw linkError
   }
 
+  // Notify friends when the moment is shared with them (fire-and-forget)
+  if (normalizedFields.visibility === 'friends') {
+    invokeEdgeFunction(sb, 'send-moment-notification', { momentId: moment.id }).catch((err) => {
+      console.warn('[saveMoment] moment notification failed:', err)
+    })
+  }
+
   return normalizeMomentMedia(moment)
 }
 
