@@ -623,14 +623,6 @@ export function PublicProfileContent({
               {profileUserIsPremium && <PremiumBadge compact />}
             </div>
 
-            <p
-              className="profile-signature-line font-sans type-support"
-              style={{ marginTop: 10 }}
-            >
-              <span>{totalMoments} {statItems[0].label}</span>
-              <span>{totalFriends} {statItems[2].label}</span>
-            </p>
-
             {since && (
               <p
                 className="font-sans type-support"
@@ -703,8 +695,6 @@ export function PublicProfileContent({
                   <span
                     className="font-sans type-stat-value"
                     style={{
-                      color: 'var(--deep)',
-                      fontSize: 27,
                       textAlign: 'center',
                     }}
                   >
@@ -714,7 +704,6 @@ export function PublicProfileContent({
                     className="font-sans type-stat-label"
                     style={{
                       marginTop: 7,
-                      color: 'var(--mid)',
                       textAlign: 'center',
                     }}
                   >

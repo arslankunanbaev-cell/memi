@@ -738,14 +738,6 @@ export default function Profile() {
                     {isPremium && <PremiumBadge compact />}
                   </div>
 
-                  <p
-                    className="profile-signature-line font-sans type-support"
-                    style={{ marginTop: 10 }}
-                  >
-                    <span>{totalMoments} {profileStats[0].label}</span>
-                    <span>{totalFriends} {profileStats[2].label}</span>
-                  </p>
-
                   {since && (
                     <p
                       className="font-sans type-support"
@@ -772,10 +764,10 @@ export default function Profile() {
                         className="flex flex-col items-center justify-center"
                         style={{ minHeight: 78, padding: '13px 10px 12px', borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)' }}
                       >
-                        <span className="font-sans type-stat-value" style={{ color: 'var(--deep)', fontSize: 27, textAlign: 'center' }}>
+                        <span className="font-sans type-stat-value" style={{ textAlign: 'center' }}>
                           {item.value}
                         </span>
-                        <span className="font-sans type-stat-label" style={{ marginTop: 7, color: 'var(--mid)', textAlign: 'center' }}>
+                        <span className="font-sans type-stat-label" style={{ marginTop: 7, textAlign: 'center' }}>
                           {item.label}
                         </span>
                       </div>
