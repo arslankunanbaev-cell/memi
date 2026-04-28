@@ -358,18 +358,11 @@ function FeaturedMomentCard({ moment, onClick }) {
           }
         : {})}
     >
-      <div
-        style={{
-          backgroundColor: 'var(--moment-surface)',
-          borderRadius: 20,
-          overflow: 'hidden',
-          boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
-        }}
-      >
+      <div className="featured-memory-card">
         <div
           style={{
             position: 'relative',
-            aspectRatio: '4 / 3',
+            aspectRatio: '5 / 4',
             background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)',
           }}
         >
@@ -377,9 +370,9 @@ function FeaturedMomentCard({ moment, onClick }) {
           <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         )}
 
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.55) 0%, transparent 58%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.72) 0%, rgba(23,20,14,0.2) 54%, transparent 100%)' }} />
 
-        <div style={{ position: 'absolute', left: 14, bottom: 14 }}>
+        <div style={{ position: 'absolute', left: 16, right: 16, bottom: 16 }}>
           <div
             className="font-sans"
             style={{
@@ -395,26 +388,26 @@ function FeaturedMomentCard({ moment, onClick }) {
           >
             Главное воспоминание
           </div>
-        </div>
-
-        </div>
-
-        <div style={{ padding: '14px 16px 16px' }}>
-        <p
-          className="font-sans"
-          style={{
-            margin: 0,
-            color: 'var(--text)',
-            fontSize: 15,
-            fontWeight: 600,
-          }}
-        >
-          {moment.title || 'Без названия'}
-        </p>
-          <p className="font-sans" style={{ marginTop: 4, fontSize: 12, color: 'var(--mid)' }}>
+          <p
+            className="font-sans"
+            style={{
+              margin: '10px 0 0',
+              color: '#fff',
+              fontSize: 21,
+              fontWeight: 700,
+              lineHeight: 1.12,
+              textShadow: '0 2px 12px rgba(0,0,0,0.34)',
+            }}
+          >
+            {moment.title || 'Без названия'}
+          </p>
+          <p className="font-sans" style={{ marginTop: 5, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.78)' }}>
             {sinceLabel(getMomentDisplayAt(moment))}
           </p>
         </div>
+
+        </div>
+
       </div>
     </CardTag>
   )
@@ -565,18 +558,14 @@ export function PublicProfileContent({
       {topContent && <div style={{ marginTop: 24, marginBottom: 16 }}>{topContent}</div>}
 
       <div
+        className="profile-hero-card"
         style={{
           marginTop: topContent ? 0 : 24,
-          backgroundColor: 'var(--moment-surface)',
-          borderRadius: 28,
-          overflow: 'hidden',
-          boxShadow: '0 10px 28px rgba(80,50,30,0.14)',
         }}
       >
         <div
+          className="profile-hero-cover"
           style={{
-            height: 130,
-            overflow: 'hidden',
             background: profileUser.banner_url
               ? 'none'
               : `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
@@ -594,36 +583,28 @@ export function PublicProfileContent({
         </div>
 
         <div style={{ padding: '0 20px 20px' }}>
-          <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
+          <div className="flex items-end gap-3" style={{ marginTop: -38 }}>
           <div
-            className="flex items-center justify-center rounded-full flex-shrink-0 overflow-hidden"
-            style={{
-              width: 68,
-              height: 68,
-              background: 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 100%)',
-              color: '#fff',
-              fontSize: 26,
-              fontWeight: 700,
-              border: '4px solid var(--moment-surface)',
-              boxShadow: '0 6px 18px rgba(80,50,30,0.18)',
-            }}
+            className={`profile-avatar-shell flex-shrink-0${profileUserIsPremium ? ' is-premium' : ''}`}
           >
-            {profileUser.photo_url ? (
-              <img
-                src={profileUser.photo_url}
-                alt={name}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }}
-                onError={(event) => {
-                  event.currentTarget.style.display = 'none'
-                }}
-              />
-            ) : (
-              <span>{name[0]?.toUpperCase()}</span>
-            )}
+            <div className="profile-avatar flex items-center justify-center">
+              {profileUser.photo_url ? (
+                <img
+                  src={profileUser.photo_url}
+                  alt={name}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                  onError={(event) => {
+                    event.currentTarget.style.display = 'none'
+                  }}
+                />
+              ) : (
+                <span>{name[0]?.toUpperCase()}</span>
+              )}
+            </div>
           </div>
 
           </div>
@@ -641,6 +622,14 @@ export function PublicProfileContent({
               </p>
               {profileUserIsPremium && <PremiumBadge compact />}
             </div>
+
+            <p
+              className="profile-signature-line font-sans type-support"
+              style={{ marginTop: 10 }}
+            >
+              <span>{totalMoments} {statItems[0].label}</span>
+              <span>{totalFriends} {statItems[2].label}</span>
+            </p>
 
             {since && (
               <p
@@ -680,14 +669,11 @@ export function PublicProfileContent({
           <button
             type="button"
             onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
-            className="inline-flex items-center gap-2 font-sans type-chip transition-opacity active:opacity-60"
+            className="profile-linked-chip font-sans type-chip transition-opacity active:opacity-60"
             style={{
               marginTop: bio ? 14 : 16,
-              backgroundColor: linkedPerson ? 'rgba(217, 139, 82, 0.1)' : 'var(--base)',
-              border: '1px solid rgba(160, 94, 44, 0.12)',
-              borderRadius: 9999,
-              padding: '8px 12px',
-              color: linkedPerson ? 'var(--accent)' : 'var(--mid)',
+              padding: '7px 11px',
+              color: linkedPerson ? 'var(--deep)' : 'var(--mid)',
             }}
           >
             <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
@@ -709,15 +695,16 @@ export function PublicProfileContent({
                   key={item.label}
                   className="flex flex-col items-center justify-center"
                   style={{
-                    minHeight: 94,
-                    padding: '16px 10px 14px',
+                    minHeight: 78,
+                    padding: '13px 10px 12px',
                     borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)',
                   }}
                 >
                   <span
                     className="font-sans type-stat-value"
                     style={{
-                      color: 'var(--accent)',
+                      color: 'var(--deep)',
+                      fontSize: 27,
                       textAlign: 'center',
                     }}
                   >
@@ -726,8 +713,8 @@ export function PublicProfileContent({
                   <span
                     className="font-sans type-stat-label"
                     style={{
-                      marginTop: 8,
-                      color: 'var(--deep)',
+                      marginTop: 7,
+                      color: 'var(--mid)',
                       textAlign: 'center',
                     }}
                   >
@@ -827,32 +814,33 @@ export function PublicProfileContent({
                       ? {
                           type: 'button',
                           onClick: () => onMomentPress(moment),
-                          className: 'flex w-full items-center gap-3 text-left transition-transform duration-150 ease-out active:scale-[0.99]',
+                          className: 'memory-row-card flex w-full items-center gap-3 text-left transition-transform duration-150 ease-out active:scale-[0.99]',
                           style: {
-                            border: 'none',
+                            border: '1px solid rgba(160, 94, 44, 0.08)',
                             backgroundColor: 'var(--moment-surface)',
-                            borderRadius: 18,
-                            padding: '13px 14px',
-                            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                            borderRadius: 20,
+                            padding: '12px 13px',
                           },
                         }
                       : {
-                          className: 'flex items-center gap-3',
+                          className: 'memory-row-card flex items-center gap-3',
                           style: {
+                            border: '1px solid rgba(160, 94, 44, 0.08)',
                             backgroundColor: 'var(--moment-surface)',
-                            borderRadius: 18,
-                            padding: '13px 14px',
-                            boxShadow: '0 4px 20px rgba(80,50,30,0.12)',
+                            borderRadius: 20,
+                            padding: '12px 13px',
                           },
                         })}
                   >
                   <div
                     style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 12,
+                      width: 54,
+                      height: 54,
+                      borderRadius: 15,
                       overflow: 'hidden',
                       flexShrink: 0,
+                      border: '1px solid rgba(255,255,255,0.76)',
+                      boxShadow: '0 5px 14px rgba(80,50,30,0.12)',
                       background: moment.photo_url
                         ? 'none'
                         : 'linear-gradient(135deg, #E8D5C0, #C8A880)',

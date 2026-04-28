@@ -62,12 +62,12 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
       <button
         type="button"
         onClick={onEmpty}
-        className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
+        className="capsule-photo-frame flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-60"
         style={{
           aspectRatio: '3 / 4',
-          borderRadius: 20,
-          border: '1.5px dashed var(--accent-light)',
-          background: 'repeating-linear-gradient(45deg, var(--card-alt), var(--card-alt) 4px, var(--base) 4px, var(--base) 12px)',
+          borderRadius: 22,
+          border: '1.5px dashed rgba(160, 94, 44, 0.28)',
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.52), rgba(237,230,220,0.72))',
         }}
       >
         <div
@@ -90,12 +90,12 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
       <button
         type="button"
         onClick={() => setShowMenu(true)}
-        className="transition-opacity active:opacity-80"
+        className="capsule-photo-frame transition-opacity active:opacity-80"
         style={{
           position: 'relative',
           aspectRatio: '3 / 4',
           border: 'none',
-          borderRadius: 20,
+          borderRadius: 22,
           overflow: 'hidden',
           padding: 0,
           boxShadow: 'var(--shadow-card)',
@@ -693,12 +693,12 @@ export default function Profile() {
           <div className="hide-scrollbar flex-1 overflow-y-auto px-4 pb-nav-clearance pt-topbar">
             {/* Profile card */}
             <section
-              style={{ marginBottom: 24, backgroundColor: 'var(--moment-surface)', borderRadius: 28, overflow: 'hidden', boxShadow: '0 10px 28px rgba(80,50,30,0.14)' }}
+              className="profile-hero-card"
+              style={{ marginBottom: 24 }}
             >
               <div
+                className="profile-hero-cover"
                 style={{
-                  height: 130,
-                  overflow: 'hidden',
                   background: currentUser?.banner_url
                     ? 'none'
                     : `radial-gradient(circle at top right, rgba(255,255,255,0.34), transparent 34%),
@@ -711,30 +711,22 @@ export default function Profile() {
               </div>
 
               <div style={{ padding: '0 20px 20px' }}>
-                <div className="flex items-end gap-3" style={{ marginTop: -34 }}>
+                <div className="flex items-end gap-3" style={{ marginTop: -38 }}>
                   <div
-                    className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
-                    style={{
-                      width: 68,
-                      height: 68,
-                      background: currentUser?.photo_url ? 'transparent' : 'linear-gradient(160deg, var(--deep) 0%, var(--accent) 100%)',
-                      border: '4px solid var(--moment-surface)',
-                      color: '#fff',
-                      fontSize: 26,
-                      fontWeight: 700,
-                      boxShadow: '0 6px 18px rgba(80,50,30,0.18)',
-                    }}
+                    className={`profile-avatar-shell flex-shrink-0${isPremium ? ' is-premium' : ''}`}
                   >
-                    {currentUser?.photo_url ? (
-                      <img
-                        src={currentUser.photo_url}
-                        alt={name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        onError={(event) => { event.currentTarget.style.display = 'none' }}
-                      />
-                    ) : (
-                      name[0]?.toUpperCase() ?? 'M'
-                    )}
+                    <div className="profile-avatar flex items-center justify-center">
+                      {currentUser?.photo_url ? (
+                        <img
+                          src={currentUser.photo_url}
+                          alt={name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(event) => { event.currentTarget.style.display = 'none' }}
+                        />
+                      ) : (
+                        name[0]?.toUpperCase() ?? 'M'
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -745,6 +737,14 @@ export default function Profile() {
                     </p>
                     {isPremium && <PremiumBadge compact />}
                   </div>
+
+                  <p
+                    className="profile-signature-line font-sans type-support"
+                    style={{ marginTop: 10 }}
+                  >
+                    <span>{totalMoments} {profileStats[0].label}</span>
+                    <span>{totalFriends} {profileStats[2].label}</span>
+                  </p>
 
                   {since && (
                     <p
@@ -770,12 +770,12 @@ export default function Profile() {
                       <div
                         key={item.label}
                         className="flex flex-col items-center justify-center"
-                        style={{ minHeight: 94, padding: '16px 10px 14px', borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)' }}
+                        style={{ minHeight: 78, padding: '13px 10px 12px', borderLeft: index === 0 ? 'none' : '1px solid rgba(160, 94, 44, 0.1)' }}
                       >
-                        <span className="font-sans type-stat-value" style={{ color: 'var(--accent)', textAlign: 'center' }}>
+                        <span className="font-sans type-stat-value" style={{ color: 'var(--deep)', fontSize: 27, textAlign: 'center' }}>
                           {item.value}
                         </span>
-                        <span className="font-sans type-stat-label" style={{ marginTop: 8, color: 'var(--deep)', textAlign: 'center' }}>
+                        <span className="font-sans type-stat-label" style={{ marginTop: 7, color: 'var(--mid)', textAlign: 'center' }}>
                           {item.label}
                         </span>
                       </div>
@@ -799,16 +799,18 @@ export default function Profile() {
                   {filledSlots} / {capsule.length}
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                {capsule.map((slot, index) => (
-                  <CapsuleTile
-                    key={index}
-                    slot={slot}
-                    index={index}
-                    onEmpty={() => setPickSlot(index)}
-                    onFilled={() => handleRemoveFromCapsule(index)}
-                  />
-                ))}
+              <div className="capsule-frame">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {capsule.map((slot, index) => (
+                    <CapsuleTile
+                      key={index}
+                      slot={slot}
+                      index={index}
+                      onEmpty={() => setPickSlot(index)}
+                      onFilled={() => handleRemoveFromCapsule(index)}
+                    />
+                  ))}
+                </div>
               </div>
             </section>
 
