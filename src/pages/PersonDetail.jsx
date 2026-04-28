@@ -139,6 +139,15 @@ function CameraIcon({ color = 'currentColor' }) {
   )
 }
 
+function DownloadIcon({ color = 'currentColor' }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v12M7 10l5 5 5-5" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 20h14" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function ChevronDownIcon({ color = 'var(--mid)' }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -150,6 +159,143 @@ function ChevronDownIcon({ color = 'var(--mid)' }) {
         strokeLinejoin="round"
       />
     </svg>
+  )
+}
+
+function PersonExportCard({ person, moments, onClick }) {
+  const previewMoments = moments.slice(0, 3)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full overflow-hidden text-left transition-opacity active:opacity-75"
+      style={{
+        border: '1px solid rgba(217, 139, 82, 0.18)',
+        borderRadius: 28,
+        background: `
+          radial-gradient(circle at 18% 0%, rgba(255,255,255,0.88), transparent 38%),
+          linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(245,235,221,0.92) 56%, rgba(217,139,82,0.16) 100%)
+        `,
+        boxShadow: '0 14px 34px rgba(80,50,30,0.13), inset 0 1px 0 rgba(255,255,255,0.78)',
+        padding: 16,
+      }}
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className="relative"
+          style={{
+            width: 106,
+            height: 118,
+            flexShrink: 0,
+          }}
+        >
+          {previewMoments.map((moment, index) => (
+            <div
+              key={moment.id}
+              className="absolute overflow-hidden"
+              style={{
+                left: index === 0 ? 0 : index === 1 ? 34 : 58,
+                top: index === 0 ? 16 : index === 1 ? 0 : 42,
+                width: index === 0 ? 58 : 48,
+                height: index === 0 ? 76 : 60,
+                borderRadius: 16,
+                border: '2px solid rgba(255,255,255,0.92)',
+                background: moment.photo_url
+                  ? 'var(--accent-pale)'
+                  : 'linear-gradient(160deg, var(--deep), var(--accent))',
+                boxShadow: '0 8px 18px rgba(80,50,30,0.18)',
+              }}
+            >
+              {moment.photo_url && (
+                <img
+                  src={moment.photo_url}
+                  alt={moment.title || 'Момент'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              )}
+            </div>
+          ))}
+
+          <div
+            className="absolute flex items-center justify-center"
+            style={{
+              right: 0,
+              bottom: 0,
+              width: 42,
+              height: 42,
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, var(--accent), var(--deep))',
+              color: '#fff',
+              boxShadow: '0 10px 22px rgba(160,94,44,0.28)',
+            }}
+          >
+            <DownloadIcon color="#fff" />
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
+            <span
+              className="font-sans"
+              style={{
+                borderRadius: 999,
+                backgroundColor: 'rgba(217,139,82,0.13)',
+                color: 'var(--deep)',
+                fontSize: 11,
+                fontWeight: 800,
+                lineHeight: 1,
+                padding: '6px 9px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Premium
+            </span>
+            <span className="font-sans" style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 700 }}>★</span>
+          </div>
+
+          <p
+            className="font-serif"
+            style={{
+              margin: 0,
+              color: 'var(--text)',
+              fontSize: 25,
+              fontWeight: 600,
+              lineHeight: 1.02,
+            }}
+          >
+            Скачать ваши моменты
+          </p>
+          <p
+            className="font-sans"
+            style={{
+              margin: '7px 0 0',
+              color: 'var(--mid)',
+              fontSize: 13,
+              fontWeight: 500,
+              lineHeight: 1.38,
+            }}
+          >
+            Постер-коллаж с {person.name}: тот же красивый стиль, что у месяца и года.
+          </p>
+        </div>
+
+        <div
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 34,
+            height: 34,
+            flexShrink: 0,
+            backgroundColor: 'rgba(255,255,255,0.72)',
+            color: 'var(--accent)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+    </button>
   )
 }
 
@@ -856,40 +1002,19 @@ export default function PersonDetail() {
                 ))}
               </div>
 
-              {momentCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => { tgHaptic('light'); navigate(`/collection/person/${id}`) }}
-                  className="flex w-full items-center justify-between font-sans transition-opacity active:opacity-70"
-                  style={{
-                    border: 'none',
-                    borderTop: '1px solid rgba(160, 94, 44, 0.1)',
-                    borderRadius: '0 0 20px 20px',
-                    background: 'linear-gradient(90deg, rgba(217,139,82,0.07) 0%, rgba(217,139,82,0.03) 100%)',
-                    color: 'var(--deep)',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    padding: '13px 18px',
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <rect x="2" y="3" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
-                      <rect x="13" y="3" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
-                      <rect x="2" y="14" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
-                      <rect x="13" y="14" width="9" height="7" rx="2" stroke="currentColor" strokeWidth="2" />
-                    </svg>
-                    Наши моменты — создать коллаж
-                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700 }}>⭐</span>
-                  </span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M9 18l6-6-6-6" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              )}
             </div>
           </div>
         </div>
+
+        {momentCount > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <PersonExportCard
+              person={person}
+              moments={personMoments}
+              onClick={() => { tgHaptic('light'); navigate(`/collection/person/${id}`) }}
+            />
+          </div>
+        )}
 
         <section style={{ marginTop: 26 }}>
           <div className="flex items-center justify-between gap-3">

@@ -12,15 +12,10 @@ import { useAppStore } from '../store/useAppStore'
 
 const W = 1080
 const H = 1920
-const GRID_COLS = 3
-const GRID_ROWS = 3
-const GRID_PAD_X = 48
-const GRID_GAP = 8
-const CELL_W = Math.floor((W - GRID_PAD_X * 2 - GRID_GAP * (GRID_COLS - 1)) / GRID_COLS)
-const CELL_H = CELL_W
-const GRID_H = GRID_ROWS * CELL_H + GRID_GAP * (GRID_ROWS - 1)
-const GRID_Y = 470
-const GRID_BOTTOM = GRID_Y + GRID_H
+const POSTER_X = 56
+const POSTER_Y = 532
+const POSTER_W = W - POSTER_X * 2
+const POSTER_BOTTOM = 1616
 
 const MONTH_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь']
 const MONTH_NOM_CAP = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
@@ -65,6 +60,36 @@ function drawSoftGlow(ctx, x, y, radius, color, alpha = 1) {
   ctx.restore()
 }
 
+function drawPremiumPill(ctx, text, x, y, dark = false, align = 'center') {
+  ctx.save()
+  ctx.font = '700 22px Inter, sans-serif'
+  const padX = 22
+  const width = Math.ceil(ctx.measureText(text).width + padX * 2)
+  const height = 42
+  const left = align === 'center' ? x - width / 2 : x
+
+  const g = ctx.createLinearGradient(left, y, left + width, y + height)
+  if (dark) {
+    g.addColorStop(0, 'rgba(217,139,82,0.24)')
+    g.addColorStop(1, 'rgba(255,244,231,0.08)')
+  } else {
+    g.addColorStop(0, 'rgba(255,255,255,0.92)')
+    g.addColorStop(1, 'rgba(245,235,221,0.72)')
+  }
+
+  fillRoundRect(ctx, left, y, width, height, 21, g)
+  ctx.strokeStyle = dark ? 'rgba(255,244,231,0.12)' : 'rgba(217,139,82,0.2)'
+  ctx.lineWidth = 1.5
+  roundRect(ctx, left, y, width, height, 21)
+  ctx.stroke()
+
+  ctx.fillStyle = dark ? 'rgba(255,244,231,0.88)' : '#A05E2C'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(text, left + width / 2, y + height / 2 + 1)
+  ctx.restore()
+}
+
 function trimToWidth(ctx, text, maxWidth) {
   if (!text) return ''
   if (ctx.measureText(text).width <= maxWidth) return text
@@ -83,7 +108,14 @@ async function loadImage(src) {
   })
 }
 
-async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false) {
+async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false, options = {}) {
+  ctx.save()
+  ctx.shadowColor = dark ? 'rgba(0,0,0,0.42)' : 'rgba(80,50,30,0.22)'
+  ctx.shadowBlur = options.featured ? 30 : 18
+  ctx.shadowOffsetY = options.featured ? 16 : 10
+  fillRoundRect(ctx, x, y, w, h, r, dark ? '#261B15' : '#FFFFFF')
+  ctx.restore()
+
   clipRoundRect(ctx, x, y, w, h, r)
 
   if (moment?.photo_url) {
@@ -111,16 +143,31 @@ async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false) {
   ctx.clip()
   const overlay = ctx.createLinearGradient(x, y + h * 0.4, x, y + h)
   overlay.addColorStop(0, 'rgba(0,0,0,0)')
-  overlay.addColorStop(1, 'rgba(0,0,0,0.6)')
+  overlay.addColorStop(0.72, 'rgba(0,0,0,0.28)')
+  overlay.addColorStop(1, 'rgba(0,0,0,0.68)')
   ctx.fillStyle = overlay
   ctx.fillRect(x, y, w, h)
 
+  if (options.badge) {
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.font = `700 ${Math.round(w * 0.055)}px Inter, sans-serif`
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'top'
+    ctx.fillText(options.badge, x + w - 18, y + 16)
+  }
+
   if (moment?.title) {
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.font = `600 ${Math.round(w * 0.075)}px Inter, sans-serif`
+    ctx.font = `700 ${Math.min(28, Math.max(18, Math.round(w * 0.062)))}px Inter, sans-serif`
+    ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
-    ctx.fillText(trimToWidth(ctx, moment.title, w - 20), x + 10, y + h - 10)
+    ctx.fillText(trimToWidth(ctx, moment.title, w - 34), x + 17, y + h - 16)
   }
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.42)'
+  ctx.lineWidth = 2
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1))
+  ctx.stroke()
 
   ctx.restore()
 }
@@ -156,16 +203,55 @@ function drawPlaceholder(ctx, x, y, w, h, r, dark) {
   ctx.restore()
 }
 
-async function drawGrid(ctx, moments, dark) {
-  const slots = GRID_COLS * GRID_ROWS
-  const displayed = Math.min(moments.length, slots)
+function collageSlots() {
+  return [
+    { x: POSTER_X, y: POSTER_Y, w: 472, h: 472, r: 30, featured: true },
+    { x: 544, y: POSTER_Y, w: 226, h: 226, r: 24 },
+    { x: 786, y: POSTER_Y, w: 238, h: 226, r: 24 },
+    { x: 544, y: 774, w: 226, h: 230, r: 24 },
+    { x: 786, y: 774, w: 238, h: 230, r: 24 },
+    { x: POSTER_X, y: 1032, w: 304, h: 304, r: 26 },
+    { x: 376, y: 1032, w: 304, h: 304, r: 26 },
+    { x: 696, y: 1032, w: 328, h: 304, r: 26 },
+    { x: POSTER_X, y: 1360, w: POSTER_W, h: 256, r: 30 },
+  ]
+}
 
-  for (let i = 0; i < slots; i++) {
-    const col = i % GRID_COLS
-    const row = Math.floor(i / GRID_COLS)
-    const x = GRID_PAD_X + col * (CELL_W + GRID_GAP)
-    const y = GRID_Y + row * (CELL_H + GRID_GAP)
-    await drawPhotoCell(ctx, i < displayed ? moments[i] : null, x, y, CELL_W, CELL_H, 20, dark)
+async function drawPremiumCollage(ctx, moments, dark) {
+  const frameG = ctx.createLinearGradient(POSTER_X - 22, POSTER_Y - 28, POSTER_X + POSTER_W + 22, POSTER_BOTTOM)
+  if (dark) {
+    frameG.addColorStop(0, 'rgba(255,244,231,0.09)')
+    frameG.addColorStop(1, 'rgba(217,139,82,0.05)')
+  } else {
+    frameG.addColorStop(0, 'rgba(255,255,255,0.86)')
+    frameG.addColorStop(1, 'rgba(237,230,220,0.58)')
+  }
+
+  ctx.save()
+  ctx.shadowColor = dark ? 'rgba(0,0,0,0.35)' : 'rgba(80,50,30,0.16)'
+  ctx.shadowBlur = 44
+  ctx.shadowOffsetY = 22
+  fillRoundRect(ctx, POSTER_X - 22, POSTER_Y - 28, POSTER_W + 44, POSTER_BOTTOM - POSTER_Y + 56, 42, frameG)
+  ctx.restore()
+
+  ctx.save()
+  ctx.strokeStyle = dark ? 'rgba(255,244,231,0.08)' : 'rgba(160,94,44,0.12)'
+  ctx.lineWidth = 2
+  roundRect(ctx, POSTER_X - 22, POSTER_Y - 28, POSTER_W + 44, POSTER_BOTTOM - POSTER_Y + 56, 42)
+  ctx.stroke()
+  ctx.restore()
+
+  const slots = collageSlots()
+  const sorted = moments.slice(0, slots.length)
+  for (let i = 0; i < slots.length; i++) {
+    const slot = slots[i]
+    const more = i === slots.length - 1 && moments.length > slots.length
+      ? `+${moments.length - slots.length}`
+      : null
+    await drawPhotoCell(ctx, sorted[i] ?? null, slot.x, slot.y, slot.w, slot.h, slot.r, dark, {
+      featured: slot.featured,
+      badge: more,
+    })
   }
 }
 
@@ -256,9 +342,10 @@ async function drawWarm(canvas, data) {
   ctx.fillRect(0, 0, W, H)
   drawSoftGlow(ctx, W * 0.72, H * 0.12, W * 0.38, 'rgba(255,255,255,0.9)', 1)
   drawSoftGlow(ctx, W * 0.26, H * 0.36, W * 0.3, 'rgba(233,210,188,0.7)', 0.8)
+  drawSoftGlow(ctx, W * 0.86, H * 0.78, W * 0.28, 'rgba(217,139,82,0.16)', 0.7)
 
   await drawHeader(ctx, data, false)
-  await drawGrid(ctx, data.moments, false)
+  await drawPremiumCollage(ctx, data.moments, false)
   drawFooter(ctx, data, false)
 }
 
@@ -276,9 +363,10 @@ async function drawDark(canvas, data) {
   ctx.fillRect(0, 0, W, H)
   drawSoftGlow(ctx, W * 0.78, H * 0.12, W * 0.32, 'rgba(217,139,82,0.18)', 1)
   drawSoftGlow(ctx, W * 0.28, H * 0.3, W * 0.26, 'rgba(133,79,44,0.16)', 0.7)
+  drawSoftGlow(ctx, W * 0.84, H * 0.78, W * 0.28, 'rgba(217,139,82,0.1)', 0.9)
 
   await drawHeader(ctx, data, true)
-  await drawGrid(ctx, data.moments, true)
+  await drawPremiumCollage(ctx, data.moments, true)
   drawFooter(ctx, data, true)
 }
 
@@ -294,73 +382,68 @@ async function drawHeader(ctx, data, dark) {
   ctx.fillStyle = accentColor
   ctx.font = '600 36px "Cormorant Garamond", Georgia, serif'
   ctx.fillText('memi', cx, 64)
+  drawPremiumPill(ctx, 'premium memory card', cx, 112, dark)
 
   if (data.type === 'person') {
-    const avatarY = 155
-    if (data.person) await drawPersonAvatar(ctx, data.person, cx, avatarY + 68, 136)
+    const avatarY = 166
+    if (data.person) await drawPersonAvatar(ctx, data.person, cx, avatarY + 58, 116)
 
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.fillStyle = textColor
-    ctx.font = `600 62px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText('Наши моменты', cx, 285)
+    ctx.font = `600 72px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText('Наши моменты', cx, 300)
 
     ctx.fillStyle = accentColor
-    ctx.font = '600 34px Inter, sans-serif'
-    ctx.fillText(`с ${data.person?.name ?? '…'}`, cx, 360)
+    ctx.font = '700 34px Inter, sans-serif'
+    ctx.fillText(`с ${data.person?.name ?? '…'}`, cx, 380)
 
     ctx.fillStyle = midColor
     ctx.font = '500 26px Inter, sans-serif'
-    ctx.fillText(data.statsLine, cx, 410)
+    ctx.fillText(data.statsLine, cx, 426)
 
   } else if (data.type === 'month') {
     const [year, month] = data.key.split('-')
     const monthName = MONTH_NOM[Number(month) - 1] ?? ''
 
     ctx.fillStyle = textColor
-    ctx.font = `600 78px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText(`Мой ${monthName}`, cx, 130)
+    ctx.font = `600 92px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText(`Мой ${monthName}`, cx, 178)
 
     ctx.fillStyle = midColor
-    ctx.font = '500 30px Inter, sans-serif'
-    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 235)
+    ctx.font = '600 30px Inter, sans-serif'
+    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 292)
 
-    ctx.fillStyle = accentColor
-    ctx.font = '600 26px Inter, sans-serif'
-    ctx.fillText(data.statsLine, cx, 292)
+    drawPremiumPill(ctx, data.statsLine, cx, 346, dark)
 
   } else if (data.type === 'year') {
     ctx.fillStyle = accentColor
-    ctx.font = `700 130px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText(data.key, cx, 108)
+    ctx.font = `700 138px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText(data.key, cx, 150)
 
     ctx.fillStyle = textColor
-    ctx.font = `600 54px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText('Мой год', cx, 268)
+    ctx.font = `600 62px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText('Мой год', cx, 306)
 
     ctx.fillStyle = midColor
-    ctx.font = '500 28px Inter, sans-serif'
-    ctx.fillText('год в воспоминаниях', cx, 342)
+    ctx.font = '600 28px Inter, sans-serif'
+    ctx.fillText('год в воспоминаниях', cx, 382)
 
-    ctx.fillStyle = accentColor
-    ctx.font = '600 26px Inter, sans-serif'
-    ctx.fillText(data.statsLine, cx, 400)
+    drawPremiumPill(ctx, data.statsLine, cx, 434, dark)
   }
 }
 
 function drawFooter(ctx, data, dark) {
-  const midColor = dark ? 'rgba(245,235,221,0.38)' : '#B8A898'
-  const accentColor = '#D98B52'
   const cx = W / 2
 
   // Separator
-  const sepY = GRID_BOTTOM + 42
+  const sepY = POSTER_BOTTOM + 52
   ctx.save()
   ctx.strokeStyle = dark ? 'rgba(255,244,230,0.1)' : 'rgba(160,94,44,0.12)'
   ctx.lineWidth = 1.5
   ctx.beginPath()
-  ctx.moveTo(GRID_PAD_X * 2, sepY)
-  ctx.lineTo(W - GRID_PAD_X * 2, sepY)
+  ctx.moveTo(POSTER_X + 40, sepY)
+  ctx.lineTo(W - POSTER_X - 40, sepY)
   ctx.stroke()
   ctx.restore()
 
@@ -681,7 +764,7 @@ export default function CollectionExport() {
 
     render()
     return () => { cancelled = true }
-  }, [template, data])
+  }, [activeTemplate, data])
 
   async function getFile() {
     if (!canvasRef.current) return null
