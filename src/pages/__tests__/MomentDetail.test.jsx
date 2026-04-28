@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useAppStore } from '../../store/useAppStore.js'
 import MomentDetail from '../MomentDetail.jsx'
@@ -143,5 +143,32 @@ describe('MomentDetail', () => {
     })
 
     expect(screen.getByRole('button', { name: 'Реакция 🔥' })).toHaveTextContent('2')
+  })
+
+  it('navigates back from a left-edge swipe', () => {
+    mockLocation.state = {}
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      moments: [{
+        id: 'moment-public',
+        user_id: 'user-1',
+        title: 'Swipe Memory',
+        created_at: '2024-02-01T10:00:00Z',
+        photo_url: null,
+        people: [],
+        taggedFriends: [],
+      }],
+      friends: [],
+      capsule: [null, null, null, null],
+    })
+
+    const { container } = render(<MomentDetail />)
+    const page = container.firstChild
+
+    fireEvent.touchStart(page, { touches: [{ clientX: 12, clientY: 220 }] })
+    fireEvent.touchMove(page, { touches: [{ clientX: 64, clientY: 226 }] })
+    fireEvent.touchEnd(page, { changedTouches: [{ clientX: 112, clientY: 228 }] })
+
+    expect(mockNavigate).toHaveBeenCalledWith(-1)
   })
 })

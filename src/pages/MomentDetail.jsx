@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import {
@@ -34,6 +34,9 @@ function formatFull(iso) {
 }
 
 const REACTION_EMOJIS = ['❤️', '🥹', '😄', '🔥', '🫶']
+const SWIPE_BACK_EDGE = 36
+const SWIPE_BACK_DISTANCE = 82
+const SWIPE_BACK_MAX_VERTICAL = 58
 
 function CircleButton({ onClick, children, light = false, ariaLabel }) {
   return (
@@ -201,6 +204,7 @@ export default function MomentDetail() {
   const [reactions, setReactions] = useState([])
   const [loadingReactions, setLoadingReactions] = useState(false)
   const [reactingEmoji, setReactingEmoji] = useState(null)
+  const swipeBackRef = useRef(null)
 
   const shouldFetchRemoteMoment = !storeMoment
     || location.state?.forceFetch === true
@@ -399,6 +403,56 @@ export default function MomentDetail() {
     navigate(`/story/${moment.id}`)
   }
 
+  function handleTouchStart(event) {
+    if (showMenu || showCapsuleSheet || event.touches.length !== 1) {
+      swipeBackRef.current = null
+      return
+    }
+
+    const touch = event.touches[0]
+
+    if (touch.clientX > SWIPE_BACK_EDGE) {
+      swipeBackRef.current = null
+      return
+    }
+
+    swipeBackRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+    }
+  }
+
+  function handleTouchMove(event) {
+    if (!swipeBackRef.current || event.touches.length !== 1) return
+
+    const touch = event.touches[0]
+    const deltaX = touch.clientX - swipeBackRef.current.x
+    const deltaY = Math.abs(touch.clientY - swipeBackRef.current.y)
+
+    if (deltaX > 18 && deltaY < SWIPE_BACK_MAX_VERTICAL) {
+      event.preventDefault()
+    }
+  }
+
+  function handleTouchEnd(event) {
+    if (!swipeBackRef.current) return
+
+    const touch = event.changedTouches[0]
+    const deltaX = touch.clientX - swipeBackRef.current.x
+    const deltaY = Math.abs(touch.clientY - swipeBackRef.current.y)
+    swipeBackRef.current = null
+
+    if (deltaX >= SWIPE_BACK_DISTANCE && deltaY <= SWIPE_BACK_MAX_VERTICAL) {
+      tgHaptic('light')
+      navigate(-1)
+    }
+  }
+
+  function preventPhotoDoubleTap(event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
   const people = (moment.people ?? []).map((person) => {
     const linkedFriend = person.linked_user_id
       ? friends.find((friend) => friend.id === person.linked_user_id)
@@ -478,7 +532,13 @@ export default function MomentDetail() {
   )
 
   return (
-    <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
+    <div
+      className="flex h-full flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{ backgroundColor: 'var(--base)', touchAction: 'pan-y' }}
+    >
       <div className="hide-scrollbar flex-1 overflow-y-auto" style={{ paddingBottom: isOwn ? 110 : 40 }}>
         <div
           style={{
@@ -492,6 +552,8 @@ export default function MomentDetail() {
             <img
               src={moment.photo_url}
               alt={moment.title || 'Момент'}
+              draggable={false}
+              onDoubleClick={preventPhotoDoubleTap}
               style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
             />
           )}
