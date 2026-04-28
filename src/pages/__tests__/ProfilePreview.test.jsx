@@ -48,6 +48,9 @@ describe('ProfilePreview', () => {
 
   it('shows the visibility toggle', () => {
     renderPreview()
+    fireEvent.click(screen.getByTestId('public-profile-more-button'))
+    fireEvent.click(screen.getByTestId('public-profile-edit-button'))
+
     expect(screen.getByRole('switch')).toBeInTheDocument()
   })
 
