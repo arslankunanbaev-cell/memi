@@ -47,11 +47,11 @@ function CircleButton({ onClick, children, light = false, ariaLabel }) {
         height: 36,
         border: 'none',
         borderRadius: 20,
-        background: light ? 'rgba(255,255,255,0.2)' : 'var(--card)',
+        background: light ? 'rgba(255,255,255,0.22)' : 'var(--card)',
         backdropFilter: light ? 'blur(8px)' : 'none',
         WebkitBackdropFilter: light ? 'blur(8px)' : 'none',
         color: light ? '#fff' : 'var(--text)',
-        boxShadow: light ? 'none' : 'var(--shadow-card)',
+        boxShadow: light ? 'inset 0 0 0 1px rgba(255,255,255,0.24)' : 'var(--shadow-card)',
       }}
     >
       {children}
@@ -63,7 +63,11 @@ function PersonChip({ person }) {
   return (
     <div
       className="surface-card flex items-center gap-2 rounded-[20px]"
-      style={{ padding: '6px 12px 6px 6px', backgroundColor: 'var(--moment-surface)' }}
+      style={{
+        padding: '6px 12px 6px 6px',
+        backgroundColor: 'var(--moment-surface)',
+        border: '1px solid rgba(160, 94, 44, 0.08)',
+      }}
     >
       <div
         className="flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
@@ -98,6 +102,7 @@ function DetailChip({ children, emoji = false }) {
         color: emoji ? 'var(--text)' : 'var(--mid)',
         fontSize: emoji ? 20 : 14,
         padding: emoji ? '7px 14px' : '7px 14px',
+        border: '1px solid rgba(160, 94, 44, 0.08)',
       }}
     >
       {children}
@@ -111,7 +116,7 @@ function MusicCard({ title, artist, cover }) {
   return (
     <div
       className="stats-panel-surface flex items-center gap-3"
-      style={{ padding: '12px 14px' }}
+      style={{ padding: '12px 14px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }}
     >
       {safeCover ? (
         <img src={safeCover} alt={title} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
@@ -449,7 +454,7 @@ export default function MomentDetail() {
                 padding: '10px 14px',
                 backgroundColor: isSelected ? 'rgba(217,139,82,0.16)' : 'var(--moment-surface)',
                 color: 'var(--text)',
-                boxShadow: isSelected ? 'inset 0 0 0 1px rgba(217,139,82,0.38)' : 'none',
+                boxShadow: isSelected ? 'inset 0 0 0 1px rgba(217,139,82,0.38)' : 'inset 0 0 0 1px rgba(160, 94, 44, 0.08)',
                 opacity: reactingEmoji && reactingEmoji !== emoji ? 0.72 : 1,
               }}
             >
@@ -478,7 +483,7 @@ export default function MomentDetail() {
         <div
           style={{
             position: 'relative',
-            height: 353,
+            height: 'min(390px, 52vh)',
             overflow: 'hidden',
             background: moment.photo_url ? 'none' : 'linear-gradient(175deg, #5A3070 0%, #B04820 20%, #E07828 45%, #F0A840 70%, #F8D880 100%)',
           }}
@@ -487,11 +492,11 @@ export default function MomentDetail() {
             <img
               src={moment.photo_url}
               alt={moment.title || 'Момент'}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
             />
           )}
 
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 34%, rgba(0,0,0,0.68) 100%)' }} />
 
           <div className="flex items-center justify-between px-4 pt-topbar" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
             <CircleButton onClick={() => navigate(-1)} light ariaLabel="Назад">
@@ -513,14 +518,14 @@ export default function MomentDetail() {
             )}
           </div>
 
-          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 20 }}>
+          <div style={{ position: 'absolute', left: 16, right: 16, bottom: 22 }}>
             <h1
-              className="font-serif"
+              className="font-sans"
               style={{
                 color: '#fff',
-                fontSize: 36,
+                fontSize: 32,
                 fontWeight: 700,
-                letterSpacing: '-0.03em',
+                letterSpacing: 0,
                 lineHeight: 1.1,
                 margin: 0,
                 textShadow: '0 2px 8px rgba(0,0,0,0.3)',
@@ -531,13 +536,27 @@ export default function MomentDetail() {
           </div>
         </div>
 
-        <div className="px-4 pt-6">
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 500, marginBottom: 18 }}>
+        <div className="px-4" style={{ paddingTop: 18 }}>
+          <p
+            className="font-sans"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              color: 'var(--mid)',
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 18,
+              padding: '7px 12px',
+              borderRadius: 999,
+              backgroundColor: 'rgba(237, 230, 220, 0.66)',
+              border: '1px solid rgba(160, 94, 44, 0.08)',
+            }}
+          >
             {formatFull(momentDisplayAt)}
           </p>
 
           {moment.description && (
-            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.6, marginBottom: 24 }}>
+            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 17, lineHeight: 1.62, marginBottom: 24 }}>
               {moment.description}
             </p>
           )}
@@ -550,7 +569,7 @@ export default function MomentDetail() {
 
           {(allPeople.length > 0 || moment.location || moment.mood) && (
             <>
-              <div style={{ height: 1, background: 'var(--divider)', marginBottom: 18 }} />
+              <div style={{ height: 1, background: 'var(--divider)', marginBottom: 20 }} />
 
               {allPeople.length > 0 && (
                 <>

@@ -24,7 +24,8 @@ function Avatar({ person, name, photoUrl, fallbackColor }) {
         width: 26,
         height: 26,
         backgroundColor: bg,
-        border: '2px solid rgba(255,255,255,0.65)',
+        border: '2px solid rgba(255,255,255,0.78)',
+        boxShadow: '0 2px 8px rgba(80, 50, 30, 0.12)',
       }}
     >
       {photo ? (
@@ -47,6 +48,7 @@ function MusicBlock({ title, artist, cover }) {
       style={{
         marginTop: 14,
         padding: '12px 14px',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
       }}
     >
       {safeCover ? (
@@ -106,12 +108,13 @@ function PhotoChip({ children, center = false }) {
         justifyContent: center ? 'center' : 'flex-start',
         gap: 5,
         maxWidth: '100%',
-        background: 'rgba(255,255,255,0.88)',
+        background: 'rgba(255,255,255,0.9)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         borderRadius: 999,
-        padding: '5px 12px',
-        boxShadow: '0 1px 6px rgba(0,0,0,0.14)',
+        padding: '6px 12px',
+        border: '1px solid rgba(255,255,255,0.5)',
+        boxShadow: '0 3px 10px rgba(0,0,0,0.12)',
         color: '#17140E',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -150,17 +153,21 @@ export default function MomentCard({ moment }) {
 
   return (
     <article
-      className="overflow-hidden rounded-[20px] cursor-pointer"
+      className="card-hover overflow-hidden rounded-[22px] cursor-pointer transition-transform active:scale-[0.985]"
       style={{
         backgroundColor: 'var(--moment-surface)',
-        boxShadow: 'var(--shadow-card)',
+        border: '1px solid rgba(160, 94, 44, 0.08)',
+        boxShadow: '0 12px 34px rgba(80, 50, 30, 0.12)',
       }}
       onClick={() => navigate(`/moment/${moment.id}`)}
     >
       {isShared && author && (
         <div
           className="flex items-center gap-2 px-4 py-3"
-          style={{ borderBottom: '1px solid var(--divider)' }}
+          style={{
+            borderBottom: '1px solid var(--divider)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0))',
+          }}
         >
           <Avatar name={author.name} photoUrl={author.photo_url} />
           <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
@@ -169,12 +176,12 @@ export default function MomentCard({ moment }) {
         </div>
       )}
 
-      <div style={{ position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', aspectRatio: '4 / 3', overflow: 'hidden', backgroundColor: 'var(--surface)' }}>
         {moment.photo_url ? (
           <img
             src={moment.photo_url}
             alt={moment.title || 'Момент'}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
           />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg, #7C5436 0%, #C98957 48%, #F0D0A1 100%)' }} />
@@ -184,7 +191,16 @@ export default function MomentCard({ moment }) {
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(to bottom, transparent 42%, rgba(0,0,0,0.58) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, transparent 34%, rgba(0,0,0,0.62) 100%)',
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.25)',
+            pointerEvents: 'none',
           }}
         />
 
@@ -198,7 +214,7 @@ export default function MomentCard({ moment }) {
         )}
 
         {moment.title && (
-          <div style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 100px)' }}>
+          <div style={{ position: 'absolute', left: 12, bottom: 12, maxWidth: 'calc(100% - 104px)' }}>
             <PhotoChip>{moment.title}</PhotoChip>
           </div>
         )}
@@ -239,6 +255,7 @@ export default function MomentCard({ moment }) {
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
+                margin: 0,
               }}
             >
               {moment.description}
@@ -254,7 +271,7 @@ export default function MomentCard({ moment }) {
           )}
 
           {participants.length > 0 && (
-            <div className="flex flex-wrap gap-2" style={{ marginTop: 14 }}>
+            <div className="flex flex-wrap gap-2" style={{ marginTop: 14, paddingTop: 2 }}>
               {participants.map((person) => (
                 <div key={person.id} className="flex items-center gap-2">
                   <Avatar person={person} />
