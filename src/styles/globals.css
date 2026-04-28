@@ -231,15 +231,6 @@
     border-left: none !important;
   }
 
-  .stats-panel-surface .grid > div::before {
-    content: '';
-    width: 22px;
-    height: 3px;
-    margin-bottom: 10px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, rgba(217, 139, 82, 0), rgba(217, 139, 82, 0.56), rgba(217, 139, 82, 0));
-  }
-
   .stats-panel-surface > * {
     position: relative;
   }
