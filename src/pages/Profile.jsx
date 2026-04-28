@@ -608,7 +608,7 @@ function PremiumRow({ onOpen }) {
         <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
           <div className="flex items-center gap-2">
             <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi Premium</p>
-            <PremiumBadge label="активен" compact />
+            <PremiumBadge compact />
           </div>
           <p className="font-sans" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
         </div>

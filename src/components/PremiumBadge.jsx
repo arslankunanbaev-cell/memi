@@ -16,7 +16,7 @@ function PremiumMarkIcon() {
   )
 }
 
-export default function PremiumBadge({ label = 'Premium', compact = false, className = '' }) {
+export default function PremiumBadge({ label = 'Memi+', compact = false, className = '' }) {
   return (
     <span className={`premium-badge ${compact ? 'premium-badge-compact' : ''} ${className}`.trim()}>
       <span className="premium-badge-orbit" aria-hidden="true" />
