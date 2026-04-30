@@ -307,10 +307,19 @@ function FriendMenuAction({ label, danger = false, onClick, children, disabled =
   )
 }
 
-function FriendActionsSheet({ removing, onRemove, onClose }) {
+function FriendActionsSheet({ removing, onRemove, onClose, linkedPerson, onLinkPress, hasPeople }) {
   return (
     <BottomSheet onClose={onClose} title="Друг">
       <div className="px-4 pb-4">
+        {hasPeople && (
+          <FriendMenuAction
+            label={linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
+            onClick={onLinkPress}
+          >
+            <LinkIcon color="var(--accent)" />
+          </FriendMenuAction>
+        )}
+
         <FriendMenuAction
           label={removing ? 'Удаляем...' : 'Удалить из друзей'}
           danger
@@ -502,10 +511,6 @@ export function PublicProfileContent({
   publicMomentsTotal,
   stats = null,
   displayName,
-  people = [],
-  linkedPerson = null,
-  onLinkedPersonPress,
-  onLinkPersonPress,
   actionButton = null,
   topContent = null,
   contentPaddingBottom = 40,
@@ -538,9 +543,6 @@ export function PublicProfileContent({
   ]
   const showMomentsSection = !profileEnabled || listMoments.length > 0 || (!featuredMoment && moments.length === 0)
   const momentsAreClickable = typeof onMomentPress === 'function'
-  const showLinkControl = linkedPerson
-    ? people.length > 0 && typeof onLinkedPersonPress === 'function'
-    : people.length > 0 && typeof onLinkPersonPress === 'function'
   const showEmptyMomentsState = !profileEnabled || listMoments.length === 0
   const emptyMomentsTitle = !profileEnabled
     ? '\u041f\u0440\u043e\u0444\u0438\u043b\u044c \u0437\u0430\u043a\u0440\u044b\u0442'
@@ -656,24 +658,6 @@ export function PublicProfileContent({
               {totalMoments} {pluralRu(totalMoments, 'момент', 'момента', 'моментов')} всего
             </p>
           </div>
-
-        {showLinkControl && (
-          <button
-            type="button"
-            onClick={linkedPerson ? onLinkedPersonPress : onLinkPersonPress}
-            className="profile-linked-chip font-sans type-chip transition-opacity active:opacity-60"
-            style={{
-              marginTop: bio ? 14 : 16,
-              padding: '7px 11px',
-              color: linkedPerson ? 'var(--deep)' : 'var(--mid)',
-            }}
-          >
-            <LinkIcon color={linkedPerson ? 'var(--accent)' : 'var(--soft)'} />
-            <span>
-              {linkedPerson ? `Связан с «${linkedPerson.name}»` : 'Связать с человеком'}
-            </span>
-          </button>
-        )}
 
           <div
             className="stats-panel-surface"
@@ -1244,10 +1228,6 @@ export default function PublicProfile() {
           profileUser.is_premium === true &&
           (!profileUser.premium_expires_at || new Date(profileUser.premium_expires_at) > new Date())
         }
-        people={people}
-        linkedPerson={linkedPerson}
-        onLinkedPersonPress={() => navigate(`/people/${linkedPerson.id}`)}
-        onLinkPersonPress={() => setShowLinkSheet(true)}
         actionButton={!isAlreadyFriend ? (
           <button
             type="button"
@@ -1278,6 +1258,12 @@ export default function PublicProfile() {
           removing={removing}
           onRemove={handleRemoveFriend}
           onClose={() => setShowActionsSheet(false)}
+          linkedPerson={linkedPerson}
+          hasPeople={people.length > 0}
+          onLinkPress={() => {
+            setShowActionsSheet(false)
+            setShowLinkSheet(true)
+          }}
         />
       )}
 
