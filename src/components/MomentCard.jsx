@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
@@ -128,6 +129,7 @@ function PhotoChip({ children, center = false }) {
 
 export default function MomentCard({ moment }) {
   const navigate = useNavigate()
+  const openingRef = useRef(false)
   const currentUser = useAppStore((state) => state.currentUser)
   const friends = useAppStore((state) => state.friends)
 
@@ -151,22 +153,41 @@ export default function MomentCard({ moment }) {
     })),
   ]
 
+  const openMoment = () => {
+    if (openingRef.current) return
+    openingRef.current = true
+    navigate(`/moment/${moment.id}`)
+  }
+
+  const handlePointerUp = (event) => {
+    if (event.pointerType === 'mouse') return
+    event.preventDefault()
+    openMoment()
+  }
+
+  const handleClick = () => {
+    openMoment()
+  }
+
   return (
-    <article
-      className="card-hover overflow-hidden rounded-[22px] cursor-pointer transition-transform active:scale-[0.985]"
+    <button
+      type="button"
+      className="card-hover block w-full overflow-hidden rounded-[22px] cursor-pointer p-0 text-left transition-transform active:scale-[0.985]"
       style={{
+        appearance: 'none',
         backgroundColor: 'var(--moment-surface)',
         border: '1px solid rgba(160, 94, 44, 0.08)',
         boxShadow: '0 12px 34px rgba(80, 50, 30, 0.12)',
       }}
-      onClick={() => navigate(`/moment/${moment.id}`)}
+      onPointerUp={handlePointerUp}
+      onClick={handleClick}
     >
       {isShared && author && (
         <div
           className="flex items-center gap-2 px-4 py-3"
           style={{
             borderBottom: '1px solid var(--divider)',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0))',
+            backgroundColor: 'var(--moment-surface)',
           }}
         >
           <Avatar name={author.name} photoUrl={author.photo_url} />
@@ -284,6 +305,6 @@ export default function MomentCard({ moment }) {
           )}
         </div>
       )}
-    </article>
+    </button>
   )
 }

@@ -1,8 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { useAppStore } from '../../store/useAppStore.js'
 import Home from '../Home.jsx'
+
+const mockNavigate = vi.fn()
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
 
 function renderHome() {
   return render(
@@ -19,6 +30,7 @@ describe('Home', () => {
       friends: [],
       moments: [],
     })
+    mockNavigate.mockClear()
   })
 
   it('показывает обложку трека в карточке момента на главной', () => {
@@ -63,5 +75,27 @@ describe('Home', () => {
 
     expect(screen.getByText('Mila')).toBeInTheDocument()
     expect(screen.getByText('Утро в городе')).toBeInTheDocument()
+  })
+
+  it('opens a moment from the first tap on home', () => {
+    useAppStore.setState({
+      moments: [
+        {
+          id: 'm3',
+          user_id: 'u1',
+          title: 'Evening',
+          created_at: '2026-04-11T18:15:00Z',
+        },
+      ],
+    })
+
+    renderHome()
+
+    const card = screen.getByRole('button', { name: /Evening/i })
+    fireEvent.pointerUp(card, { pointerType: 'touch' })
+    fireEvent.click(card)
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1)
+    expect(mockNavigate).toHaveBeenCalledWith('/moment/m3')
   })
 })
