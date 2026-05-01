@@ -126,32 +126,29 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
   ))
   const [bannerUrl, setBannerUrl] = useState(currentUser?.banner_url ?? null)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
 
   async function handleSave() {
     if (!currentUser?.id || saving) return
 
     setSaving(true)
-    setError(null)
+
+    const selectedFeaturedMomentId = publicMoments.some((m) => m.id === featuredMomentId)
+      ? featuredMomentId
+      : null
+
+    // Optimistic close — закрываем сразу, сохраняем в фоне
+    onClose()
 
     try {
-      const selectedFeaturedMomentId = publicMoments.some((m) => m.id === featuredMomentId)
-        ? featuredMomentId
-        : null
-
       const updated = await updatePublicProfile(currentUser.id, {
         publicProfileEnabled: enabled,
         bio,
         featuredMomentId: selectedFeaturedMomentId,
         bannerUrl: isPremium ? bannerUrl : undefined,
       })
-
       onSaved(updated)
-      onClose()
     } catch (saveError) {
       console.error('[PublicProfile] save settings error:', saveError)
-      setError('Не удалось сохранить. Попробуй еще раз.')
-      setSaving(false)
     }
   }
 
@@ -360,12 +357,6 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
             </div>
           )}
         </div>
-
-        {error && (
-          <p className="font-sans text-center" style={{ fontSize: 12, color: '#E05252', marginBottom: 14 }}>
-            {error}
-          </p>
-        )}
 
         <button
           type="button"
