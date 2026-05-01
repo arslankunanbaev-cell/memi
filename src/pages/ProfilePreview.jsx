@@ -106,6 +106,9 @@ const BANNER_TEMPLATES = [
   { id: 'starry', src: '/banners/starry.png', label: 'Звёздная ночь' },
   { id: 'storm', src: '/banners/storm.png', label: 'Буря' },
   { id: 'garden', src: '/banners/garden.png', label: 'Сад в Живерни' },
+  { id: 'kiss', src: '/banners/kiss.png', label: 'Поцелуй' },
+  { id: 'dali', src: '/banners/dali.png', label: 'Постоянство памяти' },
+  { id: 'marat', src: '/banners/marat.png', label: 'Смерть Марата' },
 ]
 
 const FEATURED_MOMENT_SURFACE = 'linear-gradient(135deg, rgba(255, 248, 220, 0.88) 0%, rgba(245, 184, 99, 0.20) 48%, rgba(217, 139, 82, 0.10) 100%)'
