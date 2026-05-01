@@ -267,9 +267,9 @@ export default function Archive() {
           >
             Архив
           </h1>
-          <div className="flex items-center justify-between gap-3" style={{ marginTop: 2 }}>
+          <div className="flex items-center justify-between gap-3" style={{ marginTop: 6 }}>
             <p className="font-sans type-topbar-meta" style={{ color: 'var(--mid)', margin: 0 }}>
-              {moments.length} {moments.length === 1 ? 'момент' : 'момента'}
+              {moments.length} {pluralRu(moments.length, 'момент', 'момента', 'моментов')}
             </p>
 
             <div className="flex items-center gap-2">
@@ -322,10 +322,10 @@ export default function Archive() {
                 onClick={() => setActiveMonth(key)}
                 className="font-sans type-chip whitespace-nowrap transition-opacity active:opacity-70"
                 style={{
-                  border: 'none',
+                  border: active ? 'none' : '1.5px solid var(--surface)',
                   borderRadius: 20,
                   backgroundColor: active ? 'var(--accent)' : 'var(--card)',
-                  boxShadow: active ? 'none' : 'var(--shadow-card)',
+                  boxShadow: 'none',
                   color: active ? '#fff' : 'var(--mid)',
                   fontWeight: active ? 600 : 500,
                   padding: '7px 16px',

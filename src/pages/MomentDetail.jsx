@@ -610,7 +610,7 @@ export default function MomentDetail() {
               marginBottom: 18,
               padding: '7px 12px',
               borderRadius: 999,
-              backgroundColor: 'rgba(237, 230, 220, 0.66)',
+              backgroundColor: 'var(--surface)',
               border: '1px solid rgba(160, 94, 44, 0.08)',
             }}
           >
