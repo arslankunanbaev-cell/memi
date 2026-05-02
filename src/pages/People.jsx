@@ -125,6 +125,72 @@ function StatusBadge({ label }) {
   )
 }
 
+function MomentPreviewStrip({ moments }) {
+  const previews = moments.filter((moment) => moment.photo_url).slice(0, 3)
+
+  if (previews.length === 0) {
+    return (
+      <div className="flex items-center gap-1.5" aria-hidden="true">
+        {[0, 1, 2].map((index) => (
+          <span
+            key={index}
+            style={{
+              width: index === 0 ? 18 : 6,
+              height: 6,
+              borderRadius: 999,
+              backgroundColor: index === 0 ? 'rgba(217, 139, 82, 0.28)' : 'rgba(184, 168, 152, 0.42)',
+            }}
+          />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center" aria-hidden="true" style={{ minWidth: 72 }}>
+      {previews.map((moment, index) => (
+        <div
+          key={moment.id ?? index}
+          style={{
+            width: 34,
+            height: 42,
+            marginLeft: index === 0 ? 0 : -13,
+            borderRadius: 12,
+            overflow: 'hidden',
+            border: '2px solid var(--moment-surface)',
+            boxShadow: '0 6px 14px rgba(80, 50, 30, 0.16)',
+            transform: `rotate(${[-4, 3, -2][index]}deg)`,
+            backgroundColor: 'var(--surface)',
+          }}
+        >
+          <img
+            src={moment.photo_url}
+            alt=""
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function formatMomentCount(count) {
+  if (count === 0) return '\u043d\u0435\u0442 \u043c\u043e\u043c\u0435\u043d\u0442\u043e\u0432'
+
+  const mod100 = Math.abs(count) % 100
+  const mod10 = Math.abs(count) % 10
+  const word = mod100 >= 11 && mod100 <= 14
+    ? '\u043c\u043e\u043c\u0435\u043d\u0442\u043e\u0432'
+    : mod10 === 1
+      ? '\u043c\u043e\u043c\u0435\u043d\u0442'
+      : mod10 >= 2 && mod10 <= 4
+        ? '\u043c\u043e\u043c\u0435\u043d\u0442\u0430'
+        : '\u043c\u043e\u043c\u0435\u043d\u0442\u043e\u0432'
+
+  return `${count} ${word}`
+}
+
 function SectionHeader({ label, count, compact = false }) {
   return (
     <SectionLabel
@@ -221,6 +287,118 @@ function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick 
         <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
           <path d="M1 1l5 5-5 5" stroke="var(--soft)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
+      </div>
+    </div>
+  )
+}
+
+function PersonCard({ person, momentCount, previewMoments = [], badge, actionLabel, onAction, onClick }) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick?.()
+        }
+      }}
+      className="surface-card w-full cursor-pointer rounded-[20px] text-left transition-opacity active:opacity-75"
+      style={{
+        padding: '14px 14px 13px',
+        backgroundColor: 'var(--moment-surface)',
+        border: '1px solid rgba(160, 94, 44, 0.07)',
+        boxShadow: '0 10px 28px rgba(80, 50, 30, 0.11)',
+      }}
+    >
+      <div className="flex items-center gap-3">
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <Avatar person={person} />
+          {momentCount > 0 && (
+            <div
+              className="font-sans"
+              style={{
+                position: 'absolute',
+                right: -4,
+                bottom: -2,
+                minWidth: 20,
+                height: 20,
+                borderRadius: 999,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 5px',
+                backgroundColor: 'var(--deep)',
+                border: '2px solid var(--moment-surface)',
+                color: '#fff',
+                fontSize: 10,
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              {momentCount}
+            </div>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="font-sans type-card-title truncate" style={{ color: 'var(--text)' }}>
+            {person.name}
+          </div>
+          <div className="font-sans type-support truncate" style={{ color: 'var(--mid)', marginTop: 2 }}>
+            {formatMomentCount(momentCount)}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
+          {badge && <StatusBadge label={badge} />}
+          <div
+            className="flex items-center justify-center"
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 999,
+              backgroundColor: 'rgba(184, 168, 152, 0.14)',
+              color: 'var(--soft)',
+            }}
+          >
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none">
+              <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3" style={{ paddingLeft: 68 }}>
+        <MomentPreviewStrip moments={previewMoments} />
+        {actionLabel && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(event) => {
+              event.stopPropagation()
+              onAction?.()
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.stopPropagation()
+                onAction?.()
+              }
+            }}
+            className="font-sans type-meta"
+            style={{
+              borderRadius: 999,
+              backgroundColor: 'rgba(217, 139, 82, 0.12)',
+              color: 'var(--accent)',
+              padding: '6px 11px',
+              flexShrink: 0,
+            }}
+          >
+            {actionLabel}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -496,6 +674,33 @@ export default function People() {
     return counts
   }, [moments])
 
+  const momentPreviewMap = useMemo(() => {
+    const previews = new Map()
+
+    function addMoment(personId, moment) {
+      if (!personId) return
+
+      const list = previews.get(personId) ?? []
+      if (!list.some((entry) => entry.id === moment.id)) {
+        list.push(moment)
+      }
+      previews.set(personId, list)
+    }
+
+    for (const moment of moments) {
+      for (const person of moment.people ?? []) {
+        addMoment(person.id, moment)
+        addMoment(person.linked_user_id, moment)
+      }
+
+      for (const friend of moment.taggedFriends ?? []) {
+        addMoment(friend.id, moment)
+      }
+    }
+
+    return previews
+  }, [moments])
+
   const mergedPeople = useMemo(() => {
     const mapped = people.map((person) => {
       const matchedFriend = friends.find((friend) => friend.id === person.linked_user_id)
@@ -525,6 +730,23 @@ export default function People() {
 
   function momentCountFor(personId) {
     return momentCountMap.get(personId) ?? 0
+  }
+
+  function previewMomentsFor(person) {
+    const ownMoments = momentPreviewMap.get(person.id) ?? []
+    const linkedMoments = momentPreviewMap.get(person.linked_user_id) ?? []
+    const seen = new Set()
+
+    return [...ownMoments, ...linkedMoments].filter((moment) => {
+      if (seen.has(moment.id)) return false
+      seen.add(moment.id)
+      return true
+    })
+  }
+
+  function displayMomentCountFor(person) {
+    if (person._fromFriend) return previewMomentsFor(person).length
+    return momentCountFor(person.id)
   }
 
   async function handleInvite() {
@@ -687,9 +909,10 @@ export default function People() {
                 animationDelay: `${index * 50}ms`,
               }}
             >
-              <PersonRow
+              <PersonCard
                 person={person}
-                momentCount={person._fromFriend ? 0 : momentCountFor(person.id)}
+                momentCount={displayMomentCountFor(person)}
+                previewMoments={previewMomentsFor(person)}
                 onClick={() => cardClick(person)}
                 {...rowProps(person)}
               />
@@ -705,9 +928,10 @@ export default function People() {
                 animationDelay: `${(friendsList.length + index) * 50}ms`,
               }}
             >
-              <PersonRow
+              <PersonCard
                 person={person}
-                momentCount={momentCountFor(person.id)}
+                momentCount={displayMomentCountFor(person)}
+                previewMoments={previewMomentsFor(person)}
                 onClick={() => cardClick(person)}
                 {...rowProps(person)}
               />
