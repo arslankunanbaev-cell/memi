@@ -230,50 +230,10 @@ function FriendsHeader({ count, onInvite }) {
   )
 }
 
-function PageTabTitle({ children }) {
-  return (
-    <div
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '7px 18px 9px',
-        border: '1px solid rgba(160, 94, 44, 0.16)',
-        borderBottomColor: 'rgba(160, 94, 44, 0.08)',
-        borderRadius: '18px 18px 11px 11px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,254,253,0.76)), var(--moment-surface)',
-        boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
-      }}
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          left: 14,
-          right: 14,
-          bottom: -4,
-          height: 4,
-          borderRadius: '0 0 9px 9px',
-          backgroundColor: 'var(--moment-surface)',
-          borderRight: '1px solid rgba(160, 94, 44, 0.1)',
-          borderBottom: '1px solid rgba(160, 94, 44, 0.1)',
-          borderLeft: '1px solid rgba(160, 94, 44, 0.1)',
-        }}
-      />
-      <h1
-        className="type-page-title"
-        style={{ position: 'relative', color: 'var(--text)', margin: 0 }}
-      >
-        {children}
-      </h1>
-    </div>
-  )
-}
-
 function PeopleGroupFrame({ children, compact = false }) {
   return (
     <div
+      className="people-group-frame"
       style={{
         position: 'relative',
         display: 'flex',
@@ -281,10 +241,9 @@ function PeopleGroupFrame({ children, compact = false }) {
         gap: 12,
         padding: compact ? 10 : 12,
         borderRadius: 26,
-        border: '1px solid rgba(160, 94, 44, 0.1)',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.18)), rgba(237, 230, 220, 0.28)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.62), 0 8px 22px rgba(80, 50, 30, 0.055)',
+        border: '1px solid var(--people-group-border)',
+        background: 'var(--people-group-bg)',
+        boxShadow: 'var(--people-group-shadow)',
       }}
     >
       {children}
@@ -369,11 +328,9 @@ function PersonCard({ person, momentCount, previewMoments = [], badge, actionLab
       className="surface-card w-full cursor-pointer rounded-[20px] text-left transition-opacity active:opacity-75"
       style={{
         padding: '14px 14px 13px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72)), var(--moment-surface)',
-        border: '1px solid rgba(160, 94, 44, 0.13)',
-        boxShadow:
-          'inset 0 1px 0 rgba(255,255,255,0.78), 0 10px 28px rgba(80, 50, 30, 0.11)',
+        background: 'var(--people-card-bg)',
+        border: '1px solid var(--people-card-border)',
+        boxShadow: 'var(--people-card-shadow)',
       }}
     >
       <div className="flex items-center gap-3">
@@ -474,11 +431,9 @@ function RequestRow({ request, onAccept }) {
       className="surface-card flex items-center gap-4 rounded-[20px]"
       style={{
         padding: '14px 16px',
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72)), var(--moment-surface)',
-        border: '1px solid rgba(160, 94, 44, 0.13)',
-        boxShadow:
-          'inset 0 1px 0 rgba(255,255,255,0.78), 0 10px 28px rgba(80, 50, 30, 0.11)',
+        background: 'var(--people-card-bg)',
+        border: '1px solid var(--people-card-border)',
+        boxShadow: 'var(--people-card-shadow)',
       }}
     >
       <Avatar person={request} size={48} />
@@ -940,7 +895,12 @@ export default function People() {
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
         <div className="flex items-center justify-between">
-          <PageTabTitle>Люди</PageTabTitle>
+          <h1
+            className="type-page-title"
+            style={{ color: 'var(--text)', margin: 0 }}
+          >
+            Люди
+          </h1>
 
           <div className="flex items-center gap-2">
             <IconPill onClick={handleRefreshFriends} spin={refreshing} ariaLabel="Обновить друзей">
