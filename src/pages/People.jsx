@@ -328,9 +328,11 @@ function PersonCard({ person, momentCount, previewMoments = [], badge, actionLab
       className="surface-card w-full cursor-pointer rounded-[20px] text-left transition-opacity active:opacity-75"
       style={{
         padding: '14px 14px 13px',
-        backgroundColor: 'var(--moment-surface)',
-        border: '1px solid rgba(160, 94, 44, 0.07)',
-        boxShadow: '0 10px 28px rgba(80, 50, 30, 0.11)',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72)), var(--moment-surface)',
+        border: '1px solid rgba(160, 94, 44, 0.13)',
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,0.78), 0 10px 28px rgba(80, 50, 30, 0.11)',
       }}
     >
       <div className="flex items-center gap-3">
@@ -429,7 +431,14 @@ function RequestRow({ request, onAccept }) {
   return (
     <div
       className="surface-card flex items-center gap-4 rounded-[20px]"
-      style={{ padding: '14px 16px', backgroundColor: 'var(--moment-surface)' }}
+      style={{
+        padding: '14px 16px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72)), var(--moment-surface)',
+        border: '1px solid rgba(160, 94, 44, 0.13)',
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,0.78), 0 10px 28px rgba(80, 50, 30, 0.11)',
+      }}
     >
       <Avatar person={request} size={48} />
 
