@@ -209,6 +209,47 @@ function GridCell({ moment }) {
   )
 }
 
+function PageTabTitle({ children }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '7px 18px 9px',
+        border: '1px solid rgba(160, 94, 44, 0.16)',
+        borderBottomColor: 'rgba(160, 94, 44, 0.08)',
+        borderRadius: '18px 18px 11px 11px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,254,253,0.76)), var(--moment-surface)',
+        boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: 14,
+          right: 14,
+          bottom: -4,
+          height: 4,
+          borderRadius: '0 0 9px 9px',
+          backgroundColor: 'var(--moment-surface)',
+          borderRight: '1px solid rgba(160, 94, 44, 0.1)',
+          borderBottom: '1px solid rgba(160, 94, 44, 0.1)',
+          borderLeft: '1px solid rgba(160, 94, 44, 0.1)',
+        }}
+      />
+      <h1
+        className="type-page-title"
+        style={{ position: 'relative', color: 'var(--text)', margin: 0 }}
+      >
+        {children}
+      </h1>
+    </div>
+  )
+}
+
 export default function Archive() {
   const allMoments = useAppStore((state) => state.moments)
   const currentUser = useAppStore((state) => state.currentUser)
@@ -260,55 +301,43 @@ export default function Archive() {
   return (
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
-        <div style={{ paddingBottom: 18 }}>
-          <h1
-            className="type-page-title"
-            style={{ color: 'var(--text)', margin: 0 }}
-          >
-            Архив
-          </h1>
-          <div className="flex items-center justify-between gap-3" style={{ marginTop: 6 }}>
-            <p className="font-sans type-topbar-meta" style={{ color: 'var(--mid)', margin: 0 }}>
-              {moments.length} {pluralRu(moments.length, 'момент', 'момента', 'моментов')}
-            </p>
+        <div className="flex items-center justify-between gap-3" style={{ paddingBottom: 18 }}>
+          <PageTabTitle>Архив</PageTabTitle>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowFilter(true)}
-                className="flex items-center gap-2 whitespace-nowrap font-sans type-topbar-meta transition-opacity active:opacity-60"
+          <button
+            type="button"
+            onClick={() => setShowFilter(true)}
+            className="flex items-center gap-2 whitespace-nowrap font-sans type-topbar-meta transition-opacity active:opacity-60"
+            style={{
+              border: 'none',
+              background: 'none',
+              color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
+              padding: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M3 6h18M7 12h10M11 18h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Фильтр
+            {filterPeople.length > 0 && (
+              <span
+                className="font-sans type-meta"
                 style={{
-                  border: 'none',
-                  background: 'none',
-                  color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
-                  padding: 0,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  backgroundColor: 'var(--accent-pale)',
+                  color: 'var(--accent)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 5px',
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 6h18M7 12h10M11 18h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                Фильтр
-                {filterPeople.length > 0 && (
-                  <span
-                    className="font-sans type-meta"
-                    style={{
-                      minWidth: 18,
-                      height: 18,
-                      borderRadius: 999,
-                      backgroundColor: 'var(--accent-pale)',
-                      color: 'var(--accent)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 5px',
-                    }}
-                  >
-                    {filterPeople.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
+                {filterPeople.length}
+              </span>
+            )}
+          </button>
         </div>
 
         <div className="hide-scrollbar flex items-center gap-3 overflow-x-auto">

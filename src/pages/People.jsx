@@ -230,6 +230,47 @@ function FriendsHeader({ count, onInvite }) {
   )
 }
 
+function PageTabTitle({ children }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '7px 18px 9px',
+        border: '1px solid rgba(160, 94, 44, 0.16)',
+        borderBottomColor: 'rgba(160, 94, 44, 0.08)',
+        borderRadius: '18px 18px 11px 11px',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,254,253,0.76)), var(--moment-surface)',
+        boxShadow: '0 8px 18px rgba(80, 50, 30, 0.08), inset 0 1px 0 rgba(255,255,255,0.82)',
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          left: 14,
+          right: 14,
+          bottom: -4,
+          height: 4,
+          borderRadius: '0 0 9px 9px',
+          backgroundColor: 'var(--moment-surface)',
+          borderRight: '1px solid rgba(160, 94, 44, 0.1)',
+          borderBottom: '1px solid rgba(160, 94, 44, 0.1)',
+          borderLeft: '1px solid rgba(160, 94, 44, 0.1)',
+        }}
+      />
+      <h1
+        className="type-page-title"
+        style={{ position: 'relative', color: 'var(--text)', margin: 0 }}
+      >
+        {children}
+      </h1>
+    </div>
+  )
+}
+
 function PeopleGroupFrame({ children, compact = false }) {
   return (
     <div
@@ -899,12 +940,7 @@ export default function People() {
     <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
         <div className="flex items-center justify-between">
-          <h1
-            className="type-page-title"
-            style={{ color: 'var(--text)', margin: 0 }}
-          >
-            Люди
-          </h1>
+          <PageTabTitle>Люди</PageTabTitle>
 
           <div className="flex items-center gap-2">
             <IconPill onClick={handleRefreshFriends} spin={refreshing} ariaLabel="Обновить друзей">
