@@ -230,6 +230,27 @@ function FriendsHeader({ count, onInvite }) {
   )
 }
 
+function PeopleGroupFrame({ children, compact = false }) {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        padding: compact ? 10 : 12,
+        borderRadius: 26,
+        border: '1px solid rgba(160, 94, 44, 0.1)',
+        background:
+          'linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0.18)), rgba(237, 230, 220, 0.28)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.62), 0 8px 22px rgba(80, 50, 30, 0.055)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
 function PersonRow({ person, momentCount, badge, actionLabel, onAction, onClick }) {
   return (
     <div
@@ -890,16 +911,20 @@ export default function People() {
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
         {incomingRequests.length > 0 && (
           <section style={{ paddingBottom: 20 }}>
+            <PeopleGroupFrame compact>
             <SectionHeader label="Заявки" count={incomingRequests.length} />
             <div className="flex flex-col gap-3">
               {incomingRequests.map((request) => (
                 <RequestRow key={request.friendship_id} request={request} onAccept={() => handleAccept(request)} />
               ))}
             </div>
+            </PeopleGroupFrame>
           </section>
         )}
 
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-4">
+          {(friendsList.length > 0 || localPeopleList.length > 0) && (
+            <PeopleGroupFrame>
           {friendsList.length > 0 && <FriendsHeader count={friendsList.length} onInvite={handleInvite} />}
           {friendsList.map((person, index) => (
             <div
@@ -937,6 +962,8 @@ export default function People() {
               />
             </div>
           ))}
+            </PeopleGroupFrame>
+          )}
         </section>
 
         <button
