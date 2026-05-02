@@ -111,8 +111,8 @@ const BANNER_TEMPLATES = [
   { id: 'marat', src: '/banners/marat.png', label: 'Смерть Марата' },
 ]
 
-const FEATURED_MOMENT_SURFACE = 'linear-gradient(135deg, rgba(255, 248, 220, 0.88) 0%, rgba(245, 184, 99, 0.20) 48%, rgba(217, 139, 82, 0.10) 100%)'
-const FEATURED_MOMENT_SELECTED_SURFACE = 'linear-gradient(135deg, rgba(255, 248, 220, 0.96) 0%, rgba(245, 184, 99, 0.34) 48%, rgba(217, 139, 82, 0.18) 100%)'
+const FEATURED_MOMENT_SURFACE = 'var(--featured-moment-surface)'
+const FEATURED_MOMENT_SELECTED_SURFACE = 'var(--featured-moment-selected-surface)'
 
 // ── Edit sheet ─────────────────────────────────────────────────────────────────
 
@@ -298,16 +298,18 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
                 onClick={() => setFeaturedMomentId(null)}
                 className="flex w-full items-center justify-between rounded-[16px] text-left transition-opacity active:opacity-60"
                 style={{
-                  border: featuredMomentId ? '1.5px solid rgba(160, 94, 44, 0.08)' : '1.5px solid rgba(217, 139, 82, 0.34)',
+                  border: featuredMomentId ? '1.5px solid var(--featured-moment-border)' : '1.5px solid var(--featured-moment-selected-border)',
                   background: featuredMomentId ? FEATURED_MOMENT_SURFACE : FEATURED_MOMENT_SELECTED_SURFACE,
-                  boxShadow: featuredMomentId ? 'none' : '0 8px 22px rgba(217, 139, 82, 0.12)',
-                  color: 'var(--text)',
+                  backgroundClip: 'padding-box',
+                  boxShadow: featuredMomentId ? 'var(--featured-moment-shadow)' : 'var(--featured-moment-selected-shadow)',
+                  color: 'var(--featured-moment-title)',
+                  overflow: 'hidden',
                   padding: '13px 15px',
                 }}
               >
                 <span className="font-sans" style={{ fontSize: 14, fontWeight: 500 }}>Без главного воспоминания</span>
                 {!featuredMomentId && (
-                  <span className="font-sans" style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600 }}>Выбрано</span>
+                  <span className="font-sans" style={{ color: 'var(--featured-moment-selected-label)', fontSize: 12, fontWeight: 600 }}>Выбрано</span>
                 )}
               </button>
 
@@ -320,9 +322,11 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
                     onClick={() => setFeaturedMomentId(moment.id)}
                     className="flex w-full items-center gap-3 rounded-[16px] text-left transition-opacity active:opacity-60"
                     style={{
-                      border: isSelected ? '1.5px solid rgba(217, 139, 82, 0.34)' : '1.5px solid rgba(160, 94, 44, 0.08)',
+                      border: isSelected ? '1.5px solid var(--featured-moment-selected-border)' : '1.5px solid var(--featured-moment-border)',
                       background: isSelected ? FEATURED_MOMENT_SELECTED_SURFACE : FEATURED_MOMENT_SURFACE,
-                      boxShadow: isSelected ? '0 8px 22px rgba(217, 139, 82, 0.12)' : 'none',
+                      backgroundClip: 'padding-box',
+                      boxShadow: isSelected ? 'var(--featured-moment-selected-shadow)' : 'var(--featured-moment-shadow)',
+                      overflow: 'hidden',
                       padding: '11px 12px',
                     }}
                   >
@@ -341,15 +345,15 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-sans" style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p className="font-sans" style={{ color: 'var(--featured-moment-title)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {moment.title || 'Без названия'}
                       </p>
-                      <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 2 }}>
+                      <p className="font-sans" style={{ color: 'var(--featured-moment-meta)', fontSize: 12, marginTop: 2 }}>
                         {sinceLabel(getMomentDisplayAt(moment))}
                       </p>
                     </div>
                     {isSelected && (
-                      <span className="font-sans" style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600 }}>Выбрано</span>
+                      <span className="font-sans" style={{ color: 'var(--featured-moment-selected-label)', fontSize: 12, fontWeight: 600 }}>Выбрано</span>
                     )}
                   </button>
                 )
