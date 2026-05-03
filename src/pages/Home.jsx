@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader'
 import SectionLabel from '../components/SectionLabel'
 import BottomSheet from '../components/BottomSheet'
 import CapsuleIcon from '../components/CapsuleIcon'
+import { AppEmptyState, AppToast } from '../components/FeedbackStates'
 import { getMomentAddedAt, compareMomentsByAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
@@ -177,15 +178,19 @@ export default function Home() {
   const setHomeScrollTop = useAppStore((state) => state.setHomeScrollTop)
   const hiddenHomeMomentIds = useAppStore((state) => state.hiddenHomeMomentIds)
   const hideHomeMoment = useAppStore((state) => state.hideHomeMoment)
+  const restoreHomeMoment = useAppStore((state) => state.restoreHomeMoment)
   const [showAdd, setShowAdd] = useState(false)
   const [actionMoment, setActionMoment] = useState(null)
   const [showScrollTop, setShowScrollTop] = useState(homeScrollTop > 320)
+  const [undoMoment, setUndoMoment] = useState(null)
   const scrollRef = useRef(null)
 
   const visibleMoments = moments.filter((moment) => !hiddenHomeMomentIds.includes(moment.id))
   const groups = groupByDay([...visibleMoments].sort(compareMomentsByAddedAt))
   const isEmpty = visibleMoments.length === 0
+  const hasHiddenAllMoments = moments.length > 0 && isEmpty
   const actionMomentIsOwn = actionMoment && !actionMoment.isShared && actionMoment.user_id === currentUser?.id
+  const undoMomentIsOwn = undoMoment && !undoMoment.isShared && undoMoment.user_id === currentUser?.id
   const actionMomentAuthor = actionMoment && !actionMomentIsOwn
     ? friends.find((friend) => friend.id === actionMoment.user_id)
     : null
@@ -211,6 +216,13 @@ export default function Home() {
     return () => cancelAnimationFrame(frame)
   }, [homeScrollTop, isEmpty])
 
+  useEffect(() => {
+    if (!undoMoment) return undefined
+
+    const timer = setTimeout(() => setUndoMoment(null), 5200)
+    return () => clearTimeout(timer)
+  }, [undoMoment])
+
   if (!initDone && isEmpty) {
     return <RouteLoadingState />
   }
@@ -227,6 +239,7 @@ export default function Home() {
   function archiveMoment(moment) {
     tgHaptic('medium')
     hideHomeMoment(moment.id)
+    setUndoMoment(moment)
     closeActions()
   }
 
@@ -286,6 +299,14 @@ export default function Home() {
     setShowScrollTop(nextTop > 320)
   }
 
+  function undoHideMoment() {
+    if (!undoMoment?.id) return
+
+    tgHaptic('light')
+    restoreHomeMoment(undoMoment.id)
+    setUndoMoment(null)
+  }
+
   return (
     <div className="flex h-full flex-col animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
@@ -297,6 +318,24 @@ export default function Home() {
             style={{ paddingBottom: 18 }}
             containerClassName="items-center"
           />
+
+          {hasHiddenAllMoments ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-4" style={{ paddingBottom: 108 }}>
+              <AppEmptyState
+                icon={(
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                  </svg>
+                )}
+                title="Лента очищена"
+                description="Все моменты скрыты с главной. Они по-прежнему доступны в архиве."
+                primaryLabel="Вернуть последний"
+                onPrimary={undoHideMoment}
+                secondaryLabel="Открыть архив"
+                onSecondary={() => navigate('/archive')}
+              />
+            </div>
+          ) : (
 
           <div className="flex flex-1 flex-col items-center justify-center px-4 text-center" style={{ paddingBottom: 108 }}>
             <div
@@ -351,6 +390,7 @@ export default function Home() {
               Добавить момент
             </button>
           </div>
+          )}
         </div>
       ) : (
         <>
@@ -415,6 +455,14 @@ export default function Home() {
 
       <BottomNav active="home" onActiveDoublePress={(tabId) => tabId === 'home' && scrollToTop()} />
       {showAdd && <AddMoment onClose={() => setShowAdd(false)} />}
+      {undoMoment && (
+        <AppToast
+          message={undoMomentIsOwn ? 'Момент скрыт с главной' : 'Момент скрыт из ленты'}
+          actionLabel="Отменить"
+          onAction={undoHideMoment}
+          onClose={() => setUndoMoment(null)}
+        />
+      )}
       {actionMoment && (
         <MomentActionsSheet
           moment={actionMoment}

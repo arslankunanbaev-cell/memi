@@ -6,6 +6,7 @@ import { navigateWithTransition } from '../lib/navigation'
 import { plural } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import { AppEmptyState } from '../components/FeedbackStates'
 import SectionLabel from '../components/SectionLabel'
 import { useAppStore } from '../store/useAppStore'
 
@@ -687,6 +688,7 @@ export default function People() {
 
   const [showAdd, setShowAdd] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState(null)
   const [linkTarget, setLinkTarget] = useState(null)
 
   const momentCountMap = useMemo(() => {
@@ -815,6 +817,7 @@ export default function People() {
     if (refreshing || !currentUser?.id) return
 
     setRefreshing(true)
+    setRefreshError(null)
 
     try {
       const rows = await getFriendships(currentUser.id)
@@ -838,7 +841,8 @@ export default function People() {
       setFriends(accepted)
       setIncomingRequests(incoming)
     } catch (error) {
-      window.Telegram?.WebApp?.showAlert?.(`ERROR: ${error?.message}`)
+      setRefreshError('Не удалось обновить друзей. Проверь соединение и попробуй еще раз.')
+      console.error('[People] refresh friends error:', error)
     } finally {
       setRefreshing(false)
     }
@@ -917,6 +921,31 @@ export default function People() {
       </div>
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 108 }}>
+        {refreshError && (
+          <div
+            className="flex items-center gap-3"
+            style={{
+              marginBottom: 16,
+              borderRadius: 18,
+              backgroundColor: 'rgba(217, 64, 64, 0.07)',
+              border: '1px solid rgba(217, 64, 64, 0.12)',
+              padding: '12px 14px',
+            }}
+          >
+            <p className="font-sans flex-1" style={{ color: '#D94040', fontSize: 13, fontWeight: 600, lineHeight: 1.35 }}>
+              {refreshError}
+            </p>
+            <button
+              type="button"
+              onClick={handleRefreshFriends}
+              className="font-sans transition-opacity active:opacity-70"
+              style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 13, fontWeight: 800 }}
+            >
+              Повторить
+            </button>
+          </div>
+        )}
+
         {incomingRequests.length > 0 && (
           <section style={{ paddingBottom: 20 }}>
             <PeopleGroupFrame compact>
@@ -998,31 +1027,23 @@ export default function People() {
         </button>
 
         {mergedPeople.length === 0 && incomingRequests.length === 0 && (
-          <div className="flex flex-col items-center justify-center text-center" style={{ paddingTop: 52 }}>
-            <p className="font-sans" style={{ color: 'var(--soft)', fontSize: 15 }}>
-              Пока нет людей
-            </p>
-            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, lineHeight: 1.45, marginTop: 8, maxWidth: 260 }}>
-              Добавь близких в моменты или пригласи друзей в memi.
-            </p>
-            <button
-              type="button"
-              onClick={handleInvite}
-              className="font-sans transition-opacity active:opacity-70"
-              style={{
-                marginTop: 18,
-                border: 'none',
-                borderRadius: 20,
-                backgroundColor: 'var(--accent)',
-                color: '#fff',
-                fontSize: 15,
-                fontWeight: 600,
-                padding: '14px 24px',
-                boxShadow: 'var(--shadow-accent)',
-              }}
-            >
-              Пригласить первого
-            </button>
+          <div style={{ paddingTop: 28 }}>
+            <AppEmptyState
+              icon={(
+                <svg width="31" height="31" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.9" />
+                  <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                  <path d="M16 6c1.7.4 3 1.9 3 3.7s-1.3 3.3-3 3.7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                  <path d="M20 20c0-2.8-1.8-5.1-4.3-5.8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                </svg>
+              )}
+              title="Пока нет людей"
+              description="Добавь близких в моменты или пригласи друзей в memi."
+              primaryLabel="Пригласить первого"
+              onPrimary={handleInvite}
+              secondaryLabel="Добавить вручную"
+              onSecondary={() => setShowAdd(true)}
+            />
           </div>
         )}
       </div>

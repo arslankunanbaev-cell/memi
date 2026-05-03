@@ -587,6 +587,26 @@ export default function Archive() {
             <p className="font-sans type-topbar-meta text-center" style={{ color: 'var(--mid)' }}>
               {filterPeople.length > 0 ? 'Для выбранных людей в этом месяце нет моментов.' : 'В выбранном месяце пока нет сохранённых моментов.'}
             </p>
+            {filterPeople.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilterPeople([])}
+                className="font-sans transition-opacity active:opacity-70"
+                style={{
+                  marginTop: 18,
+                  border: 'none',
+                  borderRadius: 999,
+                  backgroundColor: 'var(--accent)',
+                  color: '#fff',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  padding: '12px 18px',
+                  boxShadow: 'var(--shadow-accent)',
+                }}
+              >
+                Сбросить фильтр
+              </button>
+            )}
           </div>
         ) : (
           <>

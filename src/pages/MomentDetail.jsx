@@ -17,6 +17,7 @@ import { useAppStore } from '../store/useAppStore'
 import { DetailLoadingState } from '../components/LoadingState'
 import { useSwipeBack } from '../hooks/useSwipeBack'
 import CapsuleIcon from '../components/CapsuleIcon'
+import { AppEmptyState } from '../components/FeedbackStates'
 
 function formatFull(iso) {
   if (!iso) return ''
@@ -342,14 +343,20 @@ export default function MomentDetail() {
     }
 
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--base)' }}>
-        <span style={{ fontSize: 36 }}>🌀</span>
-        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>
-          Момент не найден
-        </p>
-        <button type="button" onClick={goBack} style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 14 }}>
-          ← Назад
-        </button>
+      <div className="flex h-full flex-col items-center justify-center px-4" style={{ backgroundColor: 'var(--base)' }}>
+        <AppEmptyState
+          icon={(
+            <svg width="31" height="31" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h16M7 7l1.2-2.4A2 2 0 0 1 10 3.5h4a2 2 0 0 1 1.8 1.1L17 7" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7" stroke="currentColor" strokeWidth="1.9" />
+              <path d="m9 11 6 6M15 11l-6 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+            </svg>
+          )}
+          title="Момент не найден"
+          description="Он мог быть удален, скрыт или еще не загрузился из сети."
+          primaryLabel="Назад"
+          onPrimary={goBack}
+        />
       </div>
     )
   }

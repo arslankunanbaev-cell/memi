@@ -13,6 +13,7 @@ import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { RouteLoadingState } from '../components/LoadingState'
+import { AppEmptyState } from '../components/FeedbackStates'
 import { useSwipeBack } from '../hooks/useSwipeBack'
 import { tgHaptic } from '../lib/telegram'
 import { navigateWithTransition } from '../lib/navigation'
@@ -1141,12 +1142,19 @@ export default function PublicProfile() {
         </div>
 
         <div className="flex-1 flex items-center justify-center px-4">
-          <p
-            className="font-sans text-center"
-            style={{ fontSize: 13, color: 'var(--mid)' }}
-          >
-            Пользователь не найден
-          </p>
+          <AppEmptyState
+            icon={(
+              <svg width="31" height="31" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="1.9" />
+                <path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                <path d="m17 5 4 4M21 5l-4 4" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+              </svg>
+            )}
+            title="Профиль не найден"
+            description="Ссылка могла устареть или профиль временно недоступен."
+            primaryLabel="Назад"
+            onPrimary={goBack}
+          />
         </div>
       </div>
     )
