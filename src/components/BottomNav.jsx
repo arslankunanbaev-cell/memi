@@ -56,6 +56,7 @@ const TABS = [
 export default function BottomNav({ active, onActiveDoublePress }) {
   const navigate = useNavigate()
   const lastActiveTapRef = useRef({ tabId: null, time: 0 })
+  const handledTouchRef = useRef(false)
 
   function handleTabPress(tab) {
     if (tab.id !== active) {
@@ -74,6 +75,23 @@ export default function BottomNav({ active, onActiveDoublePress }) {
     }
 
     lastActiveTapRef.current = { tabId: tab.id, time: now }
+  }
+
+  function handlePointerDown(event, tab) {
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return
+
+    event.preventDefault()
+    handledTouchRef.current = true
+    handleTabPress(tab)
+  }
+
+  function handleClick(tab) {
+    if (handledTouchRef.current) {
+      handledTouchRef.current = false
+      return
+    }
+
+    handleTabPress(tab)
   }
 
   return (
@@ -106,13 +124,17 @@ export default function BottomNav({ active, onActiveDoublePress }) {
             <button
               key={tab.id}
               type="button"
-              onClick={() => handleTabPress(tab)}
+              onPointerDown={(event) => handlePointerDown(event, tab)}
+              onClick={() => handleClick(tab)}
               className="flex flex-col items-center gap-1 transition-opacity active:opacity-60"
               style={{
                 border: 'none',
                 background: 'none',
                 minWidth: 62,
                 padding: '9px 14px',
+                touchAction: 'manipulation',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
               }}
             >
               <span style={{ color }}>{tab.icon(color)}</span>
