@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const TABS = [
@@ -52,8 +53,28 @@ const TABS = [
   },
 ]
 
-export default function BottomNav({ active }) {
+export default function BottomNav({ active, onActiveDoublePress }) {
   const navigate = useNavigate()
+  const lastActiveTapRef = useRef({ tabId: null, time: 0 })
+
+  function handleTabPress(tab) {
+    if (tab.id !== active) {
+      navigate(tab.path)
+      lastActiveTapRef.current = { tabId: null, time: 0 }
+      return
+    }
+
+    const now = Date.now()
+    const last = lastActiveTapRef.current
+
+    if (last.tabId === tab.id && now - last.time < 420) {
+      lastActiveTapRef.current = { tabId: null, time: 0 }
+      onActiveDoublePress?.(tab.id)
+      return
+    }
+
+    lastActiveTapRef.current = { tabId: tab.id, time: now }
+  }
 
   return (
     <nav
@@ -85,7 +106,7 @@ export default function BottomNav({ active }) {
             <button
               key={tab.id}
               type="button"
-              onClick={() => navigate(tab.path)}
+              onClick={() => handleTabPress(tab)}
               className="flex flex-col items-center gap-1 transition-opacity active:opacity-60"
               style={{
                 border: 'none',
