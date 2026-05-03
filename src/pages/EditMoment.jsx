@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { updateMoment as updateMomentApi, createPerson, uploadPhoto } from '../lib/api'
@@ -8,6 +8,7 @@ import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { tgHaptic } from '../lib/telegram'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 
 const MOODS = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
@@ -130,7 +131,6 @@ function AddPersonMiniSheet({ currentUserId, onClose, onCreated }) {
 
 export default function EditMoment() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const currentUser     = useAppStore((s) => s.currentUser)
   const allPeople       = useAppStore((s) => s.people)
   const moments         = useAppStore((s) => s.moments)
@@ -168,13 +168,17 @@ export default function EditMoment() {
   const [showAddPerson, setShowAddPerson] = useState(false)
   const songCover = proxifyCoverUrl(song?.cover ?? null)
   const outerSectionLabelClassName = 'mb-3'
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showSongSheet && !showAddPerson && !saving,
+    fallbackPath: '/home',
+  })
 
   if (!moment) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4" style={{ backgroundColor: 'var(--base)' }}>
         <span style={{ fontSize: 36 }}>🌀</span>
         <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>Момент не найден</p>
-        <button onClick={() => navigate(-1)} style={{ color: 'var(--accent)', background: 'none', border: 'none', fontSize: 14 }}>
+        <button onClick={goBack} style={{ color: 'var(--accent)', background: 'none', border: 'none', fontSize: 14 }}>
           ← Назад
         </button>
       </div>
@@ -240,7 +244,7 @@ export default function EditMoment() {
       const fullMoment = { ...updated, people: fullPeople }
       updateMomentStore(moment.id, fullMoment)
 
-      navigate(-1)
+      goBack()
     } catch (err) {
       console.error('[EditMoment]', err)
       setError('Не удалось сохранить')
@@ -249,11 +253,15 @@ export default function EditMoment() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ backgroundColor: 'var(--base)' }}>
+    <div
+      className="fixed inset-0 z-50 flex flex-col animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: 'var(--base)', ...swipeBackHandlers.style }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-topbar" style={{ borderBottom: '1px solid var(--divider)', paddingBottom: 12 }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="font-sans type-action transition-opacity active:opacity-60"
           style={{ color: 'var(--mid)', background: 'none', border: 'none' }}
         >

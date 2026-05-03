@@ -8,6 +8,8 @@ import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
+import { useSwipeBack } from '../hooks/useSwipeBack'
+import { navigateWithTransition } from '../lib/navigation'
 
 const CURRENT_YEAR = new Date().getFullYear()
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1949 }, (_, index) => CURRENT_YEAR - index)
@@ -37,15 +39,6 @@ function formatMomentDate(value) {
     .replace(/\u00A0/g, ' ')
     .replace('.', '')
     .trim()
-}
-
-function navigateBack(navigate) {
-  if (window.history.length > 1) {
-    navigate(-1)
-    return
-  }
-
-  navigate('/people')
 }
 
 function BackIcon({ color = 'currentColor' }) {
@@ -708,6 +701,10 @@ export default function PersonDetail() {
   const [showMenu, setShowMenu] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [showAddMoment, setShowAddMoment] = useState(false)
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showMenu && !showEdit && !showAddMoment,
+    fallbackPath: '/people',
+  })
 
   const person = people.find((entry) => entry.id === id)
 
@@ -718,7 +715,7 @@ export default function PersonDetail() {
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigateBack(navigate)}
+              onClick={goBack}
               className="flex items-center gap-2 transition-opacity active:opacity-60"
               style={{
                 background: 'none',
@@ -813,12 +810,16 @@ export default function PersonDetail() {
   }
 
   return (
-    <div className="flex h-full flex-col animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
+    <div
+      className="flex h-full flex-col animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: 'var(--base)', ...swipeBackHandlers.style }}
+    >
       <div className="px-4 pt-topbar">
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigateBack(navigate)}
+            onClick={goBack}
             className="flex items-center gap-2 transition-opacity active:opacity-60"
             style={{
               background: 'none',
@@ -1011,7 +1012,7 @@ export default function PersonDetail() {
             <PersonExportCard
               person={person}
               moments={personMoments}
-              onClick={() => { tgHaptic('light'); navigate(`/collection/person/${id}`) }}
+              onClick={() => { tgHaptic('light'); navigateWithTransition(navigate, `/collection/person/${id}`) }}
             />
           </div>
         )}
@@ -1146,7 +1147,7 @@ export default function PersonDetail() {
                     key={moment.id}
                     moment={moment}
                     featured={personMoments.length === 1}
-                    onClick={() => navigate(`/moment/${moment.id}`)}
+                    onClick={() => navigateWithTransition(navigate, `/moment/${moment.id}`)}
                   />
                 ))}
               </div>

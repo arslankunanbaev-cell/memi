@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pluralRu } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import FAB from '../components/FAB'
@@ -8,6 +8,7 @@ import SectionLabel from '../components/SectionLabel'
 import { getMomentAddedAt, compareMomentsByAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
+import { RouteLoadingState } from '../components/LoadingState'
 
 function today() {
   const date = new Date()
@@ -69,7 +70,11 @@ function formatTopbarDate() {
 
 export default function Home() {
   const moments = useAppStore((state) => state.moments)
+  const initDone = useAppStore((state) => state.initDone)
+  const homeScrollTop = useAppStore((state) => state.homeScrollTop)
+  const setHomeScrollTop = useAppStore((state) => state.setHomeScrollTop)
   const [showAdd, setShowAdd] = useState(false)
+  const scrollRef = useRef(null)
 
   const groups = groupByDay([...moments].sort(compareMomentsByAddedAt))
   const isEmpty = moments.length === 0
@@ -83,8 +88,23 @@ export default function Home() {
     </span>
   )
 
+  useEffect(() => {
+    if (!scrollRef.current || isEmpty) return
+
+    const node = scrollRef.current
+    const frame = requestAnimationFrame(() => {
+      node.scrollTop = homeScrollTop
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [homeScrollTop, isEmpty])
+
+  if (!initDone && isEmpty) {
+    return <RouteLoadingState />
+  }
+
   return (
-    <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
+    <div className="flex h-full flex-col animate-fade-in" style={{ backgroundColor: 'var(--base)' }}>
       {isEmpty ? (
         <div className="flex flex-1 flex-col">
           <PageHeader
@@ -159,7 +179,12 @@ export default function Home() {
             containerClassName="items-center"
           />
 
-          <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 110 }}>
+          <div
+            ref={scrollRef}
+            className="hide-scrollbar flex-1 overflow-y-auto px-4"
+            onScroll={(event) => setHomeScrollTop(event.currentTarget.scrollTop)}
+            style={{ paddingBottom: 110 }}
+          >
             {groups.map((group, groupIndex) => (
               <section key={group.label} style={{ paddingBottom: 24 }}>
                 <SectionLabel style={{ marginBottom: 12 }}>

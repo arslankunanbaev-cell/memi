@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { canShareFiles, createCanvasFile, getCardFilename, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
@@ -7,6 +7,7 @@ import { getPremiumStatus, openStarsPayment } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 
 const TEMPLATES = [
   { id: 'polaroid', label: 'Полароид', hint: 'Тёплая бумага, мягкие тени и эффект личной заметки' },
@@ -1748,7 +1749,6 @@ function ShareIcon({ disabled, dark }) {
 
 export default function StoryPreview() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const moments = useAppStore((state) => state.moments)
   const ownedThemes = useAppStore((state) => state.ownedThemes)
   const moment = moments.find((item) => item.id === id)
@@ -1761,6 +1761,10 @@ export default function StoryPreview() {
   const [sent, setSent] = useState(false)
   const [sendError, setSendError] = useState(null)
   const [purchaseTheme, setPurchaseTheme] = useState(null) // тема ожидающая покупки
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !purchaseTheme && !sending,
+    fallbackPath: '/home',
+  })
 
   const dark = template === 'dark' || template === 'cinema'
   const activeTemplate = TEMPLATES.find((item) => item.id === template) ?? TEMPLATES[0]
@@ -1922,7 +1926,7 @@ export default function StoryPreview() {
         </p>
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="font-sans transition-opacity active:opacity-60"
           style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 15, fontWeight: 600 }}
         >
@@ -1935,10 +1939,12 @@ export default function StoryPreview() {
   return (
     <>
     <div
-      className="flex h-full flex-col"
+      className="flex h-full flex-col animate-route-enter"
+      {...swipeBackHandlers}
       style={{
         background: dark ? 'linear-gradient(180deg, #241A14 0%, #17140E 100%)' : 'var(--base)',
         transition: 'background 0.24s ease',
+        ...swipeBackHandlers.style,
       }}
     >
       <div
@@ -1951,7 +1957,7 @@ export default function StoryPreview() {
         <div className="grid grid-cols-[40px_1fr_40px] items-center">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex h-10 w-10 items-center justify-center transition-opacity active:opacity-60"
             style={{ border: 'none', background: 'none' }}
             aria-label="Назад"

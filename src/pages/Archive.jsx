@@ -5,6 +5,7 @@ import { tgHaptic } from '../lib/telegram'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { navigateWithTransition } from '../lib/navigation'
 import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 
@@ -254,7 +255,7 @@ function GridCell({ moment }) {
   return (
     <button
       type="button"
-      onClick={() => navigate(`/moment/${moment.id}`)}
+      onClick={() => navigateWithTransition(navigate, `/moment/${moment.id}`)}
       className="transition-opacity active:opacity-75"
       style={{
         position: 'relative',

@@ -12,6 +12,10 @@ import { trackEvent } from '../lib/analytics'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
+import { RouteLoadingState } from '../components/LoadingState'
+import { useSwipeBack } from '../hooks/useSwipeBack'
+import { tgHaptic } from '../lib/telegram'
+import { navigateWithTransition } from '../lib/navigation'
 
 function LinkIcon({ color = 'var(--soft)' }) {
   return (
@@ -952,6 +956,10 @@ export default function PublicProfile() {
   const [showLinkSheet, setShowLinkSheet] = useState(false)
   const [showActionsSheet, setShowActionsSheet] = useState(false)
   const lastTrackedProfileIdRef = useRef(null)
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showLinkSheet && !showActionsSheet,
+    fallbackPath: '/people',
+  })
 
   const friendEntry = friends.find((friend) => friend.id === userId)
   const isAlreadyFriend = Boolean(friendEntry)
@@ -979,7 +987,7 @@ export default function PublicProfile() {
   function handleOpenMoment(moment) {
     if (!moment?.id) return
 
-    navigate(`/moment/${moment.id}`, {
+    navigateWithTransition(navigate, `/moment/${moment.id}`, {
       state: {
         previewMoment: moment,
         forceFetch: true,
@@ -1039,6 +1047,8 @@ export default function PublicProfile() {
   async function handleAddFriend() {
     if (!currentUser?.id || !userId) return
 
+    tgHaptic('medium')
+
     try {
       const friendship = await sendFriendRequest(currentUser.id, userId)
       if (friendship?.id) {
@@ -1059,7 +1069,7 @@ export default function PublicProfile() {
     try {
       await removeFriend(friendEntry.friendship_id)
       setFriends(friends.filter((friend) => friend.id !== userId))
-      navigate(-1)
+      goBack()
     } catch (error) {
       console.error('[PublicProfile] remove friend error:', error)
       setRemoving(false)
@@ -1085,16 +1095,7 @@ export default function PublicProfile() {
   }
 
   if (loading) {
-    return (
-      <div
-        className="flex flex-col h-full items-center justify-center"
-        style={{ backgroundColor: 'var(--base)' }}
-      >
-        <p className="font-sans" style={{ fontSize: 13, color: 'var(--mid)' }}>
-          Загрузка...
-        </p>
-      </div>
-    )
+    return <RouteLoadingState />
   }
 
   if (!profileUser) {
@@ -1104,7 +1105,7 @@ export default function PublicProfile() {
           <div className="flex items-center justify-between">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={goBack}
               className="flex items-center gap-2 font-sans type-action"
               style={{
                 background: 'none',
@@ -1154,12 +1155,16 @@ export default function PublicProfile() {
   const friendButtonLabel = friendSent ? 'Запрос отправлен' : 'Добавить в друзья'
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: 'var(--base)' }}>
+    <div
+      className="flex flex-col h-full animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: 'var(--base)', ...swipeBackHandlers.style }}
+    >
       <div className="px-4 pt-topbar">
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center gap-2 font-sans type-action transition-opacity active:opacity-60"
             style={{
               background: 'none',
@@ -1249,7 +1254,7 @@ export default function PublicProfile() {
         sharedMoments={sharedMoments}
         showSharedMomentsSection={isAlreadyFriend || sharedMoments.length > 0}
         onMomentPress={handleOpenMoment}
-        onSharedMomentPress={(moment) => navigate(`/moment/${moment.id}`)}
+        onSharedMomentPress={(moment) => navigateWithTransition(navigate, `/moment/${moment.id}`)}
         canViewFriendMoments={canViewFriendMoments || isAlreadyFriend}
       />
 

@@ -26,6 +26,7 @@ import People from './pages/People'
 import MomentSaved from './pages/MomentSaved'
 import PublicProfile from './pages/PublicProfile'
 import { trackEvent } from './lib/analytics'
+import { RouteLoadingState } from './components/LoadingState'
 
 let hasTrackedAppOpened = false
 
@@ -37,7 +38,7 @@ const CollectionExport = lazy(() => import('./pages/CollectionExport'))
 const EditMoment = lazy(() => import('./pages/EditMoment'))
 
 function RouteFallback() {
-  return <div className="h-full w-full" style={{ backgroundColor: 'var(--base)' }} />
+  return <RouteLoadingState />
 }
 
 export default function App() {

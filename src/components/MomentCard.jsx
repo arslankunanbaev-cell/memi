@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
+import { navigateWithTransition } from '../lib/navigation'
 import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
@@ -156,7 +157,7 @@ export default function MomentCard({ moment }) {
   const openMoment = () => {
     if (openingRef.current) return
     openingRef.current = true
-    navigate(`/moment/${moment.id}`)
+    navigateWithTransition(navigate, `/moment/${moment.id}`)
   }
 
   const handlePointerUp = (event) => {

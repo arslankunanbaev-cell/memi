@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import {
@@ -14,6 +14,8 @@ import { getMomentDisplayAt } from '../lib/momentTime'
 import { tgHaptic } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { useAppStore } from '../store/useAppStore'
+import { DetailLoadingState } from '../components/LoadingState'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 
 function formatFull(iso) {
   if (!iso) return ''
@@ -34,9 +36,6 @@ function formatFull(iso) {
 }
 
 const REACTION_EMOJIS = ['❤️', '🥹', '😄', '🔥', '🫶']
-const SWIPE_BACK_EDGE = 36
-const SWIPE_BACK_DISTANCE = 82
-const SWIPE_BACK_MAX_VERTICAL = 58
 
 function CircleButton({ onClick, children, light = false, ariaLabel }) {
   return (
@@ -204,7 +203,10 @@ export default function MomentDetail() {
   const [reactions, setReactions] = useState([])
   const [loadingReactions, setLoadingReactions] = useState(false)
   const [reactingEmoji, setReactingEmoji] = useState(null)
-  const swipeBackRef = useRef(null)
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showMenu && !showCapsuleSheet,
+    fallbackPath: '/home',
+  })
 
   const shouldFetchRemoteMoment = !storeMoment
     || location.state?.forceFetch === true
@@ -335,13 +337,7 @@ export default function MomentDetail() {
 
   if (!moment) {
     if (loadingMoment) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--base)' }}>
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>
-            Загрузка момента...
-          </p>
-        </div>
-      )
+      return <DetailLoadingState />
     }
 
     return (
@@ -350,7 +346,7 @@ export default function MomentDetail() {
         <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 14 }}>
           Момент не найден
         </p>
-        <button type="button" onClick={() => navigate(-1)} style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 14 }}>
+        <button type="button" onClick={goBack} style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 14 }}>
           ← Назад
         </button>
       </div>
@@ -358,6 +354,7 @@ export default function MomentDetail() {
   }
 
   async function handleRemoveFromCapsule() {
+    tgHaptic('medium')
     removeFromCapsule(capsuleSlotIndex)
 
     try {
@@ -401,51 +398,6 @@ export default function MomentDetail() {
     }
 
     navigate(`/story/${moment.id}`)
-  }
-
-  function handleTouchStart(event) {
-    if (showMenu || showCapsuleSheet || event.touches.length !== 1) {
-      swipeBackRef.current = null
-      return
-    }
-
-    const touch = event.touches[0]
-
-    if (touch.clientX > SWIPE_BACK_EDGE) {
-      swipeBackRef.current = null
-      return
-    }
-
-    swipeBackRef.current = {
-      x: touch.clientX,
-      y: touch.clientY,
-    }
-  }
-
-  function handleTouchMove(event) {
-    if (!swipeBackRef.current || event.touches.length !== 1) return
-
-    const touch = event.touches[0]
-    const deltaX = touch.clientX - swipeBackRef.current.x
-    const deltaY = Math.abs(touch.clientY - swipeBackRef.current.y)
-
-    if (deltaX > 18 && deltaY < SWIPE_BACK_MAX_VERTICAL) {
-      event.preventDefault()
-    }
-  }
-
-  function handleTouchEnd(event) {
-    if (!swipeBackRef.current) return
-
-    const touch = event.changedTouches[0]
-    const deltaX = touch.clientX - swipeBackRef.current.x
-    const deltaY = Math.abs(touch.clientY - swipeBackRef.current.y)
-    swipeBackRef.current = null
-
-    if (deltaX >= SWIPE_BACK_DISTANCE && deltaY <= SWIPE_BACK_MAX_VERTICAL) {
-      tgHaptic('light')
-      navigate(-1)
-    }
   }
 
   function preventPhotoDoubleTap(event) {
@@ -533,11 +485,9 @@ export default function MomentDetail() {
 
   return (
     <div
-      className="flex h-full flex-col"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      style={{ backgroundColor: 'var(--base)', touchAction: 'pan-y' }}
+      className="flex h-full flex-col animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: 'var(--base)', ...swipeBackHandlers.style }}
     >
       <div className="hide-scrollbar flex-1 overflow-y-auto" style={{ paddingBottom: isOwn ? 110 : 40 }}>
         <div
@@ -561,7 +511,7 @@ export default function MomentDetail() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 34%, rgba(0,0,0,0.68) 100%)' }} />
 
           <div className="flex items-center justify-between px-4 pt-topbar" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-            <CircleButton onClick={() => navigate(-1)} light ariaLabel="Назад">
+            <CircleButton onClick={goBack} light ariaLabel="Назад">
               <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
                 <path d="M8 2L2 8l6 6" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -804,6 +754,7 @@ export default function MomentDetail() {
                   type="button"
                   onClick={async () => {
                     setShowCapsuleSheet(false)
+                    tgHaptic('medium')
                     addToCapsule(slotIndex, moment)
 
                     try {

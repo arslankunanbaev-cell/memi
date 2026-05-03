@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { acceptFriendRequest, createPerson, getFriendships, linkPersonToUser } from '../lib/api'
 import { tgHaptic } from '../lib/telegram'
+import { navigateWithTransition } from '../lib/navigation'
 import { plural } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
@@ -844,6 +845,8 @@ export default function People() {
   }
 
   async function handleAccept(request) {
+    tgHaptic('medium')
+
     try {
       await acceptFriendRequest(request.friendship_id)
       setFriends([...friends, request])
@@ -868,11 +871,11 @@ export default function People() {
 
   function cardClick(person) {
     if (person.isFriend) {
-      navigate(`/profile/${person.linked_user_id ?? person.id}`)
+      navigateWithTransition(navigate, `/profile/${person.linked_user_id ?? person.id}`)
       return
     }
 
-    navigate(`/people/${person.id}`)
+    navigateWithTransition(navigate, `/people/${person.id}`)
   }
 
   function rowProps(person) {

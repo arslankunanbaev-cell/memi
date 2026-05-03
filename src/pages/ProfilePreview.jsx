@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import { updatePublicProfile } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { PublicProfileContent } from './PublicProfile'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 
 function sinceLabel(createdAt) {
   if (!createdAt) return ''
@@ -396,7 +396,6 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function ProfilePreview() {
-  const navigate = useNavigate()
   const currentUser = useAppStore((state) => state.currentUser)
   const setCurrentUser = useAppStore((state) => state.setCurrentUser)
   const moments = useAppStore((state) => state.moments)
@@ -425,6 +424,10 @@ export default function ProfilePreview() {
     months: uniqueMonths(publicMoments),
     friends: friends.length,
   }
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showPublicProfileMenu && !showPublicProfileSheet,
+    fallbackPath: '/profile',
+  })
 
   function handleOpenEditor() {
     setShowPublicProfileMenu(false)
@@ -433,15 +436,16 @@ export default function ProfilePreview() {
 
   return (
     <div
-      className="flex h-full flex-col"
-      style={{ backgroundColor: 'var(--base)' }}
+      className="flex h-full flex-col animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: 'var(--base)', ...swipeBackHandlers.style }}
       data-testid="profile-preview-screen"
     >
       <div className="px-4 pt-topbar" style={{ paddingBottom: 12 }}>
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center gap-2 font-sans type-action transition-opacity active:opacity-60"
             style={{ background: 'none', border: 'none', padding: '8px 0', color: 'var(--mid)' }}
           >

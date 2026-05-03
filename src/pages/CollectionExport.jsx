@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { canShareFiles, createCanvasFile, shouldUseShareFallback, triggerBrowserDownload } from '../lib/cardExport'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { plural } from '../lib/ruPlural'
@@ -7,6 +7,7 @@ import { getPremiumStatus, openStarsPayment } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { useAppStore } from '../store/useAppStore'
+import { useSwipeBack } from '../hooks/useSwipeBack'
 
 // ─── Canvas constants ────────────────────────────────────────────────────────
 
@@ -718,7 +719,6 @@ function PremiumSheet({ onClose, onUnlocked }) {
 
 export default function CollectionExport() {
   const { type, key } = useParams()
-  const navigate = useNavigate()
   const canvasRef = useRef(null)
 
   const data = useCollectionData(type, key)
@@ -731,6 +731,10 @@ export default function CollectionExport() {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [sendError, setSendError] = useState(null)
+  const { goBack, swipeBackHandlers } = useSwipeBack({
+    enabled: !showPaywall && !sending,
+    fallbackPath: '/archive',
+  })
 
   // Show paywall immediately if not premium
   useEffect(() => {
@@ -834,7 +838,11 @@ export default function CollectionExport() {
 
   return (
   <>
-    <div className="flex h-full flex-col" style={{ backgroundColor: dark ? '#17140E' : 'var(--base)' }}>
+    <div
+      className="flex h-full flex-col animate-route-enter"
+      {...swipeBackHandlers}
+      style={{ backgroundColor: dark ? '#17140E' : 'var(--base)', ...swipeBackHandlers.style }}
+    >
       {/* Topbar */}
       <div
         className="px-4 pt-topbar"
@@ -846,7 +854,7 @@ export default function CollectionExport() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={goBack}
             className="flex items-center gap-2 transition-opacity active:opacity-60"
             style={{ background: 'none', border: 'none', padding: '8px 0', color: dark ? 'rgba(245,235,221,0.6)' : 'var(--mid)', fontSize: 15, fontWeight: 500 }}
           >
@@ -1047,7 +1055,7 @@ export default function CollectionExport() {
         onClose={() => {
           tgHaptic('light')
           setShowPaywall(false)
-          if (!isPremium) navigate(-1)
+          if (!isPremium) goBack()
         }}
         onUnlocked={() => setShowPaywall(false)}
       />

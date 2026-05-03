@@ -152,6 +152,18 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes routeEnter {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes premiumBadgeGlint {
   0%, 30% { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
   42% { opacity: 0.85; }
@@ -734,6 +746,35 @@
 
   .animate-fade-in {
     animation: fadeIn 0.18s ease both;
+  }
+
+  .animate-route-enter {
+    animation: routeEnter 0.22s cubic-bezier(0.2, 0, 0, 1) both;
+  }
+
+  .skeleton-shimmer {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.62) 48%,
+        rgba(255,255,255,0) 100%
+      ),
+      linear-gradient(180deg, rgba(237,230,220,0.88), rgba(245,235,221,0.9));
+    background-size: 220% 100%, 100% 100%;
+    animation: shimmer 1.25s ease-in-out infinite;
+  }
+
+  html[data-theme="dark"] .skeleton-shimmer {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.08) 48%,
+        rgba(255,255,255,0) 100%
+      ),
+      linear-gradient(180deg, rgba(35,33,32,0.96), rgba(26,24,22,0.9));
+    background-size: 220% 100%, 100% 100%;
   }
 
   .hide-scrollbar {
