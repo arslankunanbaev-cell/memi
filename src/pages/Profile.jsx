@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
+import CapsuleIcon from '../components/CapsuleIcon'
 import PremiumBadge from '../components/PremiumBadge'
 import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
@@ -74,9 +75,7 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
           className="flex items-center justify-center rounded-full"
           style={{ width: 36, height: 36, backgroundColor: 'var(--accent-light)' }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5v14M5 12h14" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
+          <CapsuleIcon size={18} color="var(--accent)" />
         </div>
         <span className="font-sans" style={{ color: 'var(--soft)', fontSize: 12, fontWeight: 500 }}>
           Добавить
@@ -174,9 +173,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
           style={{ border: 'none', background: 'none', borderBottom: '1px solid var(--divider)' }}
         >
           <div className="flex items-center justify-center rounded-[10px]" style={{ width: 36, height: 36, backgroundColor: 'var(--accent)', color: '#fff', flexShrink: 0 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-            </svg>
+            <CapsuleIcon size={18} color="#fff" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 600 }}>Создать момент</p>
@@ -780,7 +777,13 @@ export default function Profile() {
             {/* Capsule */}
             <section style={{ marginBottom: 24 }}>
               <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="flex items-center justify-center rounded-full"
+                    style={{ width: 28, height: 28, backgroundColor: 'var(--accent-light)', color: 'var(--accent)', flexShrink: 0 }}
+                  >
+                    <CapsuleIcon size={16} />
+                  </span>
                   <span className="font-sans type-card-title" style={{ color: 'var(--text)' }}>Капсула</span>
                   <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>· моменты на всю жизнь</span>
                 </div>

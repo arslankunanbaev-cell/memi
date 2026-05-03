@@ -1,5 +1,14 @@
 import { create } from 'zustand'
 
+function readStorageArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+}
+
 export const useAppStore = create((set) => ({
   // Auth
   currentUser: null,
@@ -100,6 +109,19 @@ export const useAppStore = create((set) => ({
   setOnboarded: (v) => set({ isOnboarded: v }),
   homeScrollTop: 0,
   setHomeScrollTop: (homeScrollTop) => set({ homeScrollTop }),
+  hiddenHomeMomentIds: readStorageArray('memi_hidden_home_moments'),
+  hideHomeMoment: (id) => set((s) => {
+    const next = s.hiddenHomeMomentIds.includes(id)
+      ? s.hiddenHomeMomentIds
+      : [...s.hiddenHomeMomentIds, id]
+    localStorage.setItem('memi_hidden_home_moments', JSON.stringify(next))
+    return { hiddenHomeMomentIds: next }
+  }),
+  restoreHomeMoment: (id) => set((s) => {
+    const next = s.hiddenHomeMomentIds.filter((entry) => entry !== id)
+    localStorage.setItem('memi_hidden_home_moments', JSON.stringify(next))
+    return { hiddenHomeMomentIds: next }
+  }),
 
   // Hero photo transition (card → detail)
   heroTransition: null,

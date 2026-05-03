@@ -128,9 +128,11 @@ function PhotoChip({ children, center = false }) {
   )
 }
 
-export default function MomentCard({ moment }) {
+export default function MomentCard({ moment, onLongPress }) {
   const navigate = useNavigate()
   const openingRef = useRef(false)
+  const longPressTimerRef = useRef(null)
+  const longPressTriggeredRef = useRef(false)
   const currentUser = useAppStore((state) => state.currentUser)
   const friends = useAppStore((state) => state.friends)
 
@@ -160,13 +162,55 @@ export default function MomentCard({ moment }) {
     navigateWithTransition(navigate, `/moment/${moment.id}`)
   }
 
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  const handlePointerDown = (event) => {
+    if (!onLongPress || event.button > 0) return
+
+    longPressTriggeredRef.current = false
+    clearLongPressTimer()
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
+      onLongPress(moment)
+    }, 480)
+  }
+
   const handlePointerUp = (event) => {
+    clearLongPressTimer()
+    if (longPressTriggeredRef.current) {
+      event.preventDefault()
+      return
+    }
+
     if (event.pointerType === 'mouse') return
     event.preventDefault()
     openMoment()
   }
 
-  const handleClick = () => {
+  const handlePointerCancel = () => {
+    clearLongPressTimer()
+  }
+
+  const handleContextMenu = (event) => {
+    if (!onLongPress) return
+    event.preventDefault()
+    clearLongPressTimer()
+    longPressTriggeredRef.current = true
+    onLongPress(moment)
+  }
+
+  const handleClick = (event) => {
+    if (longPressTriggeredRef.current) {
+      event.preventDefault()
+      longPressTriggeredRef.current = false
+      return
+    }
+
     openMoment()
   }
 
@@ -180,7 +224,11 @@ export default function MomentCard({ moment }) {
         border: '1px solid rgba(160, 94, 44, 0.08)',
         boxShadow: '0 12px 34px rgba(80, 50, 30, 0.12)',
       }}
+      onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerCancel}
+      onPointerCancel={handlePointerCancel}
+      onContextMenu={handleContextMenu}
       onClick={handleClick}
     >
       {isShared && author && (

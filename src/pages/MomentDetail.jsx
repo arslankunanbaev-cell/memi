@@ -16,6 +16,7 @@ import { trackEvent } from '../lib/analytics'
 import { useAppStore } from '../store/useAppStore'
 import { DetailLoadingState } from '../components/LoadingState'
 import { useSwipeBack } from '../hooks/useSwipeBack'
+import CapsuleIcon from '../components/CapsuleIcon'
 
 function formatFull(iso) {
   if (!iso) return ''
@@ -662,11 +663,7 @@ export default function MomentDetail() {
                 className="surface-card flex items-center justify-center rounded-[16px] transition-opacity active:opacity-60"
                 style={{ border: 'none', width: 50, height: 50, backgroundColor: 'var(--moment-surface)' }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <rect x="5" y="4" width="14" height="16" rx="2" stroke="var(--accent)" strokeWidth="2" />
-                  <path d="M9 2v4M15 2v4" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M8 10h8M8 14h5" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
-                </svg>
+                <CapsuleIcon color="var(--accent)" />
               </button>
 
               <button
@@ -715,11 +712,7 @@ export default function MomentDetail() {
                 }
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="5" y="4" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M9 2v4M15 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M8 10h8M8 14h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <CapsuleIcon />
             </MenuAction>
 
             <MenuAction
