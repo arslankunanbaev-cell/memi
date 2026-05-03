@@ -44,7 +44,7 @@ function PreviewStack({ moments }) {
 
   return (
     <div
-      className="flex items-end justify-end"
+      className="archive-preview-stack flex items-end justify-end"
       style={{
         minWidth: 116,
         height: 112,
@@ -53,15 +53,11 @@ function PreviewStack({ moments }) {
     >
       {preview.length === 0 ? (
         <div
-          className="flex items-center justify-center"
+          className="archive-preview-empty flex items-center justify-center"
           style={{
             width: 92,
             height: 108,
             borderRadius: 18,
-            background:
-              'linear-gradient(145deg, rgba(217,139,82,0.22), rgba(255,255,255,0.66))',
-            border: '1px solid rgba(255,255,255,0.58)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.58)',
           }}
         >
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
@@ -92,8 +88,6 @@ function PreviewStack({ moments }) {
                 background: moment.photo_url
                   ? 'var(--surface)'
                   : 'linear-gradient(160deg, #6C7C57 0%, #BD8A5D 55%, #F0D7A1 100%)',
-                border: '2px solid rgba(255,255,255,0.78)',
-                boxShadow: '0 12px 24px rgba(80,50,30,0.17)',
               }}
             >
               {moment.photo_url && (
@@ -115,11 +109,10 @@ function PreviewStack({ moments }) {
 function StatPill({ value, label }) {
   return (
     <div
+      className="archive-stat-pill"
       style={{
         minWidth: 0,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.48)',
-        border: '1px solid rgba(255,255,255,0.52)',
         padding: '10px 12px',
       }}
     >
@@ -371,13 +364,7 @@ export default function Archive() {
   const activeMonthTitle = monthParts(resolvedActiveMonth)
 
   return (
-    <div
-      className="flex h-full flex-col"
-      style={{
-        background:
-          'linear-gradient(180deg, rgba(255,255,255,0.46) 0%, var(--base) 26%, #F2ECE4 100%)',
-      }}
-    >
+    <div className="archive-screen flex h-full flex-col">
       <div className="px-4 pt-topbar" style={{ paddingBottom: 20 }}>
         <div style={{ paddingBottom: 18 }}>
           <div className="flex items-start justify-between gap-3">
@@ -396,13 +383,10 @@ export default function Archive() {
             <button
               type="button"
               onClick={() => setShowFilter(true)}
-              className="flex items-center gap-2 whitespace-nowrap font-sans type-chip transition-opacity active:opacity-60"
+              className={`archive-filter-button flex items-center gap-2 whitespace-nowrap font-sans type-chip transition-opacity active:opacity-60${filterPeople.length > 0 ? ' is-active' : ''}`}
               style={{
-                border: '1px solid var(--divider)',
                 borderRadius: 999,
-                backgroundColor: filterPeople.length > 0 ? 'var(--accent-pale)' : 'rgba(255,255,255,0.56)',
                 color: filterPeople.length > 0 ? 'var(--accent)' : 'var(--mid)',
-                boxShadow: '0 6px 16px rgba(80,50,30,0.07)',
                 padding: '9px 12px',
               }}
             >
@@ -441,18 +425,8 @@ export default function Archive() {
                 key={key}
                 type="button"
                 onClick={() => setActiveMonth(key)}
-                className="font-sans type-chip whitespace-nowrap transition-opacity active:opacity-70"
+                className={`archive-month-chip font-sans type-chip whitespace-nowrap transition-opacity active:opacity-70${active ? ' is-active' : ''}`}
                 style={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  border: active ? '1px solid rgba(255,236,218,0.58)' : '1px solid rgba(160,94,44,0.1)',
-                  borderRadius: 999,
-                  background: active
-                    ? 'linear-gradient(145deg, #E7A06B 0%, var(--accent) 48%, var(--deep) 100%)'
-                    : 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.42))',
-                  boxShadow: active
-                    ? '0 10px 22px rgba(160,94,44,0.24), inset 0 1px 0 rgba(255,255,255,0.34)'
-                    : 'inset 0 1px 0 rgba(255,255,255,0.54)',
                   color: active ? '#fff' : 'var(--mid)',
                   fontWeight: active ? 700 : 500,
                   padding: active ? '9px 15px 9px 10px' : '9px 16px',
@@ -460,12 +434,12 @@ export default function Archive() {
               >
                 {active && (
                   <span
+                    className="archive-month-chip-gloss"
                     style={{
                       position: 'absolute',
                       inset: '1px 1px auto 1px',
                       height: '50%',
                       borderRadius: 999,
-                      background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0))',
                       pointerEvents: 'none',
                     }}
                   />
@@ -473,13 +447,11 @@ export default function Archive() {
                 <span className="relative flex items-center gap-2">
                   {active && (
                     <span
-                      className="flex items-center justify-center"
+                      className="archive-month-chip-icon flex items-center justify-center"
                       style={{
                         width: 22,
                         height: 22,
                         borderRadius: 999,
-                        backgroundColor: 'rgba(255,255,255,0.22)',
-                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28)',
                         flexShrink: 0,
                       }}
                     >
@@ -545,14 +517,11 @@ export default function Archive() {
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 112 }}>
         <div
+          className="archive-month-hero"
           style={{
             position: 'relative',
             overflow: 'hidden',
             borderRadius: 26,
-            background:
-              'radial-gradient(circle at 86% 2%, rgba(255,255,255,0.78), transparent 34%), linear-gradient(135deg, rgba(217,139,82,0.20) 0%, rgba(245,235,221,0.96) 58%, rgba(255,255,255,0.72) 100%)',
-            border: '1px solid rgba(160,94,44,0.10)',
-            boxShadow: '0 14px 34px rgba(80,50,30,0.11), inset 0 1px 0 rgba(255,255,255,0.72)',
             padding: '18px 16px',
             marginBottom: 18,
           }}
@@ -591,9 +560,7 @@ export default function Archive() {
               position: 'absolute',
               right: 14,
               top: 14,
-              border: '1px solid rgba(160,94,44,0.12)',
               borderRadius: 999,
-              backgroundColor: 'rgba(255,255,255,0.48)',
               color: 'var(--deep)',
               fontWeight: 600,
               padding: '5px 9px',
@@ -605,12 +572,9 @@ export default function Archive() {
 
         {monthMoments.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center"
+            className="archive-empty-state flex flex-col items-center justify-center"
             style={{
-              border: '1.5px dashed rgba(217,139,82,0.28)',
               borderRadius: 26,
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.24))',
               minHeight: 220,
               padding: '28px 24px',
             }}
@@ -651,14 +615,10 @@ export default function Archive() {
             <button
               type="button"
               onClick={() => { tgHaptic('light'); navigate(`/collection/month/${resolvedActiveMonth}`) }}
-              className="flex w-full items-center justify-between gap-3 font-sans transition-opacity active:opacity-70"
+              className="archive-album-cta flex w-full items-center justify-between gap-3 font-sans transition-opacity active:opacity-70"
               style={{
                 marginTop: 20,
-                border: '1px solid rgba(160,94,44,0.10)',
                 borderRadius: 22,
-                background:
-                  'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245,235,221,0.82))',
-                boxShadow: '0 10px 24px rgba(80,50,30,0.09), inset 0 1px 0 rgba(255,255,255,0.72)',
                 color: 'var(--text)',
                 fontSize: 14,
                 fontWeight: 600,
@@ -667,12 +627,11 @@ export default function Archive() {
             >
               <span className="flex min-w-0 items-center gap-3">
                 <span
-                  className="flex items-center justify-center"
+                  className="archive-album-icon flex items-center justify-center"
                   style={{
                     width: 36,
                     height: 36,
                     borderRadius: 13,
-                    backgroundColor: 'var(--accent-pale)',
                     flexShrink: 0,
                   }}
                 >
@@ -690,11 +649,9 @@ export default function Archive() {
                 </span>
               </span>
               <span
-                className="font-sans type-meta"
+                className="archive-premium-pill font-sans type-meta"
                 style={{
                   borderRadius: 999,
-                  backgroundColor: 'var(--accent-pale)',
-                  color: 'var(--accent)',
                   flexShrink: 0,
                   fontWeight: 700,
                   padding: '5px 8px',

@@ -363,6 +363,91 @@
     box-shadow: var(--shadow-card-strong);
   }
 
+  .archive-screen {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.46) 0%, var(--base) 26%, #F2ECE4 100%);
+  }
+
+  .archive-filter-button {
+    border: 1px solid var(--divider);
+    background: rgba(255,255,255,0.56);
+    box-shadow: 0 6px 16px rgba(80,50,30,0.07);
+  }
+
+  .archive-filter-button.is-active {
+    background: var(--accent-pale);
+  }
+
+  .archive-month-chip {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(160,94,44,0.1);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.42));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.54);
+  }
+
+  .archive-month-chip.is-active {
+    border-color: rgba(255,236,218,0.58);
+    background: linear-gradient(145deg, #E7A06B 0%, var(--accent) 48%, var(--deep) 100%);
+    box-shadow: 0 10px 22px rgba(160,94,44,0.24), inset 0 1px 0 rgba(255,255,255,0.34);
+  }
+
+  .archive-month-chip-gloss {
+    background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0));
+  }
+
+  .archive-month-chip-icon {
+    background-color: rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.28);
+  }
+
+  .archive-month-hero {
+    background:
+      radial-gradient(circle at 86% 2%, rgba(255,255,255,0.78), transparent 34%),
+      linear-gradient(135deg, rgba(217,139,82,0.20) 0%, rgba(245,235,221,0.96) 58%, rgba(255,255,255,0.72) 100%);
+    border: 1px solid rgba(160,94,44,0.10);
+    box-shadow: 0 14px 34px rgba(80,50,30,0.11), inset 0 1px 0 rgba(255,255,255,0.72);
+  }
+
+  .archive-month-hero > button {
+    border: 1px solid rgba(160,94,44,0.12);
+    background: rgba(255,255,255,0.48);
+  }
+
+  .archive-stat-pill {
+    background: rgba(255,255,255,0.48);
+    border: 1px solid rgba(255,255,255,0.52);
+  }
+
+  .archive-preview-empty {
+    background: linear-gradient(145deg, rgba(217,139,82,0.22), rgba(255,255,255,0.66));
+    border: 1px solid rgba(255,255,255,0.58);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.58);
+  }
+
+  .archive-preview-stack > div {
+    border: 2px solid rgba(255,255,255,0.78);
+    box-shadow: 0 12px 24px rgba(80,50,30,0.17);
+  }
+
+  .archive-empty-state {
+    border: 1.5px dashed rgba(217,139,82,0.28);
+    background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.24));
+  }
+
+  .archive-album-cta {
+    border: 1px solid rgba(160,94,44,0.10);
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(245,235,221,0.82));
+    box-shadow: 0 10px 24px rgba(80,50,30,0.09), inset 0 1px 0 rgba(255,255,255,0.72);
+  }
+
+  .archive-album-icon,
+  .archive-premium-pill {
+    background: var(--accent-pale);
+    color: var(--accent);
+  }
+
   .memory-row-card {
     border: 1px solid rgba(160, 94, 44, 0.08);
     box-shadow: 0 6px 18px rgba(80,50,30,0.09);
@@ -532,6 +617,91 @@
       linear-gradient(180deg, rgba(35,33,32,0.92), rgba(30,28,26,0.84)),
       var(--moment-surface);
     border-color: rgba(255,255,255,0.06);
+  }
+
+  html[data-theme="dark"] .archive-screen {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(217,139,82,0.08), transparent 38%),
+      linear-gradient(180deg, #11100F 0%, var(--base) 42%, #090807 100%);
+  }
+
+  html[data-theme="dark"] .archive-filter-button {
+    border-color: rgba(255,255,255,0.07);
+    background: rgba(35,33,32,0.82);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  html[data-theme="dark"] .archive-filter-button.is-active {
+    border-color: rgba(217,139,82,0.34);
+    background: rgba(217,139,82,0.15);
+  }
+
+  html[data-theme="dark"] .archive-month-chip {
+    border-color: rgba(255,255,255,0.07);
+    background: linear-gradient(180deg, rgba(36,34,32,0.96), rgba(26,24,22,0.92));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  html[data-theme="dark"] .archive-month-chip.is-active {
+    border-color: rgba(232,169,107,0.38);
+    background: linear-gradient(145deg, rgba(217,139,82,0.94) 0%, rgba(160,94,44,0.98) 58%, rgba(92,45,14,0.98) 100%);
+    box-shadow: 0 9px 20px rgba(0,0,0,0.28), 0 0 18px rgba(217,139,82,0.12), inset 0 1px 0 rgba(255,226,188,0.22);
+  }
+
+  html[data-theme="dark"] .archive-month-chip-gloss {
+    background: linear-gradient(180deg, rgba(255,220,181,0.16), rgba(255,255,255,0));
+  }
+
+  html[data-theme="dark"] .archive-month-chip-icon {
+    background-color: rgba(255,238,221,0.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  html[data-theme="dark"] .archive-month-hero {
+    background:
+      radial-gradient(circle at 88% 0%, rgba(232,169,107,0.16), transparent 32%),
+      linear-gradient(135deg, rgba(76,49,30,0.82) 0%, rgba(35,33,32,0.96) 56%, rgba(26,24,22,0.98) 100%);
+    border-color: rgba(255,255,255,0.07);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  html[data-theme="dark"] .archive-month-hero > button {
+    border-color: rgba(232,169,107,0.24);
+    background: rgba(217,139,82,0.10);
+    color: #E8A96B !important;
+  }
+
+  html[data-theme="dark"] .archive-stat-pill {
+    background: rgba(255,255,255,0.045);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  html[data-theme="dark"] .archive-preview-empty {
+    background: linear-gradient(145deg, rgba(217,139,82,0.14), rgba(255,255,255,0.04));
+    border-color: rgba(255,255,255,0.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  html[data-theme="dark"] .archive-preview-stack > div {
+    border-color: rgba(255,255,255,0.16);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.32);
+  }
+
+  html[data-theme="dark"] .archive-empty-state {
+    border-color: rgba(217,139,82,0.24);
+    background: linear-gradient(180deg, rgba(35,33,32,0.86), rgba(26,24,22,0.7));
+  }
+
+  html[data-theme="dark"] .archive-album-cta {
+    border-color: rgba(255,255,255,0.07);
+    background: linear-gradient(135deg, rgba(35,33,32,0.98), rgba(26,24,22,0.92));
+    box-shadow: 0 12px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  html[data-theme="dark"] .archive-album-icon,
+  html[data-theme="dark"] .archive-premium-pill {
+    background: rgba(217,139,82,0.14);
+    color: #E8A96B;
   }
 
   html[data-theme="dark"] .profile-avatar-shell {
