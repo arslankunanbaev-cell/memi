@@ -443,16 +443,54 @@ export default function Archive() {
                 onClick={() => setActiveMonth(key)}
                 className="font-sans type-chip whitespace-nowrap transition-opacity active:opacity-70"
                 style={{
-                  border: active ? '1px solid rgba(217,139,82,0.18)' : '1px solid rgba(160,94,44,0.1)',
-                  borderRadius: 20,
-                  backgroundColor: active ? 'var(--accent)' : 'rgba(255,255,255,0.5)',
-                  boxShadow: active ? '0 8px 18px rgba(217,139,82,0.20)' : 'none',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  border: active ? '1px solid rgba(255,236,218,0.58)' : '1px solid rgba(160,94,44,0.1)',
+                  borderRadius: 999,
+                  background: active
+                    ? 'linear-gradient(145deg, #E7A06B 0%, var(--accent) 48%, var(--deep) 100%)'
+                    : 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.42))',
+                  boxShadow: active
+                    ? '0 10px 22px rgba(160,94,44,0.24), inset 0 1px 0 rgba(255,255,255,0.34)'
+                    : 'inset 0 1px 0 rgba(255,255,255,0.54)',
                   color: active ? '#fff' : 'var(--mid)',
-                  fontWeight: active ? 600 : 500,
-                  padding: '8px 16px',
+                  fontWeight: active ? 700 : 500,
+                  padding: active ? '9px 15px 9px 10px' : '9px 16px',
                 }}
               >
-                {monthLabel(key)}
+                {active && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      inset: '1px 1px auto 1px',
+                      height: '50%',
+                      borderRadius: 999,
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0))',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+                <span className="relative flex items-center gap-2">
+                  {active && (
+                    <span
+                      className="flex items-center justify-center"
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 999,
+                        backgroundColor: 'rgba(255,255,255,0.22)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28)',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <rect x="4" y="5" width="16" height="15" rx="3" stroke="currentColor" strokeWidth="2" />
+                        <path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  )}
+                  <span>{monthLabel(key)}</span>
+                </span>
               </button>
             )
           })}
