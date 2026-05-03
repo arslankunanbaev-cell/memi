@@ -174,14 +174,17 @@ export default function Home() {
   const capsule = useAppStore((state) => state.capsule)
   const addToCapsule = useAppStore((state) => state.addToCapsule)
   const initDone = useAppStore((state) => state.initDone)
-  const homeScrollTop = useAppStore((state) => state.homeScrollTop)
   const setHomeScrollTop = useAppStore((state) => state.setHomeScrollTop)
   const hiddenHomeMomentIds = useAppStore((state) => state.hiddenHomeMomentIds)
   const hideHomeMoment = useAppStore((state) => state.hideHomeMoment)
   const restoreHomeMoment = useAppStore((state) => state.restoreHomeMoment)
+  const initialHomeScrollTopRef = useRef(useAppStore.getState().homeScrollTop)
+  const currentScrollTopRef = useRef(initialHomeScrollTopRef.current)
+  const scrollPersistTimerRef = useRef(null)
+  const showScrollTopRef = useRef(initialHomeScrollTopRef.current > 320)
   const [showAdd, setShowAdd] = useState(false)
   const [actionMoment, setActionMoment] = useState(null)
-  const [showScrollTop, setShowScrollTop] = useState(homeScrollTop > 320)
+  const [showScrollTop, setShowScrollTop] = useState(showScrollTopRef.current)
   const [undoMoment, setUndoMoment] = useState(null)
   const scrollRef = useRef(null)
 
@@ -210,11 +213,18 @@ export default function Home() {
 
     const node = scrollRef.current
     const frame = requestAnimationFrame(() => {
-      node.scrollTop = homeScrollTop
+      node.scrollTop = initialHomeScrollTopRef.current
     })
 
     return () => cancelAnimationFrame(frame)
-  }, [homeScrollTop, isEmpty])
+  }, [isEmpty])
+
+  useEffect(() => () => {
+    if (scrollPersistTimerRef.current) {
+      clearTimeout(scrollPersistTimerRef.current)
+    }
+    setHomeScrollTop(currentScrollTopRef.current)
+  }, [setHomeScrollTop])
 
   useEffect(() => {
     if (!undoMoment) return undefined
@@ -288,15 +298,35 @@ export default function Home() {
     if (!node) return
 
     tgHaptic('light')
+    if (scrollPersistTimerRef.current) {
+      clearTimeout(scrollPersistTimerRef.current)
+      scrollPersistTimerRef.current = null
+    }
     node.scrollTo({ top: 0, behavior: 'smooth' })
+    currentScrollTopRef.current = 0
     setHomeScrollTop(0)
+    showScrollTopRef.current = false
     setShowScrollTop(false)
   }
 
   function handleHomeScroll(event) {
     const nextTop = event.currentTarget.scrollTop
-    setHomeScrollTop(nextTop)
-    setShowScrollTop(nextTop > 320)
+    const shouldShowScrollTop = nextTop > 320
+    currentScrollTopRef.current = nextTop
+
+    if (showScrollTopRef.current !== shouldShowScrollTop) {
+      showScrollTopRef.current = shouldShowScrollTop
+      setShowScrollTop(shouldShowScrollTop)
+    }
+
+    if (scrollPersistTimerRef.current) {
+      clearTimeout(scrollPersistTimerRef.current)
+    }
+
+    scrollPersistTimerRef.current = setTimeout(() => {
+      scrollPersistTimerRef.current = null
+      setHomeScrollTop(currentScrollTopRef.current)
+    }, 180)
   }
 
   function undoHideMoment() {
