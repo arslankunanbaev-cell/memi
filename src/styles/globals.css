@@ -390,7 +390,7 @@
   .archive-month-chip.is-active {
     border-color: rgba(255,236,218,0.58);
     background: linear-gradient(145deg, #E7A06B 0%, var(--accent) 48%, var(--deep) 100%);
-    box-shadow: 0 10px 22px rgba(160,94,44,0.24), inset 0 1px 0 rgba(255,255,255,0.34);
+    box-shadow: 0 4px 10px rgba(160,94,44,0.16), inset 0 1px 0 rgba(255,255,255,0.34);
   }
 
   .archive-month-chip-gloss {
@@ -645,7 +645,7 @@
   html[data-theme="dark"] .archive-month-chip.is-active {
     border-color: rgba(232,169,107,0.38);
     background: linear-gradient(145deg, rgba(217,139,82,0.94) 0%, rgba(160,94,44,0.98) 58%, rgba(92,45,14,0.98) 100%);
-    box-shadow: 0 9px 20px rgba(0,0,0,0.28), 0 0 18px rgba(217,139,82,0.12), inset 0 1px 0 rgba(255,226,188,0.22);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.24), 0 0 10px rgba(217,139,82,0.09), inset 0 1px 0 rgba(255,226,188,0.22);
   }
 
   html[data-theme="dark"] .archive-month-chip-gloss {
