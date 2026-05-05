@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { pluralRu } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
@@ -13,7 +13,7 @@ import { getMomentAddedAt, compareMomentsByAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 import { RouteLoadingState } from '../components/LoadingState'
-import { saveCapsuleSlot } from '../lib/api'
+import { saveCapsuleSlot, getMoments, getSharedMoments, getFriendsFeedMoments, mergeMomentCollections } from '../lib/api'
 import { navigateWithTransition } from '../lib/navigation'
 import { tgHaptic } from '../lib/telegram'
 
@@ -66,6 +66,9 @@ function groupByDay(moments) {
     items,
   }))
 }
+
+const PAGE_SIZE = 20
+const PULL_THRESHOLD = 64 // px to trigger refresh
 
 function formatTopbarDate() {
   return new Date().toLocaleDateString('ru-RU', {
@@ -169,6 +172,7 @@ function MomentActionsSheet({ moment, author, isOwn, capsuleFull, onClose, onOpe
 export default function Home() {
   const navigate = useNavigate()
   const moments = useAppStore((state) => state.moments)
+  const setMoments = useAppStore((state) => state.setMoments)
   const friends = useAppStore((state) => state.friends)
   const currentUser = useAppStore((state) => state.currentUser)
   const capsule = useAppStore((state) => state.capsule)
@@ -187,9 +191,19 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(showScrollTopRef.current)
   const [undoMoment, setUndoMoment] = useState(null)
   const scrollRef = useRef(null)
+  const sentinelRef = useRef(null)
+
+  // Pagination
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [moments])
+
+  // Pull-to-refresh state
+  const [pullY, setPullY] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const touchStartYRef = useRef(0)
+  const pullingRef = useRef(false)
 
   const visibleMoments = moments.filter((moment) => !hiddenHomeMomentIds.includes(moment.id))
-  const groups = groupByDay([...visibleMoments].sort(compareMomentsByAddedAt))
   const isEmpty = visibleMoments.length === 0
   const hasHiddenAllMoments = moments.length > 0 && isEmpty
   const actionMomentIsOwn = actionMoment && !actionMoment.isShared && actionMoment.user_id === currentUser?.id
@@ -232,6 +246,65 @@ export default function Home() {
     const timer = setTimeout(() => setUndoMoment(null), 5200)
     return () => clearTimeout(timer)
   }, [undoMoment])
+
+  // Infinite scroll — load next page when sentinel is visible
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisibleCount((prev) => prev + PAGE_SIZE)
+      }
+    }, { threshold: 0.1 })
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [])
+
+  // Pull-to-refresh handlers
+  const handleRefresh = useCallback(async () => {
+    if (!currentUser?.id || refreshing) return
+    tgHaptic('medium')
+    setRefreshing(true)
+    try {
+      const [own, shared] = await Promise.all([
+        getMoments(currentUser.id),
+        getSharedMoments(currentUser.id).catch(() => []),
+      ])
+      const friendFeed = friends.length > 0
+        ? await getFriendsFeedMoments(friends.map((f) => f.id)).catch(() => [])
+        : []
+      setMoments(mergeMomentCollections(own, shared, friendFeed))
+    } catch (err) {
+      console.error('[Home] refresh failed:', err)
+    } finally {
+      setRefreshing(false)
+    }
+  }, [currentUser?.id, friends, refreshing, setMoments])
+
+  function handleTouchStart(e) {
+    if (scrollRef.current?.scrollTop !== 0) return
+    touchStartYRef.current = e.touches[0].clientY
+    pullingRef.current = true
+  }
+
+  function handleTouchMove(e) {
+    if (!pullingRef.current) return
+    const dy = e.touches[0].clientY - touchStartYRef.current
+    if (dy <= 0) { pullingRef.current = false; setPullY(0); return }
+    // Dampen the pull so it doesn't fly off screen
+    setPullY(Math.min(dy * 0.45, PULL_THRESHOLD))
+  }
+
+  function handleTouchEnd() {
+    if (!pullingRef.current) return
+    pullingRef.current = false
+    if (pullY >= PULL_THRESHOLD * 0.9) {
+      handleRefresh()
+    }
+    setPullY(0)
+  }
 
   if (!initDone && isEmpty) {
     return <RouteLoadingState />
@@ -436,9 +509,39 @@ export default function Home() {
             ref={scrollRef}
             className="hide-scrollbar flex-1 overflow-y-auto px-4"
             onScroll={handleHomeScroll}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             style={{ paddingBottom: 110 }}
           >
-            {groups.map((group, groupIndex) => (
+            {/* Pull-to-refresh indicator */}
+            {(pullY > 0 || refreshing) && (
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  height: refreshing ? 40 : pullY,
+                  overflow: 'hidden',
+                  transition: refreshing ? 'none' : 'height 0.1s',
+                  opacity: refreshing ? 1 : pullY / PULL_THRESHOLD,
+                }}
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  style={{
+                    color: 'var(--accent)',
+                    animation: refreshing ? 'spin 0.8s linear infinite' : 'none',
+                    transform: refreshing ? undefined : `rotate(${(pullY / PULL_THRESHOLD) * 360}deg)`,
+                  }}
+                >
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+            )}
+
+            {groupByDay([...visibleMoments].sort(compareMomentsByAddedAt).slice(0, visibleCount)).map((group, groupIndex) => (
               <section key={group.label} style={{ paddingBottom: 24 }}>
                 <SectionLabel style={{ marginBottom: 12 }}>
                   {group.label}
@@ -465,6 +568,11 @@ export default function Home() {
                 </div>
               </section>
             ))}
+
+            {/* Sentinel for infinite scroll */}
+            {visibleCount < visibleMoments.length && (
+              <div ref={sentinelRef} style={{ height: 1 }} />
+            )}
           </div>
 
           {showScrollTop && (

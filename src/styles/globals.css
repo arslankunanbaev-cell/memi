@@ -180,6 +180,10 @@
   to { transform: translateY(0); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @layer utilities {
   .bg-base { background-color: var(--base); }
   .bg-surface { background-color: var(--surface); }
