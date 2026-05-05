@@ -1042,3 +1042,166 @@ export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
     .map((moment) => normalizeMomentMedia(moment))
     .sort(compareMomentsByDisplayAt)
 }
+
+// ── Shared Collections ────────────────────────────────────────────────────────
+
+export async function getCollections(userId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('collection_members')
+    .select(`
+      collection:collections(
+        id, name, cover_url, invite_code, created_by, created_at,
+        members:collection_members(user_id, role),
+        collection_moments(moment_id)
+      )
+    `)
+    .eq('user_id', userId)
+    .order('joined_at', { ascending: false })
+
+  if (error) throw error
+
+  return (data ?? [])
+    .map((row) => row.collection)
+    .filter(Boolean)
+    .map((col) => ({
+      ...col,
+      memberCount: col.members?.length ?? 0,
+      momentCount: col.collection_moments?.length ?? 0,
+    }))
+}
+
+export async function createCollection(userId, { name }) {
+  const sb = assertSupabase()
+
+  const { data: col, error: colErr } = await sb
+    .from('collections')
+    .insert({ name: name.trim(), created_by: userId })
+    .select('id, name, cover_url, invite_code, created_by, created_at')
+    .single()
+
+  if (colErr) throw colErr
+
+  const { error: memErr } = await sb
+    .from('collection_members')
+    .insert({ collection_id: col.id, user_id: userId, role: 'owner' })
+
+  if (memErr) throw memErr
+
+  return { ...col, memberCount: 1, momentCount: 0 }
+}
+
+export async function getCollectionDetails(collectionId) {
+  const sb = assertSupabase()
+
+  const [colResult, momentsResult] = await Promise.all([
+    sb.from('collections')
+      .select(`
+        id, name, cover_url, invite_code, created_by, created_at,
+        members:collection_members(
+          user_id, role, joined_at,
+          user:users(id, name, photo_url)
+        )
+      `)
+      .eq('id', collectionId)
+      .single(),
+    sb.from('collection_moments')
+      .select(`
+        added_by, added_at,
+        moment:moments(
+          *,
+          people:moment_people(person:people(id, name, avatar_color, photo_url))
+        )
+      `)
+      .eq('collection_id', collectionId)
+      .order('added_at', { ascending: false }),
+  ])
+
+  if (colResult.error) throw colResult.error
+
+  const collection = colResult.data
+  const moments = (momentsResult.data ?? [])
+    .map((row) => {
+      if (!row.moment) return null
+      return normalizeMomentRecord(row.moment, { collectionAddedBy: row.added_by, collectionAddedAt: row.added_at })
+    })
+    .filter(Boolean)
+
+  return {
+    ...collection,
+    members: collection.members ?? [],
+    moments,
+  }
+}
+
+export async function addMomentToCollection(collectionId, momentId, userId) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('collection_moments')
+    .upsert(
+      { collection_id: collectionId, moment_id: momentId, added_by: userId },
+      { onConflict: 'collection_id,moment_id' },
+    )
+  if (error) throw error
+}
+
+export async function removeMomentFromCollection(collectionId, momentId) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('collection_moments')
+    .delete()
+    .eq('collection_id', collectionId)
+    .eq('moment_id', momentId)
+  if (error) throw error
+}
+
+export async function getCollectionByInviteCode(inviteCode) {
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .from('collections')
+    .select('id, name, cover_url, created_by, invite_code, created_at')
+    .eq('invite_code', inviteCode)
+    .maybeSingle()
+  if (error) throw error
+  return data ?? null
+}
+
+export async function joinCollection(collectionId, userId) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('collection_members')
+    .upsert(
+      { collection_id: collectionId, user_id: userId, role: 'member' },
+      { onConflict: 'collection_id,user_id' },
+    )
+  if (error) throw error
+}
+
+export async function inviteFriendToCollection(collectionId, friendId) {
+  return joinCollection(collectionId, friendId)
+}
+
+export async function updateCollectionCover(collectionId, coverUrl) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('collections')
+    .update({ cover_url: coverUrl })
+    .eq('id', collectionId)
+  if (error) throw error
+}
+
+export async function deleteCollection(collectionId) {
+  const sb = assertSupabase()
+  const { error } = await sb.from('collections').delete().eq('id', collectionId)
+  if (error) throw error
+}
+
+export async function leaveCollection(collectionId, userId) {
+  const sb = assertSupabase()
+  const { error } = await sb
+    .from('collection_members')
+    .delete()
+    .eq('collection_id', collectionId)
+    .eq('user_id', userId)
+  if (error) throw error
+}

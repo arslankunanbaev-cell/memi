@@ -8,6 +8,7 @@ import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime
 import { navigateWithTransition } from '../lib/navigation'
 import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
+import { createCollection } from '../lib/api'
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 function monthKey(iso) {
@@ -249,6 +250,205 @@ function FilterSheet({ onClose, onApply, people, current }) {
   )
 }
 
+// ── Collections UI ────────────────────────────────────────────────────────────
+
+function CreateCollectionSheet({ onClose, onCreated }) {
+  const currentUser = useAppStore((s) => s.currentUser)
+  const [name, setName] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleCreate() {
+    if (!name.trim() || saving || !currentUser?.id) return
+    tgHaptic('medium')
+    setSaving(true)
+    try {
+      const col = await createCollection(currentUser.id, { name })
+      onCreated(col)
+      onClose()
+    } catch (err) {
+      console.error('[CreateCollectionSheet]', err)
+      setSaving(false)
+    }
+  }
+
+  return (
+    <BottomSheet onClose={onClose} title="Новая коллекция">
+      <div className="px-4 pb-5 flex flex-col gap-4">
+        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, margin: 0 }}>
+          Общий альбом, куда ты и друзья можете добавлять моменты вместе.
+        </p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+          placeholder="Название коллекции"
+          autoFocus
+          className="w-full font-sans outline-none"
+          style={{
+            backgroundColor: 'var(--moment-surface)',
+            borderRadius: 12,
+            padding: '13px 14px',
+            fontSize: 15,
+            color: 'var(--text)',
+            border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={!name.trim() || saving}
+          className="w-full font-sans font-semibold transition-opacity active:opacity-70"
+          style={{
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--moment-surface)',
+            color: name.trim() && !saving ? '#fff' : 'var(--soft)',
+            border: 'none',
+            borderRadius: 9999,
+            padding: '14px 0',
+            fontSize: 15,
+            boxShadow: name.trim() && !saving ? 'var(--shadow-accent)' : 'none',
+          }}
+        >
+          {saving ? 'Создаём...' : 'Создать'}
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function CollectionCard({ collection, onClick }) {
+  const coverBg = collection.cover_url
+    ? `url(${collection.cover_url}) center/cover no-repeat`
+    : 'linear-gradient(135deg, #BD8A5D 0%, #D98B52 50%, #F0D7A1 100%)'
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col transition-opacity active:opacity-70"
+      style={{
+        flexShrink: 0,
+        width: 128,
+        border: 'none',
+        padding: 0,
+        borderRadius: 18,
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-card)',
+        background: 'var(--moment-surface)',
+      }}
+    >
+      <div style={{ height: 88, width: '100%', background: coverBg, position: 'relative' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.45), transparent 60%)' }} />
+        <div
+          className="font-sans"
+          style={{
+            position: 'absolute',
+            bottom: 6,
+            left: 8,
+            right: 8,
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 700,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {collection.momentCount ?? 0} фото
+        </div>
+      </div>
+      <div style={{ padding: '8px 10px 10px' }}>
+        <p className="font-sans" style={{
+          color: 'var(--text)',
+          fontSize: 13,
+          fontWeight: 600,
+          margin: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {collection.name}
+        </p>
+        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 2 }}>
+          {collection.memberCount ?? 1} {collection.memberCount === 1 ? 'участник' : 'участника'}
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function CollectionsRow({ collections, onCreateClick, onCollectionClick }) {
+  return (
+    <div style={{ paddingBottom: 18 }}>
+      <div className="flex items-center justify-between" style={{ marginBottom: 12, paddingRight: 0 }}>
+        <SectionLabel>Коллекции</SectionLabel>
+        <button
+          type="button"
+          onClick={onCreateClick}
+          className="flex items-center gap-1 font-sans transition-opacity active:opacity-60"
+          style={{
+            border: 'none',
+            background: 'none',
+            color: 'var(--accent)',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '2px 0',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+          Создать
+        </button>
+      </div>
+      <div className="hide-scrollbar flex gap-3 overflow-x-auto">
+        {collections.length === 0 && (
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-70"
+            style={{
+              flexShrink: 0,
+              width: 128,
+              height: 140,
+              border: '2px dashed var(--accent-light)',
+              borderRadius: 18,
+              background: 'none',
+              color: 'var(--mid)',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--accent)' }}><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+            <span className="font-sans" style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)' }}>Новая</span>
+          </button>
+        )}
+        {collections.map((col) => (
+          <CollectionCard
+            key={col.id}
+            collection={col}
+            onClick={() => onCollectionClick(col)}
+          />
+        ))}
+        {collections.length > 0 && (
+          <button
+            type="button"
+            onClick={onCreateClick}
+            className="flex flex-col items-center justify-center gap-2 transition-opacity active:opacity-70"
+            style={{
+              flexShrink: 0,
+              width: 88,
+              height: 140,
+              border: '2px dashed var(--accent-light)',
+              borderRadius: 18,
+              background: 'none',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--accent)' }}><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+            <span className="font-sans" style={{ fontSize: 12, fontWeight: 600, color: 'var(--mid)' }}>Создать</span>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function GridCell({ moment }) {
   const navigate = useNavigate()
 
@@ -319,6 +519,8 @@ export default function Archive() {
   const allMoments = useAppStore((state) => state.moments)
   const currentUser = useAppStore((state) => state.currentUser)
   const people = useAppStore((state) => state.people)
+  const collections = useAppStore((state) => state.collections)
+  const addCollection = useAppStore((state) => state.addCollection)
 
   const moments = useMemo(
     () => allMoments.filter((moment) => moment.user_id === currentUser?.id),
@@ -342,6 +544,7 @@ export default function Archive() {
   const [activeMonth, setActiveMonth] = useState(monthKeys[0])
   const [showFilter, setShowFilter] = useState(false)
   const [filterPeople, setFilterPeople] = useState([])
+  const [showCreateCollection, setShowCreateCollection] = useState(false)
   const resolvedActiveMonth = monthKeys.includes(activeMonth) ? activeMonth : monthKeys[0]
 
   const activeYear = resolvedActiveMonth.split('-')[0]
@@ -517,6 +720,12 @@ export default function Archive() {
       )}
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 112 }}>
+        <CollectionsRow
+          collections={collections}
+          onCreateClick={() => { tgHaptic('light'); setShowCreateCollection(true) }}
+          onCollectionClick={(col) => navigateWithTransition(navigate, `/shared-collection/${col.id}`)}
+        />
+
         <div
           className="archive-month-hero"
           style={{
@@ -693,6 +902,16 @@ export default function Archive() {
           onApply={setFilterPeople}
           people={people}
           current={filterPeople}
+        />
+      )}
+
+      {showCreateCollection && (
+        <CreateCollectionSheet
+          onClose={() => setShowCreateCollection(false)}
+          onCreated={(col) => {
+            addCollection(col)
+            navigateWithTransition(navigate, `/shared-collection/${col.id}`)
+          }}
         />
       )}
     </div>

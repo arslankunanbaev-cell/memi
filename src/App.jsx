@@ -13,6 +13,9 @@ import {
   getFriendsFeedMoments,
   mergeMomentCollections,
   getPremiumStatus,
+  getCollections,
+  getCollectionByInviteCode,
+  joinCollection,
 } from './lib/api'
 import { supabase } from './lib/supabase'
 import { useAppStore } from './store/useAppStore'
@@ -36,6 +39,7 @@ const StoryPreview = lazy(() => import('./pages/StoryPreview'))
 const StoryPreviewScreen = lazy(() => import('./pages/StoryPreviewScreen'))
 const CollectionExport = lazy(() => import('./pages/CollectionExport'))
 const EditMoment = lazy(() => import('./pages/EditMoment'))
+const SharedCollectionPage = lazy(() => import('./pages/SharedCollectionPage'))
 
 function RouteFallback() {
   return <RouteLoadingState />
@@ -51,6 +55,7 @@ export default function App() {
   const setIncomingRequests = useAppStore((s) => s.setIncomingRequests)
   const setIsPremium = useAppStore((s) => s.setIsPremium)
   const setOwnedThemes = useAppStore((s) => s.setOwnedThemes)
+  const setCollections = useAppStore((s) => s.setCollections)
   const currentTheme = useAppStore((s) => s.currentTheme)
 
   useLayoutEffect(() => {
@@ -131,11 +136,12 @@ export default function App() {
 
         const { user, isNew } = await saveUser(tgUser)
 
-        const [fetchedPeople, fetchedMoments, fetchedCapsule, premiumStatus] = await Promise.all([
+        const [fetchedPeople, fetchedMoments, fetchedCapsule, premiumStatus, fetchedCollections] = await Promise.all([
           getPeople(user.id),
           getMoments(user.id),
           getCapsule(user.id),
           getPremiumStatus(user.id).catch(() => ({ isPremium: false, premiumExpiresAt: null, ownedThemes: [] })),
+          getCollections(user.id).catch(() => []),
         ])
 
         setPeople(fetchedPeople)
@@ -143,6 +149,7 @@ export default function App() {
         setCapsule(fetchedCapsule)
         setIsPremium(premiumStatus.isPremium, premiumStatus.premiumExpiresAt)
         setOwnedThemes(premiumStatus.ownedThemes)
+        setCollections(fetchedCollections)
         setInitResult(user, isNew)
 
         if (!hasTrackedAppOpened) {
@@ -184,6 +191,22 @@ export default function App() {
           setMoments(mergeMomentCollections(fetchedMoments, fetchedShared, friendFeed))
 
           const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+
+          if (startParam.startsWith('col_')) {
+            const inviteCode = startParam.slice(4)
+            try {
+              const col = await getCollectionByInviteCode(inviteCode)
+              if (col?.id) {
+                await joinCollection(col.id, user.id)
+                clearTimeout(fallbackTimer)
+                navigate(`/shared-collection/${col.id}`, { replace: true })
+                return
+              }
+            } catch (colErr) {
+              console.warn('[App] collection join failed:', colErr?.message)
+            }
+          }
+
           if (startParam.startsWith('ref_')) {
             const refParam = startParam.slice(4)
             let refUser = null
@@ -240,6 +263,7 @@ export default function App() {
           <Route path="/story/:id" element={<StoryPreview />} />
           <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
           <Route path="/collection/:type/:key" element={<CollectionExport />} />
+          <Route path="/shared-collection/:id" element={<SharedCollectionPage />} />
           <Route path="/edit-moment/:id" element={<EditMoment />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="*" element={<Navigate to="/" replace />} />

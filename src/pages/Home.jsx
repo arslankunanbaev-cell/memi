@@ -13,7 +13,7 @@ import { getMomentAddedAt, compareMomentsByAddedAt } from '../lib/momentTime'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 import { RouteLoadingState } from '../components/LoadingState'
-import { saveCapsuleSlot, getMoments, getSharedMoments, getFriendsFeedMoments, mergeMomentCollections } from '../lib/api'
+import { saveCapsuleSlot, getMoments, getSharedMoments, getFriendsFeedMoments, mergeMomentCollections, addMomentToCollection, createCollection } from '../lib/api'
 import { navigateWithTransition } from '../lib/navigation'
 import { tgHaptic } from '../lib/telegram'
 
@@ -116,7 +116,70 @@ function QuickAction({ label, hint, danger = false, onClick, children }) {
   )
 }
 
-function MomentActionsSheet({ moment, author, isOwn, capsuleFull, onClose, onOpen, onArchive, onShare, onCapsule, onProfile }) {
+function AddToCollectionSheet({ moment, collections, currentUserId, onClose, onAdded, onCreateAndAdd }) {
+  return (
+    <BottomSheet onClose={onClose} title="Добавить в коллекцию">
+      <div className="px-4 pb-4 flex flex-col gap-2">
+        {collections.length === 0 && (
+          <p className="font-sans text-center" style={{ color: 'var(--mid)', fontSize: 13, padding: '8px 0 4px' }}>
+            У тебя ещё нет коллекций.
+          </p>
+        )}
+        {collections.map((col) => (
+          <button
+            key={col.id}
+            type="button"
+            onClick={() => onAdded(col)}
+            className="flex items-center gap-3 text-left transition-opacity active:opacity-60"
+            style={{
+              backgroundColor: 'var(--moment-surface)',
+              borderRadius: 14,
+              padding: '11px 14px',
+              border: 'none',
+              boxShadow: 'var(--shadow-card)',
+            }}
+          >
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 10,
+              flexShrink: 0,
+              overflow: 'hidden',
+              background: col.cover_url
+                ? `url(${col.cover_url}) center/cover`
+                : 'linear-gradient(135deg, #BD8A5D, #F0D7A1)',
+            }} />
+            <div className="min-w-0 flex-1">
+              <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, margin: 0 }}>{col.name}</p>
+              <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 11, marginTop: 2 }}>
+                {col.momentCount ?? 0} моментов · {col.memberCount ?? 1} участника
+              </p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--accent)', flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={onCreateAndAdd}
+          className="flex items-center gap-3 text-left transition-opacity active:opacity-60"
+          style={{
+            backgroundColor: 'var(--accent-pale)',
+            borderRadius: 14,
+            padding: '11px 14px',
+            border: '1.5px dashed var(--accent-light)',
+          }}
+        >
+          <span className="flex items-center justify-center rounded-[10px]" style={{ width: 38, height: 38, backgroundColor: 'var(--accent-light)', color: 'var(--accent)', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
+          </span>
+          <span className="font-sans" style={{ color: 'var(--accent)', fontSize: 14, fontWeight: 600 }}>Создать новую коллекцию</span>
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
+function MomentActionsSheet({ moment, author, isOwn, capsuleFull, onClose, onOpen, onArchive, onShare, onCapsule, onProfile, onAddToCollection }) {
   return (
     <BottomSheet onClose={onClose} title={moment.title || 'Момент'}>
       <div className="px-4 pb-4 flex flex-col gap-3">
@@ -156,6 +219,14 @@ function MomentActionsSheet({ moment, author, isOwn, capsuleFull, onClose, onOpe
           </QuickAction>
         )}
 
+        <QuickAction label="В коллекцию" hint="Добавить в совместный альбом" onClick={onAddToCollection}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="7" width="20" height="14" rx="3" stroke="currentColor" strokeWidth="2" />
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <path d="M12 12v4M10 14h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </QuickAction>
+
         {author && (
           <QuickAction label="Открыть профиль" hint={author.name} onClick={onProfile}>
             <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
@@ -173,6 +244,9 @@ export default function Home() {
   const navigate = useNavigate()
   const moments = useAppStore((state) => state.moments)
   const setMoments = useAppStore((state) => state.setMoments)
+  const collections = useAppStore((state) => state.collections)
+  const addCollection = useAppStore((state) => state.addCollection)
+  const updateCollection = useAppStore((state) => state.updateCollection)
   const friends = useAppStore((state) => state.friends)
   const currentUser = useAppStore((state) => state.currentUser)
   const capsule = useAppStore((state) => state.capsule)
@@ -190,6 +264,8 @@ export default function Home() {
   const [actionMoment, setActionMoment] = useState(null)
   const [showScrollTop, setShowScrollTop] = useState(showScrollTopRef.current)
   const [undoMoment, setUndoMoment] = useState(null)
+  const [collectionMoment, setCollectionMoment] = useState(null)
+  const [showCreateCollection, setShowCreateCollection] = useState(false)
   const scrollRef = useRef(null)
   const sentinelRef = useRef(null)
 
@@ -364,6 +440,23 @@ export default function Home() {
     if (!author?.id) return
     closeActions()
     navigateWithTransition(navigate, `/profile/${author.id}`)
+  }
+
+  async function handleAddToCollection(collection) {
+    if (!collectionMoment?.id || !currentUser?.id) return
+    setCollectionMoment(null)
+    tgHaptic('medium')
+    try {
+      await addMomentToCollection(collection.id, collectionMoment.id, currentUser.id)
+      updateCollection(collection.id, { momentCount: (collection.momentCount ?? 0) + 1 })
+    } catch (err) {
+      console.error('[Home] addMomentToCollection error:', err)
+    }
+  }
+
+  async function handleCreateAndAddToCollection() {
+    setCollectionMoment(null)
+    setShowCreateCollection(true)
   }
 
   function scrollToTop() {
@@ -613,8 +706,99 @@ export default function Home() {
           onShare={() => shareMoment(actionMoment)}
           onCapsule={() => addMomentToCapsule(actionMoment)}
           onProfile={() => openAuthorProfile(actionMomentAuthor)}
+          onAddToCollection={() => { closeActions(); setCollectionMoment(actionMoment) }}
+        />
+      )}
+      {collectionMoment && (
+        <AddToCollectionSheet
+          moment={collectionMoment}
+          collections={collections}
+          currentUserId={currentUser?.id}
+          onClose={() => setCollectionMoment(null)}
+          onAdded={handleAddToCollection}
+          onCreateAndAdd={handleCreateAndAddToCollection}
+        />
+      )}
+      {showCreateCollection && (
+        <CreateCollectionSheet
+          onClose={() => setShowCreateCollection(false)}
+          onCreated={async (col) => {
+            addCollection(col)
+            if (collectionMoment?.id && currentUser?.id) {
+              try {
+                await addMomentToCollection(col.id, collectionMoment.id, currentUser.id)
+                updateCollection(col.id, { momentCount: 1 })
+              } catch (err) {
+                console.error('[Home] add to new collection error:', err)
+              }
+            }
+            setCollectionMoment(null)
+            navigateWithTransition(navigate, `/shared-collection/${col.id}`)
+          }}
         />
       )}
     </div>
+  )
+}
+
+// ── Inline CreateCollectionSheet (mirrors Archive version) ───────────────────
+function CreateCollectionSheet({ onClose, onCreated }) {
+  const currentUser = useAppStore((s) => s.currentUser)
+  const [name, setName] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleCreate() {
+    if (!name.trim() || saving || !currentUser?.id) return
+    tgHaptic('medium')
+    setSaving(true)
+    try {
+      const col = await createCollection(currentUser.id, { name })
+      onCreated(col)
+      onClose()
+    } catch (err) {
+      console.error('[CreateCollectionSheet]', err)
+      setSaving(false)
+    }
+  }
+
+  return (
+    <BottomSheet onClose={onClose} title="Новая коллекция">
+      <div className="px-4 pb-5 flex flex-col gap-4">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+          placeholder="Название коллекции"
+          autoFocus
+          className="w-full font-sans outline-none"
+          style={{
+            backgroundColor: 'var(--moment-surface)',
+            borderRadius: 12,
+            padding: '13px 14px',
+            fontSize: 15,
+            color: 'var(--text)',
+            border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+          }}
+        />
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={!name.trim() || saving}
+          className="w-full font-sans font-semibold transition-opacity active:opacity-70"
+          style={{
+            backgroundColor: name.trim() && !saving ? 'var(--accent)' : 'var(--moment-surface)',
+            color: name.trim() && !saving ? '#fff' : 'var(--soft)',
+            border: 'none',
+            borderRadius: 9999,
+            padding: '14px 0',
+            fontSize: 15,
+            boxShadow: name.trim() && !saving ? 'var(--shadow-accent)' : 'none',
+          }}
+        >
+          {saving ? 'Создаём...' : 'Создать'}
+        </button>
+      </div>
+    </BottomSheet>
   )
 }

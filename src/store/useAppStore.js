@@ -127,4 +127,15 @@ export const useAppStore = create((set) => ({
   heroTransition: null,
   setHeroTransition: (data) => set({ heroTransition: data }),
   clearHeroTransition: () => set({ heroTransition: null }),
+
+  // Shared Collections
+  collections: [],
+  setCollections: (collections) => set({ collections }),
+  addCollection: (collection) => set((s) => ({ collections: [collection, ...s.collections] })),
+  updateCollection: (id, patch) =>
+    set((s) => ({
+      collections: s.collections.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    })),
+  removeCollection: (id) =>
+    set((s) => ({ collections: s.collections.filter((c) => c.id !== id) })),
 }))
