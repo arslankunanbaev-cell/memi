@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS collections (
   name        TEXT        NOT NULL,
   cover_url   TEXT,
   created_by  UUID        REFERENCES users(id) ON DELETE CASCADE,
-  invite_code TEXT        UNIQUE DEFAULT encode(gen_random_bytes(8), 'hex'),
+  invite_code TEXT        UNIQUE DEFAULT substring(md5(random()::text || clock_timestamp()::text), 1, 16),
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
