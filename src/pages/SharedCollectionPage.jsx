@@ -272,7 +272,7 @@ export default function SharedCollectionPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const currentUser = useAppStore((s) => s.currentUser)
-  const myMoments = useAppStore((s) => s.moments.filter((m) => m.user_id === currentUser?.id))
+  const moments = useAppStore((s) => s.moments)
   const updateCollection = useAppStore((s) => s.updateCollection)
   const removeCollection = useAppStore((s) => s.removeCollection)
 
@@ -291,6 +291,7 @@ export default function SharedCollectionPage() {
   })
 
   const isOwner = collection?.created_by === currentUser?.id
+  const myMoments = moments.filter((m) => m.user_id === currentUser?.id)
   const alreadyInCollection = new Set(collection?.moments?.map((m) => m.id) ?? [])
   const momentCount = collection?.moments?.length ?? 0
   const memberCount = collection?.members?.length ?? 0
