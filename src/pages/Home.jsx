@@ -455,7 +455,6 @@ export default function Home() {
   }
 
   async function handleCreateAndAddToCollection() {
-    setCollectionMoment(null)
     setShowCreateCollection(true)
   }
 

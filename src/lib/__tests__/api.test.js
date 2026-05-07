@@ -53,6 +53,7 @@ import {
   getPublicMoments,
   normalizeMomentRecord,
   mergeMomentCollections,
+  joinCollectionByInviteCode,
 } from '../api.js'
 
 // ── saveUser ──────────────────────────────────────────────────────────────────
@@ -149,6 +150,31 @@ describe('moment helpers', () => {
 
     expect(merged.map((moment) => moment.id)).toEqual(['m-2', 'm-1'])
     expect(merged[0].title).toBe('Shared')
+  })
+})
+
+describe('collection helpers', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('joins a collection by invite code through RPC and unwraps the returned row', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ id: 'collection-1', name: 'Trip' }],
+      error: null,
+    })
+
+    const result = await joinCollectionByInviteCode('invite-code', 'user-1')
+
+    expect(mockRpc).toHaveBeenCalledWith('join_collection_by_invite_code', {
+      p_invite_code: 'invite-code',
+      p_user_id: 'user-1',
+    })
+    expect(result).toEqual({ id: 'collection-1', name: 'Trip' })
+  })
+
+  it('returns null when invite code does not resolve to a collection', async () => {
+    mockRpc.mockResolvedValue({ data: [], error: null })
+
+    await expect(joinCollectionByInviteCode('missing', 'user-1')).resolves.toBeNull()
   })
 })
 

@@ -16,6 +16,7 @@ import {
   getCollections,
   getCollectionByInviteCode,
   joinCollection,
+  joinCollectionByInviteCode,
 } from './lib/api'
 import { supabase } from './lib/supabase'
 import { useAppStore } from './store/useAppStore'
@@ -195,9 +196,12 @@ export default function App() {
           if (startParam.startsWith('col_')) {
             const inviteCode = startParam.slice(4)
             try {
-              const col = await getCollectionByInviteCode(inviteCode)
+              let col = await joinCollectionByInviteCode(inviteCode, user.id)
+              if (!col?.id) {
+                col = await getCollectionByInviteCode(inviteCode)
+                if (col?.id) await joinCollection(col.id, user.id)
+              }
               if (col?.id) {
-                await joinCollection(col.id, user.id)
                 clearTimeout(fallbackTimer)
                 navigate(`/shared-collection/${col.id}`, { replace: true })
                 return

@@ -1118,6 +1118,7 @@ export async function getCollectionDetails(collectionId) {
   ])
 
   if (colResult.error) throw colResult.error
+  if (momentsResult.error) throw momentsResult.error
 
   const collection = colResult.data
   const moments = (momentsResult.data ?? [])
@@ -1164,6 +1165,16 @@ export async function getCollectionByInviteCode(inviteCode) {
     .maybeSingle()
   if (error) throw error
   return data ?? null
+}
+
+export async function joinCollectionByInviteCode(inviteCode, userId) {
+  const sb = assertSupabase()
+  const { data, error } = await sb.rpc('join_collection_by_invite_code', {
+    p_invite_code: inviteCode,
+    p_user_id: userId,
+  })
+  if (error) throw error
+  return Array.isArray(data) ? (data[0] ?? null) : (data ?? null)
 }
 
 export async function joinCollection(collectionId, userId) {

@@ -50,14 +50,39 @@ function MemberAvatar({ user, size = 28 }) {
 function MomentGridCell({ moment, onLongPress }) {
   const navigate = useNavigate()
   const timerRef = useRef(null)
+  const longPressedRef = useRef(false)
+
+  function clearLongPressTimer() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }
+
+  function handleOpen() {
+    if (longPressedRef.current) {
+      longPressedRef.current = false
+      return
+    }
+    navigateWithTransition(navigate, `/moment/${moment.id}`)
+  }
 
   return (
     <button
       type="button"
-      onClick={() => navigateWithTransition(navigate, `/moment/${moment.id}`)}
-      onTouchStart={() => { timerRef.current = setTimeout(() => { tgHaptic('medium'); onLongPress?.(moment) }, 420) }}
-      onTouchEnd={() => clearTimeout(timerRef.current)}
-      onTouchCancel={() => clearTimeout(timerRef.current)}
+      onClick={handleOpen}
+      onTouchStart={() => {
+        longPressedRef.current = false
+        clearLongPressTimer()
+        timerRef.current = setTimeout(() => {
+          longPressedRef.current = true
+          tgHaptic('medium')
+          onLongPress?.(moment)
+        }, 420)
+      }}
+      onTouchMove={clearLongPressTimer}
+      onTouchEnd={clearLongPressTimer}
+      onTouchCancel={clearLongPressTimer}
       className="transition-opacity active:opacity-75"
       style={{
         position: 'relative',
@@ -269,6 +294,13 @@ export default function SharedCollectionPage() {
   const alreadyInCollection = new Set(collection?.moments?.map((m) => m.id) ?? [])
   const momentCount = collection?.moments?.length ?? 0
   const memberCount = collection?.members?.length ?? 0
+  const goBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/archive', { replace: true })
+    }
+  }, [navigate])
 
   useEffect(() => {
     if (!toast) return
@@ -310,11 +342,12 @@ export default function SharedCollectionPage() {
     setShowAddMoment(false)
     try {
       await addMomentToCollection(id, moment.id, currentUser.id)
+      const nextMomentCount = momentCount + 1
       setCollection((prev) => ({
         ...prev,
         moments: [{ ...moment, collectionAddedBy: currentUser.id }, ...(prev?.moments ?? [])],
       }))
-      updateCollection(id, { momentCount: (collection?.momentCount ?? 0) + 1 })
+      updateCollection(id, { momentCount: nextMomentCount })
       setToast('Момент добавлен')
     } catch (err) {
       console.error('[SharedCollectionPage] add moment error:', err)
@@ -327,14 +360,16 @@ export default function SharedCollectionPage() {
     tgHaptic('medium')
     try {
       await removeMomentFromCollection(id, moment.id)
+      const nextMomentCount = Math.max(0, momentCount - 1)
       setCollection((prev) => ({
         ...prev,
         moments: (prev?.moments ?? []).filter((m) => m.id !== moment.id),
       }))
-      updateCollection(id, { momentCount: Math.max(0, (collection?.momentCount ?? 1) - 1) })
+      updateCollection(id, { momentCount: nextMomentCount })
       setToast('Убрано из коллекции')
     } catch (err) {
       console.error('[SharedCollectionPage] remove error:', err)
+      setToast('Не удалось убрать')
     }
   }
 
@@ -345,7 +380,7 @@ export default function SharedCollectionPage() {
     try {
       await leaveCollection(id, currentUser.id)
       removeCollection(id)
-      navigate(-1)
+      goBack()
     } catch (err) {
       console.error('[SharedCollectionPage] leave error:', err)
       setToast('Не удалось выйти')
@@ -359,7 +394,7 @@ export default function SharedCollectionPage() {
     try {
       await deleteCollection(id)
       removeCollection(id)
-      navigate(-1)
+      goBack()
     } catch (err) {
       console.error('[SharedCollectionPage] delete error:', err)
       setToast('Не удалось удалить')
@@ -377,6 +412,7 @@ export default function SharedCollectionPage() {
       setToast('Обложка обновлена')
     } catch (err) {
       console.error('[SharedCollectionPage] cover error:', err)
+      setToast('Не удалось обновить обложку')
     }
   }
 
@@ -388,7 +424,7 @@ export default function SharedCollectionPage() {
     return (
       <div className="flex h-full flex-col" style={{ backgroundColor: 'var(--base)' }}>
         <div className="px-4 pt-topbar">
-          <button type="button" onClick={() => navigate(-1)}
+          <button type="button" onClick={goBack}
             className="flex items-center gap-2 font-sans transition-opacity active:opacity-60"
             style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 15, fontWeight: 600, padding: '4px 0' }}
           >
@@ -437,11 +473,11 @@ export default function SharedCollectionPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.78) 0%, rgba(23,20,14,0.06) 55%)' }} />
 
         {/* Back */}
-        <button type="button" onClick={() => navigate(-1)}
+        <button type="button" onClick={goBack}
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{
             position: 'absolute',
-            top: 'max(1.25rem, env(safe-area-inset-top))', left: 16,
+            top: 'calc(env(safe-area-inset-top) + 12px)', left: 16,
             width: 36, height: 36, borderRadius: 18, border: 'none',
             background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             color: '#fff',
@@ -457,7 +493,7 @@ export default function SharedCollectionPage() {
           className="flex items-center justify-center transition-opacity active:opacity-60"
           style={{
             position: 'absolute',
-            top: 'max(1.25rem, env(safe-area-inset-top))', right: 16,
+            top: 'calc(env(safe-area-inset-top) + 12px)', right: 16,
             width: 36, height: 36, borderRadius: 18, border: 'none',
             background: 'rgba(0,0,0,0.32)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
             color: '#fff',
