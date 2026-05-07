@@ -256,17 +256,24 @@ function CreateCollectionSheet({ onClose, onCreated }) {
   const currentUser = useAppStore((s) => s.currentUser)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleCreate() {
-    if (!name.trim() || saving || !currentUser?.id) return
+    if (!name.trim() || saving) return
+    if (!currentUser?.id) {
+      setError('Не удалось определить пользователя. Перезапусти приложение.')
+      return
+    }
     tgHaptic('medium')
     setSaving(true)
+    setError('')
     try {
       const col = await createCollection(currentUser.id, { name })
       onCreated(col)
       onClose()
     } catch (err) {
       console.error('[CreateCollectionSheet]', err)
+      setError(err?.message ?? 'Не удалось создать коллекцию. Попробуй ещё раз.')
       setSaving(false)
     }
   }
@@ -279,7 +286,7 @@ function CreateCollectionSheet({ onClose, onCreated }) {
         </p>
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => { setName(e.target.value); setError('') }}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           placeholder="Название коллекции"
           autoFocus
@@ -290,10 +297,15 @@ function CreateCollectionSheet({ onClose, onCreated }) {
             padding: '13px 14px',
             fontSize: 15,
             color: 'var(--text)',
-            border: name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+            border: error ? '1.5px solid #E05C5C' : name.trim() ? '1.5px solid var(--accent)' : '1.5px solid transparent',
             boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
           }}
         />
+        {error && (
+          <p className="font-sans" style={{ color: '#E05C5C', fontSize: 13, margin: '-8px 0 0', lineHeight: 1.4 }}>
+            {error}
+          </p>
+        )}
         <button
           type="button"
           onClick={handleCreate}
