@@ -6,16 +6,26 @@ import { tgHaptic } from '../lib/telegram'
 function PlayIcon({ playing }) {
   if (playing) {
     return (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M8 6v12M16 6v12" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M8 6.5v11M16 6.5v11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
       </svg>
     )
   }
 
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M9 6.8v10.4c0 .7.78 1.12 1.36.74l7.72-5.2a.88.88 0 0 0 0-1.48l-7.72-5.2A.88.88 0 0 0 9 6.8Z" fill="currentColor" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8.75 6.7v10.6c0 .76.85 1.22 1.48.8l7.88-5.3a.95.95 0 0 0 0-1.6L10.23 5.9a.95.95 0 0 0-1.48.8Z" fill="currentColor" />
     </svg>
+  )
+}
+
+function PlayingBars({ playing }) {
+  return (
+    <span className={`profile-song-bars${playing ? ' is-playing' : ''}`} aria-hidden="true">
+      <span />
+      <span />
+      <span />
+    </span>
   )
 }
 
@@ -126,7 +136,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
       type="button"
       onClick={togglePlayback}
       aria-label={playing ? 'Остановить любимую песню' : 'Включить любимую песню'}
-      className="profile-song-card w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]"
+      className={`profile-song-card w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]${playing ? ' is-playing' : ''}`}
       style={{ borderStyle: 'solid' }}
     >
       {cover && (
@@ -140,7 +150,8 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
             backgroundPosition: 'center',
             filter: 'blur(22px)',
             opacity: playing ? 0.18 : 0.12,
-            transform: 'scale(1.2)',
+            transform: playing ? 'scale(1.24)' : 'scale(1.2)',
+            transition: 'opacity 220ms ease, transform 600ms ease',
           }}
         />
       )}
@@ -164,21 +175,12 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
             </p>
           )}
         </div>
-        <span
-          className="flex items-center justify-center"
-          style={{
-            width: 34,
-            height: 34,
-            borderRadius: '50%',
-            flexShrink: 0,
-            backgroundColor: playing ? 'var(--accent)' : 'rgba(217,139,82,0.14)',
-            color: playing ? '#fff' : 'var(--accent)',
-            boxShadow: playing ? '0 8px 18px rgba(217,139,82,0.24)' : 'none',
-            opacity: loadingPreview ? 0.55 : 1,
-          }}
-        >
-          <PlayIcon playing={playing} />
-        </span>
+        <div className="profile-song-action" aria-hidden="true">
+          <PlayingBars playing={playing} />
+          <span className={`profile-song-play-button${loadingPreview ? ' is-loading' : ''}`}>
+            <PlayIcon playing={playing} />
+          </span>
+        </div>
       </div>
     </button>
   )
