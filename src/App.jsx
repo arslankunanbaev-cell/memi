@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useLayoutEffect } from 'react'
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import {
   saveUser,
   getPeople,
@@ -42,6 +42,7 @@ const StoryPreviewScreen = lazy(() => import('./pages/StoryPreviewScreen'))
 const CollectionExport = lazy(() => import('./pages/CollectionExport'))
 const EditMoment = lazy(() => import('./pages/EditMoment'))
 const SharedCollectionPage = lazy(() => import('./pages/SharedCollectionPage'))
+const AdminStats = lazy(() => import('./pages/AdminStats'))
 
 function RouteFallback() {
   return <RouteLoadingState />
@@ -49,6 +50,7 @@ function RouteFallback() {
 
 export default function App() {
   const navigate = useNavigate()
+  const location = useLocation()
   const setPeople = useAppStore((s) => s.setPeople)
   const setMoments = useAppStore((s) => s.setMoments)
   const setCapsule = useAppStore((s) => s.setCapsule)
@@ -237,7 +239,9 @@ export default function App() {
         }
 
         clearTimeout(fallbackTimer)
-        navigate(isNew ? '/onboarding' : '/home', { replace: true })
+        if (!location.pathname.startsWith('/admin/stats')) {
+          navigate(isNew ? '/onboarding' : '/home', { replace: true })
+        }
       } catch (err) {
         console.error('[App] init error:', err?.message)
         clearTimeout(fallbackTimer)
@@ -271,6 +275,7 @@ export default function App() {
           <Route path="/shared-collection/:id" element={FEATURES.sharedCollections ? <SharedCollectionPage /> : <Navigate to="/archive" replace />} />
           <Route path="/edit-moment/:id" element={<EditMoment />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
+          <Route path="/admin/stats" element={<AdminStats />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
