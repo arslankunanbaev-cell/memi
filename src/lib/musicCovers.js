@@ -86,6 +86,18 @@ async function fetchItunesCover(track, artist) {
 }
 
 async function fetchItunesTrackMeta(track, artist) {
+  const localParams = new URLSearchParams({
+    track: cleanName(track),
+    artist: cleanName(artist),
+  })
+  const localJson = await safeFetch(`/api/song-preview?${localParams}`, { timeout: 5000 })
+  if (localJson?.previewUrl || localJson?.cover) {
+    return {
+      previewUrl: localJson.previewUrl ?? null,
+      cover: localJson.cover ?? null,
+    }
+  }
+
   const term = encodeURIComponent(`${cleanName(artist)} ${cleanName(track)}`)
   const json = await safeFetch(
     `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=1`,

@@ -24,6 +24,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
   const [playing, setPlaying] = useState(false)
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(previewUrl ?? null)
   const [loadingPreview, setLoadingPreview] = useState(false)
+  const [previewUnavailable, setPreviewUnavailable] = useState(false)
 
   useEffect(() => {
     setResolvedPreviewUrl(previewUrl ?? null)
@@ -32,6 +33,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
       audioRef.current = null
     }
     setPlaying(false)
+    setPreviewUnavailable(false)
   }, [previewUrl, title, artist])
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
       .then((preview) => {
         if (!cancelled) {
           setResolvedPreviewUrl(preview.previewUrl ?? null)
+          setPreviewUnavailable(!preview.previewUrl)
         }
       })
       .catch((error) => {
@@ -79,6 +82,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
     try {
       const preview = await enrichWithAudioPreview(title, artist)
       setResolvedPreviewUrl(preview.previewUrl ?? null)
+      setPreviewUnavailable(!preview.previewUrl)
       return preview.previewUrl ?? null
     } finally {
       setLoadingPreview(false)
@@ -89,7 +93,10 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
     tgHaptic('light')
 
     const nextPreviewUrl = resolvedPreviewUrl ?? await resolvePreview()
-    if (!nextPreviewUrl) return
+    if (!nextPreviewUrl) {
+      setPreviewUnavailable(true)
+      return
+    }
 
     if (!audioRef.current) {
       audioRef.current = new Audio(nextPreviewUrl)
@@ -107,6 +114,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
       await audioRef.current.play()
     } catch (error) {
       console.warn('[ProfileSongCard] audio preview failed:', error?.message)
+      setPreviewUnavailable(true)
       setPlaying(false)
     }
   }
@@ -151,8 +159,8 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
             {title}
           </p>
           {artist && (
-            <p className="font-sans truncate profile-song-card-artist">
-              {artist}
+          <p className="font-sans truncate profile-song-card-artist">
+              {previewUnavailable ? 'Превью недоступно' : artist}
             </p>
           )}
         </div>
