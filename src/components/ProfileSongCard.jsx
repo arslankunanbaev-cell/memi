@@ -35,6 +35,34 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
   }, [previewUrl, title, artist])
 
   useEffect(() => {
+    if (previewUrl || !title || !artist) return undefined
+
+    let cancelled = false
+    setLoadingPreview(true)
+
+    enrichWithAudioPreview(title, artist)
+      .then((preview) => {
+        if (!cancelled) {
+          setResolvedPreviewUrl(preview.previewUrl ?? null)
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.warn('[ProfileSongCard] preview lookup failed:', error?.message)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingPreview(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [previewUrl, title, artist])
+
+  useEffect(() => {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause()
@@ -60,7 +88,7 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
   async function togglePlayback() {
     tgHaptic('light')
 
-    const nextPreviewUrl = await resolvePreview()
+    const nextPreviewUrl = resolvedPreviewUrl ?? await resolvePreview()
     if (!nextPreviewUrl) return
 
     if (!audioRef.current) {
