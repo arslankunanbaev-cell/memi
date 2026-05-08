@@ -14,7 +14,7 @@ import { useSwipeBack } from '../hooks/useSwipeBack'
 const W = 1080
 const H = 1920
 const POSTER_X = 58
-const POSTER_Y = 560
+const POSTER_Y = 468
 const POSTER_W = W - POSTER_X * 2
 const POSTER_BOTTOM = 1708
 
@@ -452,9 +452,9 @@ async function drawHeader(ctx, data, dark) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillStyle = accentColor
-  ctx.font = '700 42px "Cormorant Garamond", Georgia, serif'
-  ctx.fillText('memi', cx, 58)
-  drawKicker(ctx, 'premium memory card', cx, 116, dark)
+  ctx.font = '700 40px "Cormorant Garamond", Georgia, serif'
+  ctx.fillText('memi', cx, 48)
+  drawKicker(ctx, 'premium memory card', cx, 104, dark)
 
   if (data.type === 'person') {
     const avatarY = 166
@@ -482,29 +482,29 @@ async function drawHeader(ctx, data, dark) {
     ctx.save()
     ctx.textAlign = 'left'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = dark ? 'rgba(217,139,82,0.18)' : 'rgba(217,139,82,0.16)'
-    ctx.font = '800 174px Inter, sans-serif'
-    ctx.fillText(monthNumber, 76, 170)
+    ctx.fillStyle = dark ? 'rgba(217,139,82,0.2)' : 'rgba(217,139,82,0.18)'
+    ctx.font = '800 188px Inter, sans-serif'
+    ctx.fillText(monthNumber, 724, 150)
     ctx.restore()
 
     ctx.save()
     ctx.strokeStyle = dark ? 'rgba(255,244,231,0.14)' : 'rgba(160,94,44,0.14)'
     ctx.lineWidth = 2
     ctx.beginPath()
-    ctx.moveTo(130, 424)
-    ctx.lineTo(W - 130, 424)
+    ctx.moveTo(118, 408)
+    ctx.lineTo(W - 118, 408)
     ctx.stroke()
     ctx.restore()
 
     ctx.fillStyle = textColor
-    ctx.font = `700 112px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText(`Мой ${monthName}`, cx, 216)
+    ctx.font = `700 132px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText(`Мой ${monthName}`, cx, 162)
 
     ctx.fillStyle = midColor
-    ctx.font = '700 32px Inter, sans-serif'
-    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 344)
+    ctx.font = '700 34px Inter, sans-serif'
+    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 312)
 
-    drawPremiumPill(ctx, data.statsLine, cx, 386, dark)
+    drawPremiumPill(ctx, data.statsLine, cx, 356, dark)
 
   } else if (data.type === 'year') {
     ctx.fillStyle = accentColor
