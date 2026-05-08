@@ -812,6 +812,7 @@ export default function CollectionExport() {
 
   const data = useCollectionData(type, key)
   const isPremium = useAppStore((s) => s.isPremium)
+  const currentTheme = useAppStore((s) => s.currentTheme)
 
   const [template, setTemplate] = useState('warm')
   const [showPaywall, setShowPaywall] = useState(false)
@@ -831,6 +832,7 @@ export default function CollectionExport() {
   }, [isPremium])
 
   const dark = template === 'dark'
+  const controlsDark = dark || currentTheme === 'dark'
   const activeTemplate = TEMPLATES.find((t) => t.id === template) ?? TEMPLATES[0]
 
   useEffect(() => {
@@ -1102,12 +1104,14 @@ export default function CollectionExport() {
               disabled={rendering}
               className="font-sans font-semibold transition-opacity active:opacity-70 disabled:opacity-50"
               style={{
-                border: 'none',
+                border: controlsDark ? '1px solid rgba(255,244,231,0.12)' : 'none',
                 borderRadius: 20,
                 minHeight: 52,
-                backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
-                boxShadow: dark ? 'none' : '0 2px 12px rgba(80,50,30,0.1)',
-                color: dark ? 'rgba(245,235,221,0.8)' : 'var(--text)',
+                background: controlsDark
+                  ? 'linear-gradient(180deg, rgba(255,244,231,0.12) 0%, rgba(255,244,231,0.07) 100%)'
+                  : 'rgba(255,255,255,0.72)',
+                boxShadow: controlsDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : '0 2px 12px rgba(80,50,30,0.1)',
+                color: controlsDark ? 'rgba(255,244,231,0.92)' : 'var(--text)',
                 fontSize: 16,
               }}
             >
@@ -1121,12 +1125,14 @@ export default function CollectionExport() {
               aria-label="Скачать"
               className="flex items-center justify-center transition-opacity active:opacity-70 disabled:opacity-50"
               style={{
-                border: 'none',
+                border: controlsDark ? '1px solid rgba(255,244,231,0.12)' : 'none',
                 borderRadius: 20,
                 minHeight: 52,
-                backgroundColor: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.72)',
-                boxShadow: dark ? 'none' : '0 2px 12px rgba(80,50,30,0.1)',
-                color: dark ? 'rgba(245,235,221,0.6)' : 'var(--mid)',
+                background: controlsDark
+                  ? 'linear-gradient(180deg, rgba(255,244,231,0.12) 0%, rgba(255,244,231,0.07) 100%)'
+                  : 'rgba(255,255,255,0.72)',
+                boxShadow: controlsDark ? 'inset 0 1px 0 rgba(255,255,255,0.05)' : '0 2px 12px rgba(80,50,30,0.1)',
+                color: controlsDark ? 'rgba(255,244,231,0.72)' : 'var(--mid)',
               }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
