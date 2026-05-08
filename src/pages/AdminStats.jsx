@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { RouteLoadingState } from '../components/LoadingState'
 import { getAdminStats } from '../lib/adminStats'
@@ -80,6 +81,30 @@ function Section({ title, children }) {
       </h2>
       {children}
     </section>
+  )
+}
+
+function BackButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="Назад"
+      className="flex items-center justify-center transition-opacity active:opacity-60"
+      style={{
+        width: 42,
+        height: 42,
+        border: '1px solid var(--divider)',
+        borderRadius: 999,
+        backgroundColor: 'var(--moment-surface)',
+        color: 'var(--text)',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
   )
 }
 
@@ -202,6 +227,7 @@ function DataList({ rows, empty, renderRow }) {
 }
 
 export default function AdminStats() {
+  const navigate = useNavigate()
   const initDone = useAppStore((state) => state.initDone)
   const [stats, setStats] = useState(null)
   const [error, setError] = useState('')
@@ -245,6 +271,7 @@ export default function AdminStats() {
       <PageHeader
         title="Статистика"
         subtitle={generatedLabel || 'Memi admin'}
+        aside={<BackButton onClick={() => navigate('/profile')} />}
       />
 
       <div className="space-y-6 px-4 pt-5">
