@@ -5,6 +5,7 @@ import BottomSheet from '../components/BottomSheet'
 import CapsuleIcon from '../components/CapsuleIcon'
 import PremiumBadge from '../components/PremiumBadge'
 import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot } from '../lib/api'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -23,6 +24,72 @@ function sinceLabel(createdAt) {
   if (!createdAt) return ''
   const date = new Date(createdAt)
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
+}
+
+function FavoriteSongCard({ title, artist, cover }) {
+  if (!title) return null
+
+  return (
+    <div
+      style={{
+        marginTop: 14,
+        padding: 10,
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 18,
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.72), rgba(237,230,220,0.72))',
+        border: '1px solid rgba(160, 94, 44, 0.08)',
+        boxShadow: '0 8px 22px rgba(80,50,30,0.08)',
+      }}
+    >
+      {cover && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${proxifyCoverUrl(cover)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(22px)',
+            opacity: 0.12,
+            transform: 'scale(1.2)',
+          }}
+        />
+      )}
+      <div className="flex items-center gap-3" style={{ position: 'relative' }}>
+        <div
+          style={{
+            width: 58,
+            height: 58,
+            borderRadius: 14,
+            overflow: 'hidden',
+            flexShrink: 0,
+            background: 'linear-gradient(135deg, var(--accent-light), var(--surface))',
+            boxShadow: '0 8px 18px rgba(80,50,30,0.12)',
+          }}
+        >
+          {cover && (
+            <img
+              src={proxifyCoverUrl(cover)}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 800 }}>
+            {title}
+          </p>
+          {artist && (
+            <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 600, marginTop: 3 }}>
+              {artist}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -680,6 +747,13 @@ export default function Profile() {
 
   const name = currentUser?.name || 'Пользователь'
   const since = sinceLabel(currentUser?.created_at)
+  const favoriteSong = currentUser?.favorite_song_title
+    ? {
+        title: currentUser.favorite_song_title,
+        artist: currentUser.favorite_song_artist,
+        cover: currentUser.favorite_song_cover,
+      }
+    : null
 
   const filledSlots = capsule.filter(Boolean).length
 
@@ -750,6 +824,14 @@ export default function Profile() {
                     >
                       с memi с {since}
                     </p>
+                  )}
+
+                  {favoriteSong && (
+                    <FavoriteSongCard
+                      title={favoriteSong.title}
+                      artist={favoriteSong.artist}
+                      cover={favoriteSong.cover}
+                    />
                   )}
                 </div>
 
