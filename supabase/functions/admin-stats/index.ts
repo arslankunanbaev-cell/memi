@@ -49,6 +49,11 @@ function addCount(map: Map<string, number>, key: string, amount = 1) {
   map.set(key, (map.get(key) ?? 0) + amount)
 }
 
+function percent(part: number, total: number) {
+  if (!total) return 0
+  return Math.round((part / total) * 100)
+}
+
 function toSortedEntries(map: Map<string, number>, limit = 10) {
   return Array.from(map.entries())
     .sort((a, b) => b[1] - a[1])
@@ -114,19 +119,26 @@ serve(async (req: Request) => {
     totalPeople,
     totalEvents,
     totalFriendships,
+    acceptedFriendships,
     totalCollections,
     premiumUsers,
+    peopleLast30,
+    friendshipsLast30,
     usersLast30Result,
     eventsLast30Result,
     momentsLast30Result,
+    allMomentOwnersResult,
   ] = await Promise.all([
     countRows(sb, 'users'),
     countRows(sb, 'moments'),
     countRows(sb, 'people'),
     countRows(sb, 'events'),
     countRows(sb, 'friendships'),
+    countRows(sb, 'friendships', (query) => query.eq('status', 'accepted')),
     countRows(sb, 'collections').catch(() => 0),
     countRows(sb, 'users', (query) => query.eq('is_premium', true)),
+    countRows(sb, 'people', (query) => query.gte('created_at', since30)).catch(() => 0),
+    countRows(sb, 'friendships', (query) => query.gte('created_at', since30)).catch(() => 0),
     sb
       .from('users')
       .select('id, telegram_id, name, created_at, is_premium, premium_expires_at')
@@ -145,21 +157,31 @@ serve(async (req: Request) => {
       .gte('created_at', since30)
       .order('created_at', { ascending: false })
       .limit(10000),
+    sb
+      .from('moments')
+      .select('user_id')
+      .limit(20000),
   ])
 
   if (usersLast30Result.error) throw usersLast30Result.error
   if (eventsLast30Result.error) throw eventsLast30Result.error
   if (momentsLast30Result.error) throw momentsLast30Result.error
+  if (allMomentOwnersResult.error) throw allMomentOwnersResult.error
 
   const usersLast30 = (usersLast30Result.data ?? []) as UserRow[]
   const eventsLast30 = (eventsLast30Result.data ?? []) as EventRow[]
   const momentsLast30 = (momentsLast30Result.data ?? []) as MomentRow[]
+  const allMomentOwners = (allMomentOwnersResult.data ?? []) as Array<{ user_id: string | null }>
 
   const active7 = new Set<string>()
   const active30 = new Set<string>()
+  const returning30 = new Set<string>()
+  const openedOnce30 = new Map<string, number>()
   const eventCounts = new Map<string, number>()
   const opensByUser = new Map<string, number>()
   const momentsByUser = new Map<string, number>()
+  const creators30 = new Set<string>()
+  const creatorsAll = new Set<string>()
   const daily = new Map<string, { date: string; opens: number; activeUsers: Set<string>; newUsers: number; newMoments: number }>()
 
   for (let i = 0; i < 14; i += 1) {
@@ -176,8 +198,13 @@ serve(async (req: Request) => {
 
   for (const moment of momentsLast30) {
     if (moment.user_id) addCount(momentsByUser, moment.user_id)
+    if (moment.user_id) creators30.add(moment.user_id)
     const bucket = daily.get(dayKey(moment.created_at))
     if (bucket) bucket.newMoments += 1
+  }
+
+  for (const moment of allMomentOwners) {
+    if (moment.user_id) creatorsAll.add(moment.user_id)
   }
 
   for (const event of eventsLast30) {
@@ -195,7 +222,12 @@ serve(async (req: Request) => {
 
     if (event.event_name === 'app_opened') {
       addCount(opensByUser, event.user_id)
+      addCount(openedOnce30, event.user_id)
     }
+  }
+
+  for (const [userId, opens] of openedOnce30.entries()) {
+    if (opens >= 2) returning30.add(userId)
   }
 
   const topIds = Array.from(new Set([
@@ -232,6 +264,15 @@ serve(async (req: Request) => {
   const opens7 = eventsLast30.filter((event) => event.event_name === 'app_opened' && event.created_at >= since7).length
   const opens30 = eventsLast30.filter((event) => event.event_name === 'app_opened').length
   const moments7 = momentsLast30.filter((moment) => moment.created_at >= since7).length
+  const onboarded30 = new Set(eventsLast30
+    .filter((event) => event.event_name === 'onboarding_completed' && event.user_id)
+    .map((event) => event.user_id as string))
+  const friendAdds30 = eventsLast30.filter((event) => event.event_name === 'friend_added').length
+  const publicProfileViews30 = eventsLast30.filter((event) => event.event_name === 'public_profile_viewed').length
+  const reactions30 = eventsLast30.filter((event) => event.event_name === 'reaction_added').length
+  const newUserIds30 = new Set(usersLast30.map((user) => user.id))
+  const newUsersWithMoment30 = Array.from(newUserIds30).filter((id) => creators30.has(id)).length
+  const activeWithMoment30 = Array.from(active30).filter((id) => creators30.has(id)).length
 
   return json({
     generatedAt: now.toISOString(),
@@ -242,8 +283,10 @@ serve(async (req: Request) => {
       people: totalPeople,
       events: totalEvents,
       friendships: totalFriendships,
+      acceptedFriendships,
       collections: totalCollections,
       premiumUsers,
+      creatorsAll: creatorsAll.size,
     },
     activity: {
       opensToday,
@@ -251,10 +294,36 @@ serve(async (req: Request) => {
       opens30,
       activeUsers7: active7.size,
       activeUsers30: active30.size,
+      returningUsers30: returning30.size,
       newUsers30: usersLast30.length,
       moments7,
       moments30: momentsLast30.length,
+      people30: peopleLast30,
+      friendships30: friendshipsLast30,
+      creators30: creators30.size,
+      activeWithMoment30,
+      onboarded30: onboarded30.size,
+      friendAdds30,
+      publicProfileViews30,
+      reactions30,
     },
+    rates: {
+      activation30: percent(newUsersWithMoment30, usersLast30.length),
+      creatorRate30: percent(creators30.size, active30.size),
+      retentionProxy30: percent(returning30.size, active30.size),
+      premiumRate: percent(premiumUsers, totalUsers),
+      socialRate: percent(acceptedFriendships, totalUsers),
+      contentDepth: totalUsers ? Number((totalMoments / totalUsers).toFixed(1)) : 0,
+      peoplePerUser: totalUsers ? Number((totalPeople / totalUsers).toFixed(1)) : 0,
+      opensPerActive30: active30.size ? Number((opens30 / active30.size).toFixed(1)) : 0,
+      momentsPerCreator30: creators30.size ? Number((momentsLast30.length / creators30.size).toFixed(1)) : 0,
+    },
+    funnel: [
+      { name: 'Новые пользователи', count: usersLast30.length, rate: 100 },
+      { name: 'Прошли онбординг', count: onboarded30.size, rate: percent(onboarded30.size, usersLast30.length) },
+      { name: 'Создали момент', count: newUsersWithMoment30, rate: percent(newUsersWithMoment30, usersLast30.length) },
+      { name: 'Вернулись 2+ раза', count: Array.from(newUserIds30).filter((id) => returning30.has(id)).length, rate: percent(Array.from(newUserIds30).filter((id) => returning30.has(id)).length, usersLast30.length) },
+    ],
     daily: Array.from(daily.values()).map((entry) => ({
       date: entry.date,
       opens: entry.opens,
