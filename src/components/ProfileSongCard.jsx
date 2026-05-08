@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { proxifyCoverUrl } from '../lib/imageProxy'
+import { enrichWithAudioPreview } from '../lib/musicCovers'
 import { tgHaptic } from '../lib/telegram'
 
 function PlayIcon({ playing }) {
@@ -21,6 +22,17 @@ function PlayIcon({ playing }) {
 export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
+  const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(previewUrl ?? null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
+
+  useEffect(() => {
+    setResolvedPreviewUrl(previewUrl ?? null)
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+    setPlaying(false)
+  }, [previewUrl, title, artist])
 
   useEffect(() => {
     return () => {
@@ -31,13 +43,28 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
     }
   }, [])
 
-  async function togglePlayback() {
-    if (!previewUrl) return
+  async function resolvePreview() {
+    if (resolvedPreviewUrl) return resolvedPreviewUrl
+    if (!title || !artist || loadingPreview) return null
 
+    setLoadingPreview(true)
+    try {
+      const preview = await enrichWithAudioPreview(title, artist)
+      setResolvedPreviewUrl(preview.previewUrl ?? null)
+      return preview.previewUrl ?? null
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  async function togglePlayback() {
     tgHaptic('light')
 
+    const nextPreviewUrl = await resolvePreview()
+    if (!nextPreviewUrl) return
+
     if (!audioRef.current) {
-      audioRef.current = new Audio(previewUrl)
+      audioRef.current = new Audio(nextPreviewUrl)
       audioRef.current.addEventListener('ended', () => setPlaying(false))
       audioRef.current.addEventListener('pause', () => setPlaying(false))
       audioRef.current.addEventListener('play', () => setPlaying(true))
@@ -58,21 +85,13 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
 
   if (!title) return null
 
-  const CardTag = previewUrl ? 'button' : 'div'
-
   return (
-    <CardTag
-      {...(previewUrl
-        ? {
-            type: 'button',
-            onClick: togglePlayback,
-            'aria-label': playing ? 'Остановить любимую песню' : 'Включить любимую песню',
-            className: 'profile-song-card w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]',
-          }
-        : {
-            className: 'profile-song-card',
-          })}
-      style={previewUrl ? { borderStyle: 'solid' } : undefined}
+    <button
+      type="button"
+      onClick={togglePlayback}
+      aria-label={playing ? 'Остановить любимую песню' : 'Включить любимую песню'}
+      className="profile-song-card w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]"
+      style={{ borderStyle: 'solid' }}
     >
       {cover && (
         <div
@@ -109,23 +128,22 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
             </p>
           )}
         </div>
-        {previewUrl && (
-          <span
-            className="flex items-center justify-center"
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: '50%',
-              flexShrink: 0,
-              backgroundColor: playing ? 'var(--accent)' : 'rgba(217,139,82,0.14)',
-              color: playing ? '#fff' : 'var(--accent)',
-              boxShadow: playing ? '0 8px 18px rgba(217,139,82,0.24)' : 'none',
-            }}
-          >
-            <PlayIcon playing={playing} />
-          </span>
-        )}
+        <span
+          className="flex items-center justify-center"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            flexShrink: 0,
+            backgroundColor: playing ? 'var(--accent)' : 'rgba(217,139,82,0.14)',
+            color: playing ? '#fff' : 'var(--accent)',
+            boxShadow: playing ? '0 8px 18px rgba(217,139,82,0.24)' : 'none',
+            opacity: loadingPreview ? 0.55 : 1,
+          }}
+        >
+          <PlayIcon playing={playing} />
+        </span>
       </div>
-    </CardTag>
+    </button>
   )
 }
