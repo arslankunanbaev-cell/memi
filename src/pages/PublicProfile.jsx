@@ -433,12 +433,15 @@ function FavoriteSongCard({ title, artist, cover }) {
 
   return (
     <div
-      className="stats-panel-surface"
       style={{
-        marginTop: 16,
-        padding: 12,
+        marginTop: 14,
+        padding: 10,
         position: 'relative',
         overflow: 'hidden',
+        borderRadius: 18,
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.72), rgba(237,230,220,0.72))',
+        border: '1px solid rgba(160, 94, 44, 0.08)',
+        boxShadow: '0 8px 22px rgba(80,50,30,0.08)',
       }}
     >
       {cover && (
@@ -450,8 +453,8 @@ function FavoriteSongCard({ title, artist, cover }) {
             backgroundImage: `url(${proxifyCoverUrl(cover)})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            filter: 'blur(24px)',
-            opacity: 0.18,
+            filter: 'blur(22px)',
+            opacity: 0.12,
             transform: 'scale(1.2)',
           }}
         />
@@ -461,11 +464,11 @@ function FavoriteSongCard({ title, artist, cover }) {
           style={{
             width: 58,
             height: 58,
-            borderRadius: 16,
+            borderRadius: 14,
             overflow: 'hidden',
             flexShrink: 0,
             background: 'linear-gradient(135deg, var(--accent-light), var(--surface))',
-            boxShadow: '0 10px 24px rgba(80,50,30,0.14)',
+            boxShadow: '0 8px 18px rgba(80,50,30,0.12)',
           }}
         >
           {cover && (
@@ -477,14 +480,11 @@ function FavoriteSongCard({ title, artist, cover }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-sans type-meta" style={{ color: 'var(--accent)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Саундтрек
-          </p>
-          <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 16, fontWeight: 800, marginTop: 4 }}>
+          <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 800 }}>
             {title}
           </p>
           {artist && (
-            <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 600, marginTop: 2 }}>
+            <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 600, marginTop: 3 }}>
               {artist}
             </p>
           )}
