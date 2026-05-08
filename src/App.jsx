@@ -30,6 +30,7 @@ import People from './pages/People'
 import MomentSaved from './pages/MomentSaved'
 import PublicProfile from './pages/PublicProfile'
 import { trackEvent } from './lib/analytics'
+import { FEATURES } from './lib/features'
 import { RouteLoadingState } from './components/LoadingState'
 
 let hasTrackedAppOpened = false
@@ -142,7 +143,7 @@ export default function App() {
           getMoments(user.id),
           getCapsule(user.id),
           getPremiumStatus(user.id).catch(() => ({ isPremium: false, premiumExpiresAt: null, ownedThemes: [] })),
-          getCollections(user.id).catch(() => []),
+          FEATURES.sharedCollections ? getCollections(user.id).catch(() => []) : [],
         ])
 
         setPeople(fetchedPeople)
@@ -193,7 +194,7 @@ export default function App() {
 
           const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
 
-          if (startParam.startsWith('col_')) {
+          if (FEATURES.sharedCollections && startParam.startsWith('col_')) {
             const inviteCode = startParam.slice(4)
             try {
               let col = await joinCollectionByInviteCode(inviteCode, user.id)
@@ -267,7 +268,7 @@ export default function App() {
           <Route path="/story/:id" element={<StoryPreview />} />
           <Route path="/story-preview/:id" element={<StoryPreviewScreen />} />
           <Route path="/collection/:type/:key" element={<CollectionExport />} />
-          <Route path="/shared-collection/:id" element={<SharedCollectionPage />} />
+          <Route path="/shared-collection/:id" element={FEATURES.sharedCollections ? <SharedCollectionPage /> : <Navigate to="/archive" replace />} />
           <Route path="/edit-moment/:id" element={<EditMoment />} />
           <Route path="/profile/:userId" element={<PublicProfile />} />
           <Route path="*" element={<Navigate to="/" replace />} />

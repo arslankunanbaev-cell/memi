@@ -14,6 +14,7 @@ import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
 import { RouteLoadingState } from '../components/LoadingState'
 import { saveCapsuleSlot, getMoments, getSharedMoments, getFriendsFeedMoments, mergeMomentCollections, addMomentToCollection, createCollection } from '../lib/api'
+import { FEATURES } from '../lib/features'
 import { navigateWithTransition } from '../lib/navigation'
 import { tgHaptic } from '../lib/telegram'
 
@@ -79,6 +80,8 @@ function formatTopbarDate() {
 }
 
 function QuickAction({ label, hint, danger = false, onClick, children }) {
+  if (!onClick) return null
+
   return (
     <button
       type="button"
@@ -705,10 +708,10 @@ export default function Home() {
           onShare={() => shareMoment(actionMoment)}
           onCapsule={() => addMomentToCapsule(actionMoment)}
           onProfile={() => openAuthorProfile(actionMomentAuthor)}
-          onAddToCollection={() => { closeActions(); setCollectionMoment(actionMoment) }}
+          onAddToCollection={FEATURES.sharedCollections ? () => { closeActions(); setCollectionMoment(actionMoment) } : null}
         />
       )}
-      {collectionMoment && (
+      {FEATURES.sharedCollections && collectionMoment && (
         <AddToCollectionSheet
           moment={collectionMoment}
           collections={collections}
@@ -718,7 +721,7 @@ export default function Home() {
           onCreateAndAdd={handleCreateAndAddToCollection}
         />
       )}
-      {showCreateCollection && (
+      {FEATURES.sharedCollections && showCreateCollection && (
         <CreateCollectionSheet
           onClose={() => setShowCreateCollection(false)}
           onCreated={async (col) => {

@@ -9,6 +9,7 @@ import { navigateWithTransition } from '../lib/navigation'
 import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { createCollection } from '../lib/api'
+import { FEATURES } from '../lib/features'
 
 const RU_MONTHS = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
 function monthKey(iso) {
@@ -732,11 +733,13 @@ export default function Archive() {
       )}
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 112 }}>
-        <CollectionsRow
-          collections={collections}
-          onCreateClick={() => { tgHaptic('light'); setShowCreateCollection(true) }}
-          onCollectionClick={(col) => navigateWithTransition(navigate, `/shared-collection/${col.id}`)}
-        />
+        {FEATURES.sharedCollections && (
+          <CollectionsRow
+            collections={collections}
+            onCreateClick={() => { tgHaptic('light'); setShowCreateCollection(true) }}
+            onCollectionClick={(col) => navigateWithTransition(navigate, `/shared-collection/${col.id}`)}
+          />
+        )}
 
         <div
           className="archive-month-hero"
@@ -917,7 +920,7 @@ export default function Archive() {
         />
       )}
 
-      {showCreateCollection && (
+      {FEATURES.sharedCollections && showCreateCollection && (
         <CreateCollectionSheet
           onClose={() => setShowCreateCollection(false)}
           onCreated={(col) => {
