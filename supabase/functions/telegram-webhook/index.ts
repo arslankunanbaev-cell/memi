@@ -160,6 +160,9 @@ async function handleSuccessfulPayment(message: Record<string, unknown>) {
   const payload    = payment.invoice_payload as string  // 'premium' | 'theme_summer' | 'theme_cinema'
   const totalStars = payment.total_amount as number     // в Stars
 
+  const telegramPaymentChargeId = payment.telegram_payment_charge_id as string | undefined
+  const providerPaymentChargeId = payment.provider_payment_charge_id as string | undefined
+
   console.log(`[payment] telegram_id=${telegramId} payload=${payload} stars=${totalStars}`)
 
   const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2')
@@ -197,6 +200,28 @@ async function handleSuccessfulPayment(message: Record<string, unknown>) {
     if (error) {
       console.error('[payment] failed to update premium:', error)
     } else {
+      const purchaseRecord = {
+        user_id: user.id,
+        telegram_id: telegramId,
+        product_id: 'premium',
+        stars_amount: totalStars,
+        premium_expires_at: expiresAt.toISOString(),
+        telegram_payment_charge_id: telegramPaymentChargeId ?? null,
+        provider_payment_charge_id: providerPaymentChargeId ?? null,
+        payload,
+      }
+
+      const { error: purchaseError } = telegramPaymentChargeId
+        ? await sb
+          .from('premium_purchases')
+          .upsert(purchaseRecord, { onConflict: 'telegram_payment_charge_id' })
+        : await sb
+          .from('premium_purchases')
+          .insert(purchaseRecord)
+
+      if (purchaseError) {
+        console.error('[payment] failed to save premium purchase:', purchaseError)
+      }
       console.log(`[payment] ✅ premium activated until ${expiresAt.toISOString()} for user ${user.id}`)
     }
 

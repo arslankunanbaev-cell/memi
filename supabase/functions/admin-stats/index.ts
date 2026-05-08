@@ -121,7 +121,7 @@ serve(async (req: Request) => {
     totalFriendships,
     acceptedFriendships,
     totalCollections,
-    premiumUsers,
+    premiumPurchasesResult,
     peopleLast30,
     friendshipsLast30,
     usersLast30Result,
@@ -136,7 +136,12 @@ serve(async (req: Request) => {
     countRows(sb, 'friendships'),
     countRows(sb, 'friendships', (query) => query.eq('status', 'accepted')),
     countRows(sb, 'collections').catch(() => 0),
-    countRows(sb, 'users', (query) => query.eq('is_premium', true)),
+    sb
+      .from('premium_purchases')
+      .select('user_id')
+      .eq('product_id', 'premium')
+      .gt('premium_expires_at', now.toISOString())
+      .limit(20000),
     countRows(sb, 'people', (query) => query.gte('created_at', since30)).catch(() => 0),
     countRows(sb, 'friendships', (query) => query.gte('created_at', since30)).catch(() => 0),
     sb
@@ -167,11 +172,15 @@ serve(async (req: Request) => {
   if (eventsLast30Result.error) throw eventsLast30Result.error
   if (momentsLast30Result.error) throw momentsLast30Result.error
   if (allMomentOwnersResult.error) throw allMomentOwnersResult.error
+  if (premiumPurchasesResult.error) throw premiumPurchasesResult.error
 
   const usersLast30 = (usersLast30Result.data ?? []) as UserRow[]
   const eventsLast30 = (eventsLast30Result.data ?? []) as EventRow[]
   const momentsLast30 = (momentsLast30Result.data ?? []) as MomentRow[]
   const allMomentOwners = (allMomentOwnersResult.data ?? []) as Array<{ user_id: string | null }>
+  const paidPremiumUserIds = new Set((premiumPurchasesResult.data ?? [])
+    .map((row: { user_id: string | null }) => row.user_id)
+    .filter(Boolean))
 
   const active7 = new Set<string>()
   const active30 = new Set<string>()
@@ -285,7 +294,7 @@ serve(async (req: Request) => {
       friendships: totalFriendships,
       acceptedFriendships,
       collections: totalCollections,
-      premiumUsers,
+      premiumUsers: paidPremiumUserIds.size,
       creatorsAll: creatorsAll.size,
     },
     activity: {
@@ -311,7 +320,7 @@ serve(async (req: Request) => {
       activation30: percent(newUsersWithMoment30, usersLast30.length),
       creatorRate30: percent(creators30.size, active30.size),
       retentionProxy30: percent(returning30.size, active30.size),
-      premiumRate: percent(premiumUsers, totalUsers),
+      premiumRate: percent(paidPremiumUserIds.size, totalUsers),
       socialRate: percent(acceptedFriendships, totalUsers),
       contentDepth: totalUsers ? Number((totalMoments / totalUsers).toFixed(1)) : 0,
       peoplePerUser: totalUsers ? Number((totalPeople / totalUsers).toFixed(1)) : 0,

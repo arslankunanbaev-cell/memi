@@ -265,7 +265,7 @@ export default function AdminStats() {
               <MetricCard label="Активные 7 дней" value={stats.activity.activeUsers7} hint={`${formatNumber(stats.activity.activeUsers30)} активных за 30 дней`} />
               <MetricCard label="Моменты" value={stats.totals.moments} hint={`воспоминания, +${formatNumber(stats.activity.moments7)} за 7 дней`} />
               <MetricCard label="Люди" value={stats.totals.people} hint="персоны, которых добавили в воспоминания" />
-              <MetricCard label="Premium" value={stats.totals.premiumUsers} hint={`${formatPercent(stats.rates?.premiumRate)} от всех пользователей`} />
+              <MetricCard label="Premium купили" value={stats.totals.premiumUsers} hint={`${formatPercent(stats.rates?.premiumRate)} от всех пользователей, только оплаты Stars`} />
             </section>
 
             <Section title="Главные сигналы">
