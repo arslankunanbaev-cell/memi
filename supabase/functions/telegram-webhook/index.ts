@@ -4,6 +4,7 @@ const BOT_TOKEN       = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
 const WEBHOOK_SECRET  = Deno.env.get('TELEGRAM_WEBHOOK_SECRET') ?? ''
 const SUPABASE_URL    = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const FEEDBACK_CHAT_ID = Deno.env.get('TELEGRAM_FEEDBACK_CHAT_ID') ?? ''
 const TG_API          = `https://api.telegram.org/bot${BOT_TOKEN}`
 const ASSETS_BASE     = 'https://memi-sand.vercel.app/tut'
 
@@ -27,6 +28,17 @@ const TUTORIAL_IMAGE_FILES = [
   'tutorial-people.png',
 ]
 
+const FEEDBACK_PROMPT = [
+  'Напишите жалобу или предложение ответом на это сообщение.',
+  '',
+  'Можно также отправить сразу так:',
+  '/feedback ваш текст',
+].join('\n')
+
+const FEEDBACK_SENT_TEXT = 'Спасибо! Я передал фидбек.'
+const FEEDBACK_UNAVAILABLE_TEXT = 'Фидбек временно недоступен. Попробуйте позже.'
+const MAX_FEEDBACK_TEXT_LENGTH = 3200
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -38,16 +50,68 @@ function isStartCommand(text: string) {
   return /^\/start(?:@\w+)?(?:\s+.*)?$/i.test(text.trim())
 }
 
-async function sendWelcomeMessage(chatId: number | string) {
+function parseFeedbackCommand(text: string) {
+  const match = text.trim().match(/^\/feedback(?:@\w+)?(?:\s+([\s\S]+))?$/i)
+  if (!match) return null
+  return (match[1] ?? '').trim()
+}
+
+function isFeedbackReply(message: Record<string, unknown>) {
+  const reply = message.reply_to_message as Record<string, unknown> | undefined
+  return typeof reply?.text === 'string' && reply.text === FEEDBACK_PROMPT
+}
+
+function formatFeedbackMessage(message: Record<string, unknown>, feedbackText: string) {
+  const from = message.from as Record<string, unknown> | undefined
+  const chat = message.chat as Record<string, unknown> | undefined
+  const safeFeedbackText = feedbackText.length > MAX_FEEDBACK_TEXT_LENGTH
+    ? `${feedbackText.slice(0, MAX_FEEDBACK_TEXT_LENGTH)}\n\n[обрезано: сообщение было слишком длинным]`
+    : feedbackText
+  const name = [
+    typeof from?.first_name === 'string' ? from.first_name : '',
+    typeof from?.last_name === 'string' ? from.last_name : '',
+  ].filter(Boolean).join(' ')
+  const username = typeof from?.username === 'string' ? `@${from.username}` : 'без username'
+
+  return [
+    'Новый фидбек в memi',
+    '',
+    `От: ${name || 'без имени'} (${username})`,
+    `Telegram ID: ${from?.id ?? 'unknown'}`,
+    `Chat ID: ${chat?.id ?? 'unknown'}`,
+    '',
+    safeFeedbackText,
+  ].join('\n')
+}
+
+async function sendMessage(chatId: number | string, text: string, extra: Record<string, unknown> = {}) {
   const tgRes = await fetch(`${TG_API}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text: WELCOME_TEXT }),
+    body: JSON.stringify({ chat_id: chatId, text, ...extra }),
   })
   const tgJson = await tgRes.json().catch(() => null)
   if (!tgRes.ok || !tgJson?.ok) {
     throw new Error(tgJson?.description ?? 'Telegram sendMessage failed')
   }
+}
+
+async function sendWelcomeMessage(chatId: number | string) {
+  await sendMessage(chatId, WELCOME_TEXT)
+}
+
+async function handleFeedback(message: Record<string, unknown>, feedbackText: string) {
+  const chatId = message.chat ? (message.chat as Record<string, unknown>).id : undefined
+  if (!chatId) return
+
+  if (!FEEDBACK_CHAT_ID) {
+    console.error('[feedback] TELEGRAM_FEEDBACK_CHAT_ID is not configured')
+    await sendMessage(chatId as number | string, FEEDBACK_UNAVAILABLE_TEXT)
+    return
+  }
+
+  await sendMessage(FEEDBACK_CHAT_ID, formatFeedbackMessage(message, feedbackText))
+  await sendMessage(chatId as number | string, FEEDBACK_SENT_TEXT)
 }
 
 async function sendTutorial(chatId: number | string) {
@@ -231,9 +295,27 @@ serve(async (req: Request) => {
 
   try {
     const chatId = message?.chat ? (message.chat as Record<string, unknown>).id : undefined
+    const text = typeof message?.text === 'string' ? message.text : ''
+
+    const feedbackText = parseFeedbackCommand(text)
+    if (chatId && feedbackText !== null) {
+      if (!feedbackText) {
+        await sendMessage(chatId as number | string, FEEDBACK_PROMPT, {
+          reply_markup: { force_reply: true, selective: true },
+        })
+        return json({ ok: true })
+      }
+
+      await handleFeedback(message, feedbackText)
+      return json({ ok: true })
+    }
+
+    if (chatId && text.trim() && message && isFeedbackReply(message)) {
+      await handleFeedback(message, text.trim())
+      return json({ ok: true })
+    }
 
     // ── /start — приветствие ───────────────────────────────────────────────
-    const text = typeof message?.text === 'string' ? message.text : ''
     if (!chatId || !isStartCommand(text)) {
       return json({ ok: true, ignored: true })
     }
