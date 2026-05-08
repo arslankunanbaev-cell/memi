@@ -150,7 +150,12 @@ export default function EditMoment() {
   // Song: map from moment fields to song object
   const [song, setSong] = useState(
     moment?.song_title
-      ? { name: moment.song_title, artist: moment.song_artist ?? '', cover: moment.song_cover ?? null }
+      ? {
+          name: moment.song_title,
+          artist: moment.song_artist ?? '',
+          cover: moment.song_cover ?? null,
+          previewUrl: moment.song_preview_url ?? null,
+        }
       : null
   )
   const [showSongSheet, setShowSongSheet] = useState(false)
@@ -226,6 +231,7 @@ export default function EditMoment() {
         song_title:  song?.name   ?? null,
         song_artist: song?.artist ?? null,
         song_cover:  song?.cover  ?? null,
+        song_preview_url: song?.previewUrl ?? null,
         photo_url,
         photo_path,
       })

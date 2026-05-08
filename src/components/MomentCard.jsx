@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { proxifyCoverUrl } from '../lib/imageProxy'
+import ProfileSongCard from './ProfileSongCard'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { navigateWithTransition } from '../lib/navigation'
 import { useAppStore } from '../store/useAppStore'
@@ -37,65 +37,6 @@ function Avatar({ person, name, photoUrl, fallbackColor }) {
           {initial}
         </span>
       )}
-    </div>
-  )
-}
-
-function MusicBlock({ title, artist, cover }) {
-  const safeCover = proxifyCoverUrl(cover)
-
-  return (
-    <div
-      className="stats-panel-surface music-panel-surface flex items-center gap-3"
-      style={{
-        marginTop: 14,
-        padding: '12px 14px',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
-      }}
-    >
-      {safeCover ? (
-        <img
-          src={safeCover}
-          alt={title}
-          style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
-        />
-      ) : (
-        <div
-          className="flex items-center justify-center"
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 10,
-            backgroundColor: 'var(--accent-light)',
-            flexShrink: 0,
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2" />
-            <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2" />
-          </svg>
-        </div>
-      )}
-
-      <div className="min-w-0">
-        <p
-          className="font-sans type-chip"
-          style={{
-            color: 'var(--text)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {title}
-        </p>
-        {artist && (
-          <p className="font-sans type-meta" style={{ color: 'var(--mid)', marginTop: 1 }}>
-            {artist}
-          </p>
-        )}
-      </div>
     </div>
   )
 }
@@ -333,10 +274,13 @@ export default function MomentCard({ moment, onLongPress }) {
           )}
 
           {moment.song_title && (
-            <MusicBlock
+            <ProfileSongCard
               title={moment.song_title}
               artist={moment.song_artist}
               cover={moment.song_cover}
+              previewUrl={moment.song_preview_url}
+              as="div"
+              stopPropagation
             />
           )}
 

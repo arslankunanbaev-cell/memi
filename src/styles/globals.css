@@ -248,6 +248,7 @@
       linear-gradient(135deg, rgba(255,255,255,0.72), rgba(237,230,220,0.72));
     border: 1px solid rgba(160, 94, 44, 0.08);
     box-shadow: 0 8px 22px rgba(80,50,30,0.08);
+    cursor: pointer;
   }
 
   .profile-song-card.is-playing {
@@ -260,7 +261,6 @@
   button.profile-song-card {
     appearance: none;
     -webkit-appearance: none;
-    cursor: pointer;
   }
 
   .profile-song-card-cover {

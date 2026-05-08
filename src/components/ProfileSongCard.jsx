@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { enrichWithAudioPreview } from '../lib/musicCovers'
+import { getPlaybackSongKey, toggleSongPlayback, useSongPlayback } from '../lib/songPlayback'
 import { tgHaptic } from '../lib/telegram'
 
 function PlayIcon({ playing }) {
@@ -29,20 +30,25 @@ function PlayingBars({ playing }) {
   )
 }
 
-export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
-  const audioRef = useRef(null)
-  const [playing, setPlaying] = useState(false)
+export default function ProfileSongCard({
+  title,
+  artist,
+  cover,
+  previewUrl,
+  as: Element = 'button',
+  stopPropagation = false,
+}) {
+  const playback = useSongPlayback()
   const [resolvedPreviewUrl, setResolvedPreviewUrl] = useState(previewUrl ?? null)
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [previewUnavailable, setPreviewUnavailable] = useState(false)
+  const songKey = getPlaybackSongKey({ title, artist })
+  const isCurrentSong = playback.current?.key === songKey
+  const playing = isCurrentSong && playback.status === 'playing'
+  const playbackLoading = isCurrentSong && playback.status === 'loading'
 
   useEffect(() => {
     setResolvedPreviewUrl(previewUrl ?? null)
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
-    setPlaying(false)
     setPreviewUnavailable(false)
   }, [previewUrl, title, artist])
 
@@ -75,15 +81,6 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
     }
   }, [previewUrl, title, artist])
 
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [])
-
   async function resolvePreview() {
     if (resolvedPreviewUrl) return resolvedPreviewUrl
     if (!title || !artist || loadingPreview) return null
@@ -99,7 +96,12 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
     }
   }
 
-  async function togglePlayback() {
+  async function togglePlayback(event) {
+    if (stopPropagation) {
+      event?.preventDefault()
+      event?.stopPropagation()
+    }
+
     tgHaptic('light')
 
     const nextPreviewUrl = resolvedPreviewUrl ?? await resolvePreview()
@@ -108,32 +110,49 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
       return
     }
 
-    if (!audioRef.current) {
-      audioRef.current = new Audio(nextPreviewUrl)
-      audioRef.current.addEventListener('ended', () => setPlaying(false))
-      audioRef.current.addEventListener('pause', () => setPlaying(false))
-      audioRef.current.addEventListener('play', () => setPlaying(true))
-    }
+    const ok = await toggleSongPlayback({
+      key: songKey,
+      title,
+      artist,
+      cover,
+      previewUrl: nextPreviewUrl,
+    })
 
-    if (playing) {
-      audioRef.current.pause()
-      return
-    }
-
-    try {
-      await audioRef.current.play()
-    } catch (error) {
-      console.warn('[ProfileSongCard] audio preview failed:', error?.message)
+    if (!ok) {
       setPreviewUnavailable(true)
-      setPlaying(false)
     }
+  }
+
+  function handleKeyDown(event) {
+    if (Element === 'button') return
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    togglePlayback(event)
+  }
+
+  function stopNestedPointer(event) {
+    if (!stopPropagation) return
+    event.preventDefault()
+    event.stopPropagation()
   }
 
   if (!title) return null
 
+  const elementProps = Element === 'button'
+    ? { type: 'button' }
+    : { role: 'button', tabIndex: 0, onKeyDown: handleKeyDown }
+  const nestedPointerProps = stopPropagation
+    ? {
+        onPointerDown: stopNestedPointer,
+        onPointerUp: stopNestedPointer,
+        onPointerCancel: stopNestedPointer,
+        onContextMenu: stopNestedPointer,
+      }
+    : null
+
   return (
-    <button
-      type="button"
+    <Element
+      {...elementProps}
+      {...nestedPointerProps}
       onClick={togglePlayback}
       aria-label={playing ? 'Остановить любимую песню' : 'Включить любимую песню'}
       className={`profile-song-card w-full text-left transition-transform duration-150 ease-out active:scale-[0.99]${playing ? ' is-playing' : ''}`}
@@ -177,11 +196,11 @@ export default function ProfileSongCard({ title, artist, cover, previewUrl }) {
         </div>
         <div className="profile-song-action" aria-hidden="true">
           <PlayingBars playing={playing} />
-          <span className={`profile-song-play-button${loadingPreview ? ' is-loading' : ''}`}>
+          <span className={`profile-song-play-button${loadingPreview || playbackLoading ? ' is-loading' : ''}`}>
             <PlayIcon playing={playing} />
           </span>
         </div>
       </div>
-    </button>
+    </Element>
   )
 }

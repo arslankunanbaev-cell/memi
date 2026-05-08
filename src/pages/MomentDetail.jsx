@@ -9,7 +9,6 @@ import {
   saveCapsuleSlot,
   upsertMomentReaction,
 } from '../lib/api'
-import { proxifyCoverUrl } from '../lib/imageProxy'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { tgHaptic } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
@@ -18,6 +17,7 @@ import { DetailLoadingState } from '../components/LoadingState'
 import { useSwipeBack } from '../hooks/useSwipeBack'
 import CapsuleIcon from '../components/CapsuleIcon'
 import { AppEmptyState } from '../components/FeedbackStates'
+import ProfileSongCard from '../components/ProfileSongCard'
 
 function formatFull(iso) {
   if (!iso) return ''
@@ -110,42 +110,6 @@ function DetailChip({ children, emoji = false }) {
       }}
     >
       {children}
-    </div>
-  )
-}
-
-function MusicCard({ title, artist, cover }) {
-  const safeCover = proxifyCoverUrl(cover)
-
-  return (
-    <div
-      className="stats-panel-surface music-panel-surface flex items-center gap-3"
-      style={{ padding: '12px 14px', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)' }}
-    >
-      {safeCover ? (
-        <img src={safeCover} alt={title} style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} />
-      ) : (
-        <div
-          className="flex items-center justify-center"
-          style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: 'var(--accent-light)', flexShrink: 0 }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M9 18V5l12-2v13" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="6" cy="18" r="3" stroke="var(--accent)" strokeWidth="2" />
-            <circle cx="18" cy="16" r="3" stroke="var(--accent)" strokeWidth="2" />
-          </svg>
-        </div>
-      )}
-      <div className="min-w-0">
-        <p className="font-sans" style={{ color: 'var(--text)', fontSize: 14, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {title}
-        </p>
-        {artist && (
-          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 1 }}>
-            {artist}
-          </p>
-        )}
-      </div>
     </div>
   )
 }
@@ -583,7 +547,12 @@ export default function MomentDetail() {
 
           {moment.song_title && (
             <div style={{ marginBottom: 24 }}>
-              <MusicCard title={moment.song_title} artist={moment.song_artist} cover={moment.song_cover} />
+              <ProfileSongCard
+                title={moment.song_title}
+                artist={moment.song_artist}
+                cover={moment.song_cover}
+                previewUrl={moment.song_preview_url}
+              />
             </div>
           )}
 
