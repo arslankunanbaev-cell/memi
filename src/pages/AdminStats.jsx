@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import { RouteLoadingState } from '../components/LoadingState'
 import { getAdminStats } from '../lib/adminStats'
+import { useAppStore } from '../store/useAppStore'
 
 function formatNumber(value) {
   return new Intl.NumberFormat('ru-RU').format(value ?? 0)
@@ -144,11 +145,14 @@ function DataList({ rows, empty, renderRow }) {
 }
 
 export default function AdminStats() {
+  const initDone = useAppStore((state) => state.initDone)
   const [stats, setStats] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!initDone) return
+
     let cancelled = false
 
     async function load() {
@@ -170,14 +174,14 @@ export default function AdminStats() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [initDone])
 
   const generatedLabel = useMemo(() => {
     if (!stats?.generatedAt) return ''
     return `обновлено ${formatDateTime(stats.generatedAt)}`
   }, [stats?.generatedAt])
 
-  if (loading) return <RouteLoadingState />
+  if (!initDone || loading) return <RouteLoadingState />
 
   return (
     <main className="h-full overflow-y-auto bg-base pb-safe">

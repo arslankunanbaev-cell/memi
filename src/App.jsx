@@ -69,7 +69,9 @@ export default function App() {
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
       console.warn('[App] fallback timeout -> /home')
-      navigate('/home', { replace: true })
+      if (!location.pathname.startsWith('/admin/stats')) {
+        navigate('/home', { replace: true })
+      }
     }, 5000)
 
     async function init() {

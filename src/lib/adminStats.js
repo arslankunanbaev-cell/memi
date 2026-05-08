@@ -12,7 +12,11 @@ export async function getAdminStats() {
     ? await supabase.auth.getSession()
     : { data: { session: null } }
 
-  const token = sessionData?.session?.access_token ?? anonKey
+  const token = sessionData?.session?.access_token
+
+  if (!token) {
+    throw new Error('Открой статистику из Telegram Mini App после загрузки профиля')
+  }
 
   const response = await fetch(`${url}/functions/v1/admin-stats`, {
     method: 'GET',

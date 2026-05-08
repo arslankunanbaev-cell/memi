@@ -46,6 +46,18 @@ function PublicProfileIcon() {
   )
 }
 
+function StatsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 19V5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <path d="M4 19h16" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+      <rect x="7" y="11" width="3" height="5" rx="1" fill="currentColor" />
+      <rect x="12" y="7" width="3" height="9" rx="1" fill="currentColor" />
+      <rect x="17" y="9" width="3" height="7" rx="1" fill="currentColor" />
+    </svg>
+  )
+}
+
 function StarIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -638,6 +650,7 @@ export default function Profile() {
   const removeFromCapsule = useAppStore((state) => state.removeFromCapsule)
   const isPremium = useAppStore((state) => state.isPremium)
   const currentTheme = useAppStore((state) => state.currentTheme)
+  const isAdmin = currentUser?.telegram_id === 308362442
 
   const [pickSlot, setPickSlot] = useState(null)
   const [addMomentSlot, setAddMomentSlot] = useState(null)
@@ -841,6 +854,15 @@ export default function Profile() {
             </SettingsGroup>
 
             <SettingsGroup label="Настройки">
+              {isAdmin && (
+                <SettingsRow
+                  icon={<StatsIcon />}
+                  title="Статистика"
+                  subtitle="Пользователи, заходы и моменты"
+                  onPress={() => navigate('/admin/stats')}
+                  isFirst
+                />
+              )}
               <SettingsRow
                 icon={
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -852,7 +874,7 @@ export default function Profile() {
                 title="Тема приложения"
                 subtitle={isPremium ? (currentTheme === 'dark' ? 'Тёмная' : 'Светлая') : 'Только для Premium'}
                 onPress={() => isPremium ? setShowThemeSheet(true) : setShowPremiumSheet(true)}
-                isFirst
+                isFirst={!isAdmin}
                 isLast
               />
             </SettingsGroup>
