@@ -4,8 +4,8 @@ import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
 import CapsuleIcon from '../components/CapsuleIcon'
 import PremiumBadge from '../components/PremiumBadge'
+import ProfileSongCard from '../components/ProfileSongCard'
 import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot } from '../lib/api'
-import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -24,51 +24,6 @@ function sinceLabel(createdAt) {
   if (!createdAt) return ''
   const date = new Date(createdAt)
   return `${MONTHS_GENITIVE[date.getMonth()]} ${date.getFullYear()}`
-}
-
-function FavoriteSongCard({ title, artist, cover }) {
-  if (!title) return null
-
-  return (
-    <div className="profile-song-card">
-      {cover && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url(${proxifyCoverUrl(cover)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(22px)',
-            opacity: 0.12,
-            transform: 'scale(1.2)',
-          }}
-        />
-      )}
-      <div className="flex items-center gap-3" style={{ position: 'relative' }}>
-        <div className="profile-song-card-cover">
-          {cover && (
-            <img
-              src={proxifyCoverUrl(cover)}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-sans truncate profile-song-card-title">
-            {title}
-          </p>
-          {artist && (
-            <p className="font-sans truncate profile-song-card-artist">
-              {artist}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -731,6 +686,7 @@ export default function Profile() {
         title: currentUser.favorite_song_title,
         artist: currentUser.favorite_song_artist,
         cover: currentUser.favorite_song_cover,
+        previewUrl: currentUser.favorite_song_preview_url,
       }
     : null
 
@@ -806,10 +762,11 @@ export default function Profile() {
                   )}
 
                   {favoriteSong && (
-                    <FavoriteSongCard
+                    <ProfileSongCard
                       title={favoriteSong.title}
                       artist={favoriteSong.artist}
                       cover={favoriteSong.cover}
+                      previewUrl={favoriteSong.previewUrl}
                     />
                   )}
                 </div>

@@ -3,7 +3,7 @@ import BottomSheet from './BottomSheet'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
 import { tgHaptic } from '../lib/telegram'
-import { enrichWithCover, enrichTracksWithCovers, artistColor } from '../lib/musicCovers'
+import { enrichWithAudioPreview, enrichWithCover, enrichTracksWithCovers, artistColor } from '../lib/musicCovers'
 
 const LASTFM_KEY = import.meta.env.VITE_LASTFM_API_KEY
 
@@ -152,10 +152,16 @@ export default function SongSearchSheet({ onClose, onSelect, title = 'Трек �
     return () => clearTimeout(debounceRef.current)
   }, [query])
 
-  function handleAdd(track) {
+  async function handleAdd(track) {
     tgHaptic('light')
-    addRecentSong(track)
-    onSelect(track)
+    const preview = await enrichWithAudioPreview(track.name, track.artist)
+    const selectedTrack = {
+      ...track,
+      cover: track.cover ?? preview.cover ?? null,
+      previewUrl: preview.previewUrl ?? track.previewUrl ?? null,
+    }
+    addRecentSong(selectedTrack)
+    onSelect(selectedTrack)
     onClose()
   }
 

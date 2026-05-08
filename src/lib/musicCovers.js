@@ -85,6 +85,23 @@ async function fetchItunesCover(track, artist) {
   return art ? art.replace('100x100bb', '600x600bb') : null
 }
 
+async function fetchItunesTrackMeta(track, artist) {
+  const term = encodeURIComponent(`${cleanName(artist)} ${cleanName(track)}`)
+  const json = await safeFetch(
+    `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=1`,
+    { timeout: 4000 }
+  )
+  const result = json?.results?.[0]
+  if (!result) return { previewUrl: null, cover: null }
+
+  return {
+    previewUrl: result.previewUrl ?? null,
+    cover: result.artworkUrl100
+      ? result.artworkUrl100.replace('100x100bb', '600x600bb')
+      : null,
+  }
+}
+
 // ── Deezer ────────────────────────────────────────────────────────────────────
 // Note: Deezer does not set CORS headers for browser requests in most envs.
 // Included as spec-required fallback; errors are swallowed silently.
@@ -139,6 +156,14 @@ export async function enrichWithCover(track, artist) {
   console.log('[covers]', track, '-', artist, '→', result.source, result.url ? '✓' : '✗')
   coverCache.set(cacheKey, result)
   return result
+}
+
+export async function enrichWithAudioPreview(track, artist) {
+  const meta = await fetchItunesTrackMeta(track, artist)
+  return {
+    previewUrl: meta.previewUrl ?? null,
+    cover: meta.cover ? proxifyCoverUrl(meta.cover) : null,
+  }
 }
 
 /**

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import PremiumBadge from '../components/PremiumBadge'
+import ProfileSongCard from '../components/ProfileSongCard'
 import {
   getUserProfile,
   linkPersonToUser,
@@ -9,7 +10,6 @@ import {
   sendFriendRequest,
 } from '../lib/api'
 import { trackEvent } from '../lib/analytics'
-import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -428,55 +428,6 @@ function FeaturedMomentCard({ moment, onClick }) {
   )
 }
 
-function FavoriteSongCard({ title, artist, cover }) {
-  if (!title) return null
-
-  return (
-    <div
-      className="profile-song-card"
-    >
-      {cover && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `url(${proxifyCoverUrl(cover)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(22px)',
-            opacity: 0.12,
-            transform: 'scale(1.2)',
-          }}
-        />
-      )}
-      <div className="flex items-center gap-3" style={{ position: 'relative' }}>
-        <div
-          className="profile-song-card-cover"
-        >
-          {cover && (
-            <img
-              src={proxifyCoverUrl(cover)}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-sans truncate profile-song-card-title">
-            {title}
-          </p>
-          {artist && (
-            <p className="font-sans truncate profile-song-card-artist">
-              {artist}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function SharedMomentRow({ moment, sourceLabel, onClick }) {
   return (
     <button
@@ -587,6 +538,7 @@ export function PublicProfileContent({
         title: profileUser.favorite_song_title,
         artist: profileUser.favorite_song_artist,
         cover: profileUser.favorite_song_cover,
+        previewUrl: profileUser.favorite_song_preview_url,
       }
     : null
   const featuredMoment = profileEnabled
@@ -714,10 +666,11 @@ export function PublicProfileContent({
             )}
 
             {favoriteSong && (
-              <FavoriteSongCard
+              <ProfileSongCard
                 title={favoriteSong.title}
                 artist={favoriteSong.artist}
                 cover={favoriteSong.cover}
+                previewUrl={favoriteSong.previewUrl}
               />
             )}
 

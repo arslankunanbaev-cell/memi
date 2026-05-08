@@ -268,6 +268,7 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
     payload.favorite_song_title = favoriteSong?.name?.trim() || null
     payload.favorite_song_artist = favoriteSong?.artist?.trim() || null
     payload.favorite_song_cover = favoriteSong?.cover || null
+    payload.favorite_song_preview_url = favoriteSong?.previewUrl || null
   }
 
   const { data, error } = await sb
@@ -289,6 +290,7 @@ const PUBLIC_PROFILE_RPC_FIELDS = [
   'favorite_song_title',
   'favorite_song_artist',
   'favorite_song_cover',
+  'favorite_song_preview_url',
 ]
 
 function hasPublicProfileRpcFields(user) {
@@ -308,7 +310,7 @@ async function getUserPublicRecord(sb, userId) {
 
   const { data: directUser, error: directUserError } = await sb
     .from('users')
-    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url, is_premium, premium_expires_at, favorite_song_title, favorite_song_artist, favorite_song_cover')
+    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url, is_premium, premium_expires_at, favorite_song_title, favorite_song_artist, favorite_song_cover, favorite_song_preview_url')
     .eq('id', userId)
     .maybeSingle()
 
@@ -324,6 +326,7 @@ async function getUserPublicRecord(sb, userId) {
     favorite_song_title: rpcUser.favorite_song_title ?? null,
     favorite_song_artist: rpcUser.favorite_song_artist ?? null,
     favorite_song_cover: rpcUser.favorite_song_cover ?? null,
+    favorite_song_preview_url: rpcUser.favorite_song_preview_url ?? null,
   })
 }
 

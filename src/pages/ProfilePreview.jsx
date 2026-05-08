@@ -127,6 +127,7 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
           name: currentUser.favorite_song_title,
           artist: currentUser.favorite_song_artist ?? '',
           cover: currentUser.favorite_song_cover ?? null,
+          previewUrl: currentUser.favorite_song_preview_url ?? null,
         }
       : null
   ))
