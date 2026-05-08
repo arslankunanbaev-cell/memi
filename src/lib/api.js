@@ -256,7 +256,7 @@ export async function saveUser(tgUser) {
   return { user: normalizePhotoEntity(newUser), isNew: true }
 }
 
-export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId, bannerUrl } = {}) {
+export async function updatePublicProfile(userId, { publicProfileEnabled, bio, featuredMomentId, bannerUrl, favoriteSong } = {}) {
   const sb = assertSupabase()
   const payload = {}
 
@@ -264,6 +264,11 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
   if (bio !== undefined) payload.bio = bio?.trim() ? bio.trim() : null
   if (featuredMomentId !== undefined) payload.featured_moment_id = featuredMomentId || null
   if (bannerUrl !== undefined) payload.banner_url = bannerUrl || null
+  if (favoriteSong !== undefined) {
+    payload.favorite_song_title = favoriteSong?.name?.trim() || null
+    payload.favorite_song_artist = favoriteSong?.artist?.trim() || null
+    payload.favorite_song_cover = favoriteSong?.cover || null
+  }
 
   const { data, error } = await sb
     .from('users')
@@ -276,7 +281,15 @@ export async function updatePublicProfile(userId, { publicProfileEnabled, bio, f
   return normalizePhotoEntity(data)
 }
 
-const PUBLIC_PROFILE_RPC_FIELDS = ['public_profile_enabled', 'bio', 'featured_moment_id', 'banner_url']
+const PUBLIC_PROFILE_RPC_FIELDS = [
+  'public_profile_enabled',
+  'bio',
+  'featured_moment_id',
+  'banner_url',
+  'favorite_song_title',
+  'favorite_song_artist',
+  'favorite_song_cover',
+]
 
 function hasPublicProfileRpcFields(user) {
   return PUBLIC_PROFILE_RPC_FIELDS.every((field) => Object.prototype.hasOwnProperty.call(user ?? {}, field))
@@ -295,7 +308,7 @@ async function getUserPublicRecord(sb, userId) {
 
   const { data: directUser, error: directUserError } = await sb
     .from('users')
-    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url, is_premium, premium_expires_at')
+    .select('id, name, photo_url, created_at, public_code, public_profile_enabled, bio, featured_moment_id, banner_url, is_premium, premium_expires_at, favorite_song_title, favorite_song_artist, favorite_song_cover')
     .eq('id', userId)
     .maybeSingle()
 
@@ -308,6 +321,9 @@ async function getUserPublicRecord(sb, userId) {
     public_profile_enabled: rpcUser.public_profile_enabled ?? false,
     bio: rpcUser.bio ?? null,
     featured_moment_id: rpcUser.featured_moment_id ?? null,
+    favorite_song_title: rpcUser.favorite_song_title ?? null,
+    favorite_song_artist: rpcUser.favorite_song_artist ?? null,
+    favorite_song_cover: rpcUser.favorite_song_cover ?? null,
   })
 }
 

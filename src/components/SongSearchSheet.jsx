@@ -114,7 +114,7 @@ function TrackRow({ track, onAdd }) {
 }
 
 // ── SongSearchSheet ───────────────────────────────────────────────────────────
-export default function SongSearchSheet({ onClose, onSelect }) {
+export default function SongSearchSheet({ onClose, onSelect, title = 'Трек момента' }) {
   const recentSongs   = useAppStore((s) => s.recentSongs)
   const addRecentSong = useAppStore((s) => s.addRecentSong)
 
@@ -164,7 +164,7 @@ export default function SongSearchSheet({ onClose, onSelect }) {
   const noResults   = searched && results.length === 0
 
   return (
-    <BottomSheet onClose={onClose} title="Трек момента">
+    <BottomSheet onClose={onClose} title={title}>
       {/* Search input */}
       <div className="px-4 pb-3">
         <div

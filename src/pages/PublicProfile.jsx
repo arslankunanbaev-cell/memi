@@ -9,6 +9,7 @@ import {
   sendFriendRequest,
 } from '../lib/api'
 import { trackEvent } from '../lib/analytics'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -427,6 +428,72 @@ function FeaturedMomentCard({ moment, onClick }) {
   )
 }
 
+function FavoriteSongCard({ title, artist, cover }) {
+  if (!title) return null
+
+  return (
+    <div
+      className="stats-panel-surface"
+      style={{
+        marginTop: 16,
+        padding: 12,
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {cover && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${proxifyCoverUrl(cover)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(24px)',
+            opacity: 0.18,
+            transform: 'scale(1.2)',
+          }}
+        />
+      )}
+      <div className="flex items-center gap-3" style={{ position: 'relative' }}>
+        <div
+          style={{
+            width: 58,
+            height: 58,
+            borderRadius: 16,
+            overflow: 'hidden',
+            flexShrink: 0,
+            background: 'linear-gradient(135deg, var(--accent-light), var(--surface))',
+            boxShadow: '0 10px 24px rgba(80,50,30,0.14)',
+          }}
+        >
+          {cover && (
+            <img
+              src={proxifyCoverUrl(cover)}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-sans type-meta" style={{ color: 'var(--accent)', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            Саундтрек
+          </p>
+          <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 16, fontWeight: 800, marginTop: 4 }}>
+            {title}
+          </p>
+          {artist && (
+            <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 600, marginTop: 2 }}>
+              {artist}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SharedMomentRow({ moment, sourceLabel, onClick }) {
   return (
     <button
@@ -532,6 +599,13 @@ export function PublicProfileContent({
   const since = null
   const profileEnabled = profileUser.public_profile_enabled === true
   const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
+  const favoriteSong = profileEnabled && profileUser.favorite_song_title
+    ? {
+        title: profileUser.favorite_song_title,
+        artist: profileUser.favorite_song_artist,
+        cover: profileUser.favorite_song_cover,
+      }
+    : null
   const featuredMoment = profileEnabled
     ? moments.find((moment) => moment.id === profileUser.featured_moment_id) ?? null
     : null
@@ -654,6 +728,14 @@ export function PublicProfileContent({
               >
                 {bio}
               </p>
+            )}
+
+            {favoriteSong && (
+              <FavoriteSongCard
+                title={favoriteSong.title}
+                artist={favoriteSong.artist}
+                cover={favoriteSong.cover}
+              />
             )}
 
             <p

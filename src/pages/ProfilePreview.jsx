@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import BottomSheet from '../components/BottomSheet'
+import SongSearchSheet from '../components/SongSearchSheet'
 import { updatePublicProfile } from '../lib/api'
+import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { MONTHS_GENITIVE } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
@@ -119,6 +121,15 @@ const FEATURED_MOMENT_SELECTED_SURFACE = 'var(--featured-moment-selected-surface
 function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, onSaved }) {
   const [enabled, setEnabled] = useState(currentUser?.public_profile_enabled === true)
   const [bio, setBio] = useState(currentUser?.bio ?? '')
+  const [favoriteSong, setFavoriteSong] = useState(() => (
+    currentUser?.favorite_song_title
+      ? {
+          name: currentUser.favorite_song_title,
+          artist: currentUser.favorite_song_artist ?? '',
+          cover: currentUser.favorite_song_cover ?? null,
+        }
+      : null
+  ))
   const [featuredMomentId, setFeaturedMomentId] = useState(() => (
     publicMoments.some((m) => m.id === currentUser?.featured_moment_id)
       ? currentUser.featured_moment_id
@@ -126,6 +137,7 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
   ))
   const [bannerUrl, setBannerUrl] = useState(currentUser?.banner_url ?? null)
   const [saving, setSaving] = useState(false)
+  const [showSongSheet, setShowSongSheet] = useState(false)
 
   async function handleSave() {
     if (!currentUser?.id || saving) return
@@ -145,6 +157,7 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
         bio,
         featuredMomentId: selectedFeaturedMomentId,
         bannerUrl: isPremium ? bannerUrl : undefined,
+        favoriteSong,
       })
       onSaved(updated)
     } catch (saveError) {
@@ -171,6 +184,85 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
             onChange={() => setEnabled((prev) => !prev)}
             label="Показывать профиль другим"
           />
+        </div>
+
+        {/* Favorite song */}
+        <div style={{ marginBottom: 18 }}>
+          <p className="section-label">Любимая песня</p>
+          {favoriteSong ? (
+            <div
+              className="flex items-center gap-3"
+              style={{
+                backgroundColor: 'var(--base)',
+                borderRadius: 18,
+                boxShadow: 'inset 0 0 0 1px rgba(160, 94, 44, 0.08)',
+                padding: '10px 12px',
+              }}
+            >
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  background: 'linear-gradient(135deg, var(--accent-light), var(--surface))',
+                }}
+              >
+                {favoriteSong.cover && (
+                  <img
+                    src={proxifyCoverUrl(favoriteSong.cover)}
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700 }}>
+                  {favoriteSong.name}
+                </p>
+                {favoriteSong.artist && (
+                  <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 12, marginTop: 2 }}>
+                    {favoriteSong.artist}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSongSheet(true)}
+                className="font-sans transition-opacity active:opacity-60"
+                style={{ border: 'none', background: 'none', color: 'var(--accent)', fontSize: 13, fontWeight: 700 }}
+              >
+                Изм.
+              </button>
+              <button
+                type="button"
+                onClick={() => setFavoriteSong(null)}
+                className="font-sans transition-opacity active:opacity-60"
+                style={{ border: 'none', background: 'none', color: 'var(--soft)', fontSize: 18, lineHeight: 1 }}
+                aria-label="Убрать любимую песню"
+              >
+                ×
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowSongSheet(true)}
+              className="flex w-full items-center justify-between transition-opacity active:opacity-60"
+              style={{
+                backgroundColor: 'var(--base)',
+                border: 'none',
+                borderRadius: 18,
+                boxShadow: 'inset 0 0 0 1px rgba(160, 94, 44, 0.08)',
+                color: 'var(--mid)',
+                padding: '14px 16px',
+              }}
+            >
+              <span className="font-sans" style={{ fontSize: 14, fontWeight: 600 }}>Выбрать саундтрек профиля</span>
+              <span style={{ color: 'var(--accent)', fontSize: 20, lineHeight: 1 }}>+</span>
+            </button>
+          )}
         </div>
 
         {/* Bio */}
@@ -389,6 +481,13 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
           Отмена
         </button>
       </div>
+      {showSongSheet && (
+        <SongSearchSheet
+          title="Любимая песня"
+          onClose={() => setShowSongSheet(false)}
+          onSelect={(track) => setFavoriteSong(track)}
+        />
+      )}
     </BottomSheet>
   )
 }
@@ -525,7 +624,6 @@ export default function ProfilePreview() {
           onClose={() => setShowPublicProfileSheet(false)}
           onSaved={(updatedUser) => {
             setCurrentUser(updatedUser)
-            setPublicProfileError(null)
           }}
         />
       )}
