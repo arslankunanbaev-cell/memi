@@ -13,10 +13,10 @@ import { useSwipeBack } from '../hooks/useSwipeBack'
 
 const W = 1080
 const H = 1920
-const POSTER_X = 56
-const POSTER_Y = 532
+const POSTER_X = 58
+const POSTER_Y = 560
 const POSTER_W = W - POSTER_X * 2
-const POSTER_BOTTOM = 1616
+const POSTER_BOTTOM = 1708
 
 const MONTH_NOM = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь']
 const MONTH_NOM_CAP = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь']
@@ -63,10 +63,10 @@ function drawSoftGlow(ctx, x, y, radius, color, alpha = 1) {
 
 function drawPremiumPill(ctx, text, x, y, dark = false, align = 'center') {
   ctx.save()
-  ctx.font = '700 22px Inter, sans-serif'
-  const padX = 22
+  ctx.font = '800 20px Inter, sans-serif'
+  const padX = 24
   const width = Math.ceil(ctx.measureText(text).width + padX * 2)
-  const height = 42
+  const height = 40
   const left = align === 'center' ? x - width / 2 : x
 
   const g = ctx.createLinearGradient(left, y, left + width, y + height)
@@ -78,10 +78,10 @@ function drawPremiumPill(ctx, text, x, y, dark = false, align = 'center') {
     g.addColorStop(1, 'rgba(245,235,221,0.72)')
   }
 
-  fillRoundRect(ctx, left, y, width, height, 21, g)
+  fillRoundRect(ctx, left, y, width, height, 20, g)
   ctx.strokeStyle = dark ? 'rgba(255,244,231,0.12)' : 'rgba(217,139,82,0.2)'
   ctx.lineWidth = 1.5
-  roundRect(ctx, left, y, width, height, 21)
+  roundRect(ctx, left, y, width, height, 20)
   ctx.stroke()
 
   ctx.fillStyle = dark ? 'rgba(255,244,231,0.88)' : '#A05E2C'
@@ -89,6 +89,47 @@ function drawPremiumPill(ctx, text, x, y, dark = false, align = 'center') {
   ctx.textBaseline = 'middle'
   ctx.fillText(text, left + width / 2, y + height / 2 + 1)
   ctx.restore()
+}
+
+function drawKicker(ctx, text, x, y, dark = false, align = 'center') {
+  ctx.save()
+  ctx.font = '800 19px Inter, sans-serif'
+  const label = text.toUpperCase()
+  const padX = 20
+  const width = Math.ceil(ctx.measureText(label).width + padX * 2)
+  const height = 34
+  const left = align === 'center' ? x - width / 2 : x
+  const g = ctx.createLinearGradient(left, y, left + width, y + height)
+  if (dark) {
+    g.addColorStop(0, 'rgba(217,139,82,0.26)')
+    g.addColorStop(1, 'rgba(255,244,231,0.08)')
+  } else {
+    g.addColorStop(0, 'rgba(255,255,255,0.9)')
+    g.addColorStop(1, 'rgba(245,235,221,0.72)')
+  }
+  fillRoundRect(ctx, left, y, width, height, 17, g)
+  ctx.strokeStyle = dark ? 'rgba(255,244,231,0.13)' : 'rgba(160,94,44,0.16)'
+  ctx.lineWidth = 1.4
+  roundRect(ctx, left, y, width, height, 17)
+  ctx.stroke()
+  ctx.fillStyle = dark ? 'rgba(255,244,231,0.78)' : '#A05E2C'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(label, left + width / 2, y + height / 2 + 1)
+  ctx.restore()
+}
+
+function formatMomentDay(moment) {
+  if (!moment) return ''
+  try {
+    const d = new Date(getMomentDisplayAt(moment))
+    if (Number.isNaN(d.getTime())) return ''
+    return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' })
+      .format(d)
+      .replace('.', '')
+  } catch {
+    return ''
+  }
 }
 
 function trimToWidth(ctx, text, maxWidth) {
@@ -111,10 +152,10 @@ async function loadImage(src) {
 
 async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false, options = {}) {
   ctx.save()
-  ctx.shadowColor = dark ? 'rgba(0,0,0,0.42)' : 'rgba(80,50,30,0.22)'
-  ctx.shadowBlur = options.featured ? 30 : 18
-  ctx.shadowOffsetY = options.featured ? 16 : 10
-  fillRoundRect(ctx, x, y, w, h, r, dark ? '#261B15' : '#FFFFFF')
+  ctx.shadowColor = dark ? 'rgba(0,0,0,0.5)' : 'rgba(80,50,30,0.26)'
+  ctx.shadowBlur = options.featured ? 34 : 20
+  ctx.shadowOffsetY = options.featured ? 18 : 11
+  fillRoundRect(ctx, x, y, w, h, r, dark ? '#261B15' : '#FFFDF8')
   ctx.restore()
 
   clipRoundRect(ctx, x, y, w, h, r)
@@ -144,10 +185,25 @@ async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false, options =
   ctx.clip()
   const overlay = ctx.createLinearGradient(x, y + h * 0.4, x, y + h)
   overlay.addColorStop(0, 'rgba(0,0,0,0)')
-  overlay.addColorStop(0.72, 'rgba(0,0,0,0.28)')
-  overlay.addColorStop(1, 'rgba(0,0,0,0.68)')
+  overlay.addColorStop(0.62, 'rgba(0,0,0,0.2)')
+  overlay.addColorStop(1, 'rgba(0,0,0,0.76)')
   ctx.fillStyle = overlay
   ctx.fillRect(x, y, w, h)
+
+  const dayLabel = formatMomentDay(moment)
+  if (dayLabel) {
+    ctx.font = `800 ${Math.min(20, Math.max(14, Math.round(w * 0.045)))}px Inter, sans-serif`
+    const dayPadX = Math.max(12, Math.round(w * 0.035))
+    const dayH = Math.max(26, Math.round(w * 0.07))
+    const dayW = Math.ceil(ctx.measureText(dayLabel).width + dayPadX * 2)
+    const dayX = x + Math.max(12, Math.round(w * 0.04))
+    const dayY = y + Math.max(12, Math.round(w * 0.04))
+    fillRoundRect(ctx, dayX, dayY, dayW, dayH, dayH / 2, 'rgba(255,250,242,0.88)')
+    ctx.fillStyle = '#A05E2C'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(dayLabel, dayX + dayW / 2, dayY + dayH / 2 + 1)
+  }
 
   if (options.badge) {
     ctx.fillStyle = 'rgba(255,255,255,0.9)'
@@ -158,14 +214,17 @@ async function drawPhotoCell(ctx, moment, x, y, w, h, r, dark = false, options =
   }
 
   if (moment?.title) {
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.font = `700 ${Math.min(28, Math.max(18, Math.round(w * 0.062)))}px Inter, sans-serif`
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'
+    ctx.font = `800 ${Math.min(30, Math.max(18, Math.round(w * 0.064)))}px Inter, sans-serif`
     ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
-    ctx.fillText(trimToWidth(ctx, moment.title, w - 34), x + 17, y + h - 16)
+    ctx.shadowColor = 'rgba(0,0,0,0.38)'
+    ctx.shadowBlur = 10
+    ctx.fillText(trimToWidth(ctx, moment.title, w - 38), x + 19, y + h - 18)
   }
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.42)'
+  ctx.shadowBlur = 0
+  ctx.strokeStyle = 'rgba(255,255,255,0.46)'
   ctx.lineWidth = 2
   roundRect(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1))
   ctx.stroke()
@@ -206,39 +265,51 @@ function drawPlaceholder(ctx, x, y, w, h, r, dark) {
 
 function collageSlots() {
   return [
-    { x: POSTER_X, y: POSTER_Y, w: 472, h: 472, r: 30, featured: true },
-    { x: 544, y: POSTER_Y, w: 226, h: 226, r: 24 },
-    { x: 786, y: POSTER_Y, w: 238, h: 226, r: 24 },
-    { x: 544, y: 774, w: 226, h: 230, r: 24 },
-    { x: 786, y: 774, w: 238, h: 230, r: 24 },
-    { x: POSTER_X, y: 1032, w: 304, h: 304, r: 26 },
-    { x: 376, y: 1032, w: 304, h: 304, r: 26 },
-    { x: 696, y: 1032, w: 328, h: 304, r: 26 },
-    { x: POSTER_X, y: 1360, w: POSTER_W, h: 256, r: 30 },
+    { x: POSTER_X + 24, y: POSTER_Y + 32, w: 488, h: 520, r: 34, featured: true },
+    { x: 598, y: POSTER_Y + 32, w: 390, h: 246, r: 28 },
+    { x: 598, y: POSTER_Y + 306, w: 184, h: 246, r: 26 },
+    { x: 804, y: POSTER_Y + 306, w: 184, h: 246, r: 26 },
+    { x: POSTER_X + 24, y: 1142, w: 296, h: 286, r: 28 },
+    { x: 354, y: 1142, w: 298, h: 286, r: 28 },
+    { x: 686, y: 1142, w: 302, h: 286, r: 28 },
+    { x: POSTER_X + 24, y: 1456, w: 464, h: 252, r: 30 },
+    { x: 520, y: 1456, w: 468, h: 252, r: 30 },
   ]
 }
 
 async function drawPremiumCollage(ctx, moments, dark) {
-  const frameG = ctx.createLinearGradient(POSTER_X - 22, POSTER_Y - 28, POSTER_X + POSTER_W + 22, POSTER_BOTTOM)
+  const frameX = POSTER_X - 8
+  const frameY = POSTER_Y - 8
+  const frameW = POSTER_W + 16
+  const frameH = POSTER_BOTTOM - POSTER_Y + 32
+  const frameG = ctx.createLinearGradient(frameX, frameY, frameX + frameW, frameY + frameH)
   if (dark) {
-    frameG.addColorStop(0, 'rgba(255,244,231,0.09)')
-    frameG.addColorStop(1, 'rgba(217,139,82,0.05)')
+    frameG.addColorStop(0, 'rgba(255,244,231,0.12)')
+    frameG.addColorStop(0.52, 'rgba(39,28,21,0.72)')
+    frameG.addColorStop(1, 'rgba(217,139,82,0.08)')
   } else {
-    frameG.addColorStop(0, 'rgba(255,255,255,0.86)')
-    frameG.addColorStop(1, 'rgba(237,230,220,0.58)')
+    frameG.addColorStop(0, 'rgba(255,255,255,0.92)')
+    frameG.addColorStop(0.52, 'rgba(250,246,239,0.78)')
+    frameG.addColorStop(1, 'rgba(234,220,203,0.66)')
   }
 
   ctx.save()
-  ctx.shadowColor = dark ? 'rgba(0,0,0,0.35)' : 'rgba(80,50,30,0.16)'
-  ctx.shadowBlur = 44
-  ctx.shadowOffsetY = 22
-  fillRoundRect(ctx, POSTER_X - 22, POSTER_Y - 28, POSTER_W + 44, POSTER_BOTTOM - POSTER_Y + 56, 42, frameG)
+  ctx.shadowColor = dark ? 'rgba(0,0,0,0.42)' : 'rgba(80,50,30,0.18)'
+  ctx.shadowBlur = 58
+  ctx.shadowOffsetY = 28
+  fillRoundRect(ctx, frameX, frameY, frameW, frameH, 52, frameG)
   ctx.restore()
 
   ctx.save()
-  ctx.strokeStyle = dark ? 'rgba(255,244,231,0.08)' : 'rgba(160,94,44,0.12)'
+  ctx.strokeStyle = dark ? 'rgba(255,244,231,0.1)' : 'rgba(160,94,44,0.13)'
   ctx.lineWidth = 2
-  roundRect(ctx, POSTER_X - 22, POSTER_Y - 28, POSTER_W + 44, POSTER_BOTTOM - POSTER_Y + 56, 42)
+  roundRect(ctx, frameX, frameY, frameW, frameH, 52)
+  ctx.stroke()
+  ctx.strokeStyle = dark ? 'rgba(217,139,82,0.2)' : 'rgba(217,139,82,0.22)'
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.moveTo(frameX + 78, frameY + 34)
+  ctx.lineTo(frameX + frameW - 78, frameY + 34)
   ctx.stroke()
   ctx.restore()
 
@@ -381,9 +452,9 @@ async function drawHeader(ctx, data, dark) {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
   ctx.fillStyle = accentColor
-  ctx.font = '600 36px "Cormorant Garamond", Georgia, serif'
-  ctx.fillText('memi', cx, 64)
-  drawPremiumPill(ctx, 'premium memory card', cx, 112, dark)
+  ctx.font = '700 42px "Cormorant Garamond", Georgia, serif'
+  ctx.fillText('memi', cx, 58)
+  drawKicker(ctx, 'premium memory card', cx, 116, dark)
 
   if (data.type === 'person') {
     const avatarY = 166
@@ -406,16 +477,34 @@ async function drawHeader(ctx, data, dark) {
   } else if (data.type === 'month') {
     const [year, month] = data.key.split('-')
     const monthName = MONTH_NOM[Number(month) - 1] ?? ''
+    const monthNumber = String(Number(month)).padStart(2, '0')
+
+    ctx.save()
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'top'
+    ctx.fillStyle = dark ? 'rgba(217,139,82,0.18)' : 'rgba(217,139,82,0.16)'
+    ctx.font = '800 174px Inter, sans-serif'
+    ctx.fillText(monthNumber, 76, 170)
+    ctx.restore()
+
+    ctx.save()
+    ctx.strokeStyle = dark ? 'rgba(255,244,231,0.14)' : 'rgba(160,94,44,0.14)'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(130, 424)
+    ctx.lineTo(W - 130, 424)
+    ctx.stroke()
+    ctx.restore()
 
     ctx.fillStyle = textColor
-    ctx.font = `600 92px "Cormorant Garamond", Georgia, serif`
-    ctx.fillText(`Мой ${monthName}`, cx, 178)
+    ctx.font = `700 112px "Cormorant Garamond", Georgia, serif`
+    ctx.fillText(`Мой ${monthName}`, cx, 216)
 
     ctx.fillStyle = midColor
-    ctx.font = '600 30px Inter, sans-serif'
-    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 292)
+    ctx.font = '700 32px Inter, sans-serif'
+    ctx.fillText(`${MONTH_NOM_CAP[Number(month) - 1]} ${year}`, cx, 344)
 
-    drawPremiumPill(ctx, data.statsLine, cx, 346, dark)
+    drawPremiumPill(ctx, data.statsLine, cx, 386, dark)
 
   } else if (data.type === 'year') {
     ctx.fillStyle = accentColor
