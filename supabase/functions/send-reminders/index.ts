@@ -9,18 +9,28 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 //   );
 // $$);
 
-const BOT_TOKEN      = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
-const SUPABASE_URL   = Deno.env.get('SUPABASE_URL') ?? ''
-const SERVICE_KEY    = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-const TG_API         = `https://api.telegram.org/bot${BOT_TOKEN}`
+const BOT_TOKEN    = Deno.env.get('TELEGRAM_BOT_TOKEN') ?? ''
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SERVICE_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const TG_API       = `https://api.telegram.org/bot${BOT_TOKEN}`
 
-const INACTIVITY_DAYS = 3
+const RITUAL_INTERVAL_DAYS = 2
+const MEMORY_INTERVAL_DAYS = 2
+const MEMORY_MIN_AGE_DAYS = 14
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: { 'Content-Type': 'application/json' },
   })
+}
+
+function daysAgo(dateLike: string) {
+  return Math.floor((Date.now() - new Date(dateLike).getTime()) / 86_400_000)
+}
+
+function firstName(name: string | null | undefined) {
+  return name?.split(' ')[0] || 'привет'
 }
 
 async function sendMessage(chatId: number | string, text: string) {
@@ -33,64 +43,37 @@ async function sendMessage(chatId: number | string, text: string) {
       parse_mode: 'HTML',
     }),
   })
+
   if (!res.ok) {
     const err = await res.text().catch(() => '')
     console.warn(`[send-reminders] sendMessage failed for chatId=${chatId}: ${err}`)
   }
 }
 
-// ── Reminders for users inactive N+ days ──────────────────────────────────────
-async function sendInactivityReminders(sb: ReturnType<typeof createClient>) {
+// ── Main ritual: every couple of days without a new moment ────────────────────
+async function sendRitualReminders(sb: ReturnType<typeof createClient>) {
   const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - INACTIVITY_DAYS)
+  cutoff.setDate(cutoff.getDate() - RITUAL_INTERVAL_DAYS)
 
-  // Users who have at least one moment but last posted before the cutoff
-  const { data: inactive, error } = await sb.rpc('get_inactive_users', {
-    p_cutoff: cutoff.toISOString(),
-  })
-
-  if (error) {
-    // Fallback: raw query if RPC doesn't exist yet
-    console.warn('[send-reminders] RPC get_inactive_users not found, using raw query')
-    return await sendInactivityRemindersRaw(sb, cutoff)
-  }
-
-  if (!inactive?.length) {
-    console.log('[send-reminders] no inactive users')
-    return 0
-  }
-
-  let sent = 0
-  for (const row of inactive as Array<{ telegram_id: number; name: string; days_ago: number }>) {
-    if (!row.telegram_id) continue
-
-    const firstName = row.name?.split(' ')[0] ?? 'привет'
-    const days = row.days_ago ?? INACTIVITY_DAYS
-    const text = days >= 7
-      ? `${firstName}, ты не заходил в memi уже ${days} дней 🌿\n\nКаждый момент стоит того, чтобы его сохранить — даже маленький.`
-      : `${firstName}, давно не было новых моментов 🕊\n\nЧто-нибудь интересное случилось сегодня?`
-
-    await sendMessage(row.telegram_id, text)
-    sent++
-  }
-
-  return sent
-}
-
-async function sendInactivityRemindersRaw(
-  sb: ReturnType<typeof createClient>,
-  cutoff: Date,
-) {
   const { data: users, error } = await sb
     .from('users')
-    .select('id, telegram_id, name')
+    .select('id, telegram_id, name, last_ritual_reminder_at')
     .not('telegram_id', 'is', null)
 
   if (error || !users?.length) return 0
 
   let sent = 0
 
-  for (const user of users as Array<{ id: string; telegram_id: number; name: string }>) {
+  for (const user of users as Array<{
+    id: string
+    telegram_id: number
+    name: string | null
+    last_ritual_reminder_at: string | null
+  }>) {
+    if (user.last_ritual_reminder_at && new Date(user.last_ritual_reminder_at) > cutoff) {
+      continue
+    }
+
     const { data: lastMoment } = await sb
       .from('moments')
       .select('created_at')
@@ -99,20 +82,76 @@ async function sendInactivityRemindersRaw(
       .limit(1)
       .maybeSingle()
 
-    // Skip users who have never posted or posted recently
-    if (!lastMoment) continue
-    if (new Date(lastMoment.created_at) > cutoff) continue
+    if (!lastMoment || new Date(lastMoment.created_at) > cutoff) continue
 
-    const daysAgo = Math.floor(
-      (Date.now() - new Date(lastMoment.created_at).getTime()) / 86_400_000,
-    )
-
-    const firstName = user.name?.split(' ')[0] ?? 'привет'
-    const text = daysAgo >= 7
-      ? `${firstName}, ты не заходил в memi уже ${daysAgo} дней 🌿\n\nКаждый момент стоит того, чтобы его сохранить — даже маленький.`
-      : `${firstName}, давно не было новых моментов 🕊\n\nЧто-нибудь интересное случилось сегодня?`
+    const idleDays = daysAgo(lastMoment.created_at)
+    const text = idleDays >= 7
+      ? `${firstName(user.name)}, в memi уже ${idleDays} дней нет новых моментов.\n\nВернись на минуту: сохрани маленькую деталь последних дней, пока она не растворилась.`
+      : `${firstName(user.name)}, пора для маленького ритуала memi.\n\nЧто из последних пары дней хочется сохранить: место, человек, трек или одна фраза?`
 
     await sendMessage(user.telegram_id, text)
+    await sb
+      .from('users')
+      .update({ last_ritual_reminder_at: new Date().toISOString() })
+      .eq('id', user.id)
+    sent++
+  }
+
+  return sent
+}
+
+// ── Memory return: bring an older saved moment back ───────────────────────────
+async function sendMemoryReturnReminders(sb: ReturnType<typeof createClient>) {
+  const reminderCutoff = new Date()
+  reminderCutoff.setDate(reminderCutoff.getDate() - MEMORY_INTERVAL_DAYS)
+
+  const memoryCutoff = new Date()
+  memoryCutoff.setDate(memoryCutoff.getDate() - MEMORY_MIN_AGE_DAYS)
+
+  const { data: users, error } = await sb
+    .from('users')
+    .select('id, telegram_id, name, last_memory_reminder_at, last_ritual_reminder_at')
+    .not('telegram_id', 'is', null)
+
+  if (error || !users?.length) return 0
+
+  let sent = 0
+
+  for (const user of users as Array<{
+    id: string
+    telegram_id: number
+    name: string | null
+    last_memory_reminder_at: string | null
+    last_ritual_reminder_at: string | null
+  }>) {
+    if (user.last_memory_reminder_at && new Date(user.last_memory_reminder_at) > reminderCutoff) {
+      continue
+    }
+    if (user.last_ritual_reminder_at && new Date(user.last_ritual_reminder_at) > reminderCutoff) {
+      continue
+    }
+
+    const { data: moment, error: momentError } = await sb
+      .from('moments')
+      .select('id, title, created_at, location, song_title')
+      .eq('user_id', user.id)
+      .lte('created_at', memoryCutoff.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (momentError || !moment) continue
+
+    const title = moment.title ? `«${moment.title}»` : 'один старый момент'
+    const details = [moment.location, moment.song_title].filter(Boolean).join(' · ')
+    const detailLine = details ? `\n\n${details}` : ''
+    const text = `${firstName(user.name)}, memi нашёл воспоминание, к которому стоит вернуться: ${title}.${detailLine}\n\nОткрой приложение и посмотри на него свежими глазами.`
+
+    await sendMessage(user.telegram_id, text)
+    await sb
+      .from('users')
+      .update({ last_memory_reminder_at: new Date().toISOString() })
+      .eq('id', user.id)
     sent++
   }
 
@@ -125,7 +164,6 @@ async function sendAnniversaryReminders(sb: ReturnType<typeof createClient>) {
   const yearAgo = new Date(now)
   yearAgo.setFullYear(yearAgo.getFullYear() - 1)
 
-  // Moments from exactly 1 year ago (same calendar day)
   const dayStart = new Date(yearAgo)
   dayStart.setHours(0, 0, 0, 0)
   const dayEnd = new Date(yearAgo)
@@ -144,7 +182,6 @@ async function sendAnniversaryReminders(sb: ReturnType<typeof createClient>) {
 
   if (!moments?.length) return 0
 
-  // One message per user (group their moments)
   const byUser = new Map<string, { telegramId: number; name: string; titles: string[] }>()
 
   for (const m of moments as Array<{
@@ -164,21 +201,18 @@ async function sendAnniversaryReminders(sb: ReturnType<typeof createClient>) {
       })
     }
 
-    if (m.title) {
-      byUser.get(m.user_id)!.titles.push(m.title)
-    }
+    if (m.title) byUser.get(m.user_id)!.titles.push(m.title)
   }
 
   let sent = 0
 
   for (const [, info] of byUser) {
-    const firstName = info.name?.split(' ')[0] ?? 'привет'
     const count = info.titles.length
-    const sample = info.titles.slice(0, 2).map((t) => `«${t}»`).join(', ')
+    const sample = info.titles.slice(0, 2).map((title) => `«${title}»`).join(', ')
 
     const text = count === 1
-      ? `${firstName}, год назад ты сохранил момент ${sample} 🕰\n\nОткрой memi, чтобы вспомнить.`
-      : `${firstName}, год назад у тебя было ${count} момент${count < 5 ? 'а' : 'ов'}: ${sample}${count > 2 ? ' и другие' : ''} 🕰\n\nОткрой memi, чтобы вспомнить.`
+      ? `${firstName(info.name)}, год назад ты сохранил момент ${sample}.\n\nОткрой memi, чтобы вспомнить.`
+      : `${firstName(info.name)}, год назад у тебя было ${count} момента: ${sample}${count > 2 ? ' и другие' : ''}.\n\nОткрой memi, чтобы вспомнить.`
 
     await sendMessage(info.telegramId, text)
     sent++
@@ -187,7 +221,7 @@ async function sendAnniversaryReminders(sb: ReturnType<typeof createClient>) {
   return sent
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
+// ── Handler ──────────────────────────────────────────────────────────────────
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok')
 
@@ -199,13 +233,14 @@ serve(async (req: Request) => {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY)
 
   try {
-    const [inactive, anniversaries] = await Promise.all([
-      sendInactivityReminders(sb),
+    const rituals = await sendRitualReminders(sb)
+    const [memories, anniversaries] = await Promise.all([
+      sendMemoryReturnReminders(sb),
       sendAnniversaryReminders(sb),
     ])
 
-    console.log(`[send-reminders] done: inactive=${inactive} anniversaries=${anniversaries}`)
-    return json({ ok: true, inactive, anniversaries })
+    console.log(`[send-reminders] done: rituals=${rituals} memories=${memories} anniversaries=${anniversaries}`)
+    return json({ ok: true, rituals, memories, anniversaries })
   } catch (err) {
     console.error('[send-reminders] fatal:', err)
     return json({ error: (err as Error).message }, 500)

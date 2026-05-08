@@ -937,8 +937,11 @@ export async function getPremiumStatus(userId) {
     && (expiresAt === null || expiresAt === undefined || new Date(expiresAt) > now)
 
   const ownedThemes = (themesResult.data ?? []).map((row) => row.theme_id)
+  const effectiveOwnedThemes = isPremium
+    ? Array.from(new Set([...ownedThemes, 'summer', 'cinema']))
+    : ownedThemes
 
-  return { isPremium, premiumExpiresAt: expiresAt ?? null, ownedThemes }
+  return { isPremium, premiumExpiresAt: expiresAt ?? null, ownedThemes: effectiveOwnedThemes }
 }
 
 // Создать invoice link и открыть оплату через Telegram WebApp

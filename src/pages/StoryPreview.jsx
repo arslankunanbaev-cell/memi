@@ -17,6 +17,10 @@ const TEMPLATES = [
   { id: 'cinema', label: '🎬 Кино', hint: 'Плёночная эстетика и кинематографичный формат', paid: true, themeKey: 'cinema' },
 ]
 
+function hasTemplateAccess(template, ownedThemes, isPremium) {
+  return !template.paid || isPremium || ownedThemes?.includes(template.themeKey)
+}
+
 const COLOR = {
   base: '#F7F4F0',
   card: '#FBF7F0',
@@ -1496,13 +1500,13 @@ async function drawCard(canvas, moment, template) {
   return drawPolaroid(canvas, moment)
 }
 
-function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes }) {
+function TemplateToggle({ activeTemplate, onChange, dark, ownedThemes, isPremium }) {
   const freeTemplates = TEMPLATES.filter((t) => !t.paid)
   const paidTemplates = TEMPLATES.filter((t) => t.paid)
 
   function renderBtn(template) {
     const active = template.id === activeTemplate
-    const locked = template.paid && !ownedThemes?.includes(template.themeKey)
+    const locked = !hasTemplateAccess(template, ownedThemes, isPremium)
     const activePreview = active && locked
 
     let bg = 'transparent'
@@ -1751,6 +1755,7 @@ export default function StoryPreview() {
   const { id } = useParams()
   const moments = useAppStore((state) => state.moments)
   const ownedThemes = useAppStore((state) => state.ownedThemes)
+  const isPremium = useAppStore((state) => state.isPremium)
   const moment = moments.find((item) => item.id === id)
 
   const canvasRef = useRef(null)
@@ -1768,7 +1773,7 @@ export default function StoryPreview() {
 
   const dark = template === 'dark' || template === 'cinema'
   const activeTemplate = TEMPLATES.find((item) => item.id === template) ?? TEMPLATES[0]
-  const isPreview = !!(activeTemplate.paid && !ownedThemes?.includes(activeTemplate.themeKey))
+  const isPreview = !hasTemplateAccess(activeTemplate, ownedThemes, isPremium)
 
   useEffect(() => {
     let cancelled = false
@@ -2093,7 +2098,13 @@ export default function StoryPreview() {
         }}
       >
         <div className="mx-auto w-full max-w-[356px]">
-          <TemplateToggle activeTemplate={template} onChange={handleTemplateChange} dark={dark} ownedThemes={ownedThemes} />
+          <TemplateToggle
+            activeTemplate={template}
+            onChange={handleTemplateChange}
+            dark={dark}
+            ownedThemes={ownedThemes}
+            isPremium={isPremium}
+          />
 
           <p
             className="font-sans text-center"

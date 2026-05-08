@@ -314,7 +314,7 @@ function PremiumSheet({ onClose }) {
           <rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" strokeWidth="1.8" />
         </>
       ),
-      text: 'Темы карточек моментов',
+      text: 'Все темы карточек без отдельной покупки',
     },
   ]
 

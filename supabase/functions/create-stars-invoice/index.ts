@@ -15,7 +15,7 @@ const CORS = {
 const PRODUCTS: Record<string, { title: string; description: string; stars: number; payload: string }> = {
   premium: {
     title:       'Memi Premium',
-    description: '⭐ Бейдж на профиле · Экспорт альбома месяца · 30 дней',
+    description: '⭐ Бейдж · Экспорт альбома месяца · Все темы карточек · 30 дней',
     stars:       99,
     payload:     'premium',
   },
