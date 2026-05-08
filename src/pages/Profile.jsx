@@ -30,18 +30,7 @@ function FavoriteSongCard({ title, artist, cover }) {
   if (!title) return null
 
   return (
-    <div
-      style={{
-        marginTop: 14,
-        padding: 10,
-        position: 'relative',
-        overflow: 'hidden',
-        borderRadius: 18,
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.72), rgba(237,230,220,0.72))',
-        border: '1px solid rgba(160, 94, 44, 0.08)',
-        boxShadow: '0 8px 22px rgba(80,50,30,0.08)',
-      }}
-    >
+    <div className="profile-song-card">
       {cover && (
         <div
           aria-hidden="true"
@@ -58,17 +47,7 @@ function FavoriteSongCard({ title, artist, cover }) {
         />
       )}
       <div className="flex items-center gap-3" style={{ position: 'relative' }}>
-        <div
-          style={{
-            width: 58,
-            height: 58,
-            borderRadius: 14,
-            overflow: 'hidden',
-            flexShrink: 0,
-            background: 'linear-gradient(135deg, var(--accent-light), var(--surface))',
-            boxShadow: '0 8px 18px rgba(80,50,30,0.12)',
-          }}
-        >
+        <div className="profile-song-card-cover">
           {cover && (
             <img
               src={proxifyCoverUrl(cover)}
@@ -78,11 +57,11 @@ function FavoriteSongCard({ title, artist, cover }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-sans truncate" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 800 }}>
+          <p className="font-sans truncate profile-song-card-title">
             {title}
           </p>
           {artist && (
-            <p className="font-sans truncate" style={{ color: 'var(--mid)', fontSize: 13, fontWeight: 600, marginTop: 3 }}>
+            <p className="font-sans truncate profile-song-card-artist">
               {artist}
             </p>
           )}
