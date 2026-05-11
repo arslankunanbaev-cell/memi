@@ -260,11 +260,31 @@ serve(async (req: Request) => {
 
   // ── Диагностика: GET /telegram-webhook ────────────────────────────────────
   if (req.method === 'GET') {
-    const [webhookInfo, botInfo] = await Promise.all([
+    const expectedWebhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`
+    const webhookInfo = await fetch(`${TG_API}/getWebhookInfo`)
+      .then(r => r.json())
+      .catch((e) => ({ error: String(e) }))
+
+    let setWebhook = null
+    if (webhookInfo?.ok && webhookInfo.result?.url !== expectedWebhookUrl) {
+      const body: Record<string, unknown> = {
+        url: expectedWebhookUrl,
+        allowed_updates: ['message', 'pre_checkout_query'],
+      }
+      if (WEBHOOK_SECRET) body.secret_token = WEBHOOK_SECRET
+
+      setWebhook = await fetch(`${TG_API}/setWebhook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }).then(r => r.json()).catch((e) => ({ error: String(e) }))
+    }
+
+    const [freshWebhookInfo, botInfo] = await Promise.all([
       fetch(`${TG_API}/getWebhookInfo`).then(r => r.json()).catch((e) => ({ error: String(e) })),
       fetch(`${TG_API}/getMe`).then(r => r.json()).catch((e) => ({ error: String(e) })),
     ])
-    return json({ botTokenSet: BOT_TOKEN.length > 0, webhookInfo, botInfo })
+    return json({ botTokenSet: BOT_TOKEN.length > 0, expectedWebhookUrl, webhookInfo: freshWebhookInfo, setWebhook, botInfo })
   }
 
   if (req.method !== 'POST') {
@@ -351,6 +371,6 @@ serve(async (req: Request) => {
     return json({ ok: true })
   } catch (error) {
     console.error('[telegram-webhook]', error)
-    return json({ error: (error as Error).message }, 500)
+    return json({ ok: true, error: (error as Error).message })
   }
 })
