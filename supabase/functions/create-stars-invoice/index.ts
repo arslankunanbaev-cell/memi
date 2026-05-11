@@ -11,23 +11,22 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ── Каталог продуктов ──────────────────────────────────────────────────────
 const PRODUCTS: Record<string, { title: string; description: string; stars: number; payload: string }> = {
   premium: {
     title:       'Memi Premium',
-    description: '⭐ Бейдж · Экспорт альбома месяца · Все темы карточек · 30 дней',
+    description: 'Premium badge, monthly album export, all card themes, 30 days',
     stars:       99,
     payload:     'premium',
   },
   theme_summer: {
-    title:       'Тема «Лето»',
-    description: '🌅 Тёплые летние тона для карточек историй — навсегда',
+    title:       'Summer theme',
+    description: 'Warm summer tones for story cards, forever',
     stars:       79,
     payload:     'theme_summer',
   },
   theme_cinema: {
-    title:       'Тема «Кино»',
-    description: '🎬 Кинематографичный стиль для карточек историй — навсегда',
+    title:       'Cinema theme',
+    description: 'Cinematic style for story cards, forever',
     stars:       79,
     payload:     'theme_cinema',
   },
@@ -59,7 +58,6 @@ serve(async (req: Request) => {
       return json({ error: `Unknown product: ${productId}` }, 400)
     }
 
-    // Проверить что юзер существует
     const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE)
     const { data: user } = await sb
       .from('users')
@@ -71,16 +69,16 @@ serve(async (req: Request) => {
       return json({ error: 'User not found' }, 404)
     }
 
-    // Создать invoice link через Bot API
     const tgRes = await fetch(`${TG_API}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title:           product.title,
-        description:     product.description,
-        payload:         product.payload,
-        currency:        'XTR',          // Telegram Stars
-        prices:          [{ label: product.title, amount: product.stars }],
+        title:          product.title,
+        description:    product.description,
+        payload:        product.payload,
+        provider_token: '',
+        currency:       'XTR',
+        prices:         [{ label: product.title, amount: product.stars }],
       }),
     })
 
