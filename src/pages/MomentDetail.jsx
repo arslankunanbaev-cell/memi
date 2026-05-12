@@ -274,6 +274,25 @@ export default function MomentDetail() {
     tgHaptic('light')
     setReactingEmoji(emoji)
 
+    const previousReactions = reactions
+    const optimisticReaction = {
+      id: myReaction?.id ?? `optimistic-${moment.id}-${currentUser.id}`,
+      moment_id: moment.id,
+      user_id: currentUser.id,
+      emoji,
+      created_at: myReaction?.created_at ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    setReactions((current) => {
+      const next = [...current.filter((entry) => entry.user_id !== currentUser.id), optimisticReaction]
+      return next.sort((left, right) => {
+        const leftTime = new Date(left.created_at ?? 0).getTime()
+        const rightTime = new Date(right.created_at ?? 0).getTime()
+        return leftTime - rightTime
+      })
+    })
+
     try {
       const { reaction, isNew } = await upsertMomentReaction({
         momentId: moment.id,
@@ -296,6 +315,7 @@ export default function MomentDetail() {
       })
     } catch (error) {
       console.error('[MomentDetail] react error:', error)
+      setReactions(previousReactions)
     } finally {
       setReactingEmoji(null)
     }
@@ -424,9 +444,9 @@ export default function MomentDetail() {
               type="button"
               aria-label={`Реакция ${emoji}`}
               aria-pressed={isSelected}
-              disabled={!currentUser?.id || loadingReactions || Boolean(reactingEmoji)}
+              disabled={!currentUser?.id || loadingReactions}
               onClick={() => handleReact(emoji)}
-              className="inline-flex items-center gap-2 rounded-[20px] transition-opacity active:opacity-60"
+              className="inline-flex items-center gap-2 rounded-[20px] transition-[background-color,box-shadow,opacity,transform] duration-150 ease-out active:scale-95 active:opacity-70"
               style={{
                 border: 'none',
                 padding: '10px 14px',
