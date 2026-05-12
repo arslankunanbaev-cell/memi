@@ -580,7 +580,7 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
 
   return (
     <div
-      className="surface-card"
+      className="surface-card people-search-card"
       style={{
         marginBottom: 18,
         borderRadius: 24,
@@ -618,12 +618,12 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
       </div>
 
       <div
-        className="flex items-center gap-2"
+        className="people-search-field flex items-center gap-2"
         style={{
           borderRadius: 18,
           backgroundColor: 'var(--people-search-field-bg)',
           border: normalizedTelegramQuery ? '1.5px solid rgba(217, 139, 82, 0.72)' : '1.5px solid var(--people-search-field-border)',
-          boxShadow: normalizedTelegramQuery ? '0 8px 20px rgba(160, 94, 44, 0.09)' : 'inset 0 1px 0 rgba(255,255,255,0.6)',
+          boxShadow: normalizedTelegramQuery ? 'var(--people-search-field-active-shadow)' : 'var(--people-search-field-shadow)',
           padding: '5px 5px 5px 12px',
         }}
       >
@@ -663,7 +663,7 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
           style={{
             border: 'none',
             borderRadius: 14,
-            backgroundColor: canSearchTelegram ? 'var(--accent)' : 'var(--surface)',
+            backgroundColor: canSearchTelegram ? 'var(--accent)' : 'var(--people-search-idle-button-bg)',
             color: canSearchTelegram ? '#fff' : 'var(--soft)',
             width: 42,
             height: 42,
