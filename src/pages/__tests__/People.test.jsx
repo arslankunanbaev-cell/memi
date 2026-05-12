@@ -104,7 +104,7 @@ describe('People', () => {
     })
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('@username'), '@Mila')
+    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@Mila')
     fireEvent.click(screen.getByText('Найти'))
 
     await waitFor(() => expect(screen.getByText('Mila')).toBeInTheDocument())
@@ -124,13 +124,49 @@ describe('People', () => {
     mockFindUserByTelegramUsername.mockResolvedValue(null)
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('@username'), '@missing_user')
+    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@missing_user')
     fireEvent.click(screen.getByText('Найти'))
 
     await waitFor(() => expect(screen.getByText('Пригласить')).toBeInTheDocument())
     fireEvent.click(screen.getByText('Пригласить'))
 
     expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('startapp%3Dref_test-code'))
+  })
+
+  it('finds an existing friend locally before searching remote usernames', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Test', public_code: 'test-code' },
+      people: [],
+      moments: [],
+      friends: [{ id: 'friend-1', name: 'Mila Friend', photo_url: null, telegram_username: 'mila_friend' }],
+      incomingRequests: [],
+    })
+
+    renderPeople()
+    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@mila_friend')
+    fireEvent.click(screen.getByText('Найти'))
+
+    await waitFor(() => expect(screen.getAllByText('Mila Friend').length).toBeGreaterThan(0))
+    expect(screen.getByText('Уже друг')).toBeInTheDocument()
+    expect(mockFindUserByTelegramUsername).not.toHaveBeenCalled()
+  })
+
+  it('finds an existing friend by displayed name when username is not saved yet', async () => {
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Test', public_code: 'test-code' },
+      people: [],
+      moments: [],
+      friends: [{ id: 'friend-2', name: 'Arslan K', photo_url: null }],
+      incomingRequests: [],
+    })
+
+    renderPeople()
+    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), 'Arslan')
+    fireEvent.click(screen.getByText('Найти'))
+
+    await waitFor(() => expect(screen.getAllByText('Arslan K').length).toBeGreaterThan(0))
+    expect(screen.getByText('Уже друг')).toBeInTheDocument()
+    expect(mockFindUserByTelegramUsername).not.toHaveBeenCalled()
   })
 
   async function openSheetAndType(name) {

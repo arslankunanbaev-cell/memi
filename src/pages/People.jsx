@@ -23,6 +23,10 @@ function normalizeTelegramUsername(value) {
   return String(value ?? '').trim().replace(/^@+/, '').toLowerCase()
 }
 
+function normalizeSearchText(value) {
+  return normalizeTelegramUsername(value).replace(/\s+/g, ' ')
+}
+
 function RefreshIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -478,7 +482,7 @@ function RequestRow({ request, onAccept }) {
   )
 }
 
-function TelegramUserSearch({ currentUser, friends, onInvite }) {
+function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }) {
   const [telegramQuery, setTelegramQuery] = useState('')
   const [telegramResult, setTelegramResult] = useState(null)
   const [telegramStatus, setTelegramStatus] = useState('idle')
@@ -496,6 +500,13 @@ function TelegramUserSearch({ currentUser, friends, onInvite }) {
     setTelegramError(null)
 
     try {
+      const localUser = findLocalSearchResult(username)
+      if (localUser) {
+        setTelegramResult(localUser)
+        setTelegramStatus(localUser.id === currentUser?.id ? 'self' : 'found')
+        return
+      }
+
       const foundUser = await findUserByTelegramUsername(username)
       if (!foundUser) {
         setTelegramStatus('not_found')
@@ -509,6 +520,30 @@ function TelegramUserSearch({ currentUser, friends, onInvite }) {
       setTelegramError('Не удалось найти по username. Попробуй ещё раз.')
       setTelegramStatus('error')
     }
+  }
+
+  function findLocalSearchResult(query) {
+    const normalizedQuery = normalizeSearchText(query)
+    if (!normalizedQuery) return null
+
+    const candidates = (searchablePeople ?? [])
+      .filter((person) => person?.isInMemi || person?.isFriend)
+      .map((person) => ({
+        id: person.linked_user_id ?? person.id,
+        name: person.name,
+        photo_url: person.photo_url ?? null,
+        public_code: person.public_code ?? null,
+        telegram_username: person.telegram_username ?? null,
+      }))
+      .filter((person) => person.id)
+
+    return candidates.find((person) => {
+      const normalizedName = normalizeSearchText(person.name)
+      const normalizedUsername = normalizeSearchText(person.telegram_username)
+
+      return normalizedUsername === normalizedQuery
+        || normalizedName.includes(normalizedQuery)
+    }) ?? null
   }
 
   async function handleSendFriendRequest(userId) {
@@ -549,7 +584,7 @@ function TelegramUserSearch({ currentUser, friends, onInvite }) {
       }}
     >
       <label className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
-        Telegram username
+        Имя или Telegram username
       </label>
       <div className="flex items-center gap-2" style={{ marginTop: 8 }}>
         <input
@@ -566,7 +601,7 @@ function TelegramUserSearch({ currentUser, friends, onInvite }) {
               handleTelegramSearch()
             }
           }}
-          placeholder="@username"
+          placeholder="Имя или @username"
           className="min-w-0 flex-1 outline-none"
           style={{
             backgroundColor: 'var(--base)',
@@ -942,6 +977,7 @@ export default function People() {
         id: friend.id,
         name: friend.name,
         photo_url: friend.photo_url ?? null,
+        telegram_username: friend.telegram_username ?? null,
         avatar_color: AVATAR_COLORS[0],
         linked_user_id: friend.id,
         isFriend: true,
@@ -1149,6 +1185,7 @@ export default function People() {
         <TelegramUserSearch
           currentUser={currentUser}
           friends={friends}
+          searchablePeople={mergedPeople}
           onInvite={handleInvite}
         />
 
