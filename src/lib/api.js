@@ -607,11 +607,14 @@ export async function sendFriendRequest(requesterId, receiverId, options = {}) {
     .maybeSingle()
   if (error) throw error
 
-  // Notify the receiver via Telegram (fire-and-forget, errors are non-fatal)
-  if (data) {
+  // Notify via Telegram (fire-and-forget, errors are non-fatal).
+  // Duplicate pending requests return no row, but invite flows should still
+  // reassure the requester that the request is already waiting.
+  if (data || options.notifyRequester) {
     invokeEdgeFunction(sb, 'send-friend-notification', {
       receiverId,
       notifyRequester: Boolean(options.notifyRequester),
+      notifyReceiver: Boolean(data),
     }).catch((err) => {
       console.warn('[sendFriendRequest] notification failed:', err)
     })

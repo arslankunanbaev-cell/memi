@@ -204,7 +204,7 @@ describe('sendFriendRequest', () => {
       { onConflict: 'requester_id,receiver_id', ignoreDuplicates: true },
     )
     expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
-      body: { receiverId: 'user-2', notifyRequester: true },
+      body: { receiverId: 'user-2', notifyRequester: true, notifyReceiver: true },
     })
   })
 
@@ -218,7 +218,19 @@ describe('sendFriendRequest', () => {
     await sendFriendRequest('user-1', 'user-2')
 
     expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
-      body: { receiverId: 'user-2', notifyRequester: false },
+      body: { receiverId: 'user-2', notifyRequester: false, notifyReceiver: true },
+    })
+  })
+
+  it('still confirms invite requests when the pending friendship already exists', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null })
+    mockFrom.mockReturnValueOnce({ upsert: () => ({ select: () => ({ maybeSingle }) }) })
+
+    const result = await sendFriendRequest('user-1', 'user-2', { notifyRequester: true })
+
+    expect(result).toBeNull()
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
+      body: { receiverId: 'user-2', notifyRequester: true, notifyReceiver: false },
     })
   })
 })

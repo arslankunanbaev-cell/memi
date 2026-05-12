@@ -18,6 +18,21 @@ function json(data: unknown, status = 200) {
   })
 }
 
+async function sendTelegramMessage(chatId: number | string, text: string) {
+  const res = await fetch(`${TG_API}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text }),
+  })
+  const body = await res.json()
+
+  if (!body.ok) {
+    throw new Error(body.description ?? 'Telegram sendMessage failed')
+  }
+
+  return body?.result?.message_id ?? null
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: CORS })
@@ -31,6 +46,7 @@ serve(async (req: Request) => {
     const payload = await req.json()
     const receiverId = typeof payload?.receiverId === 'string' ? payload.receiverId : ''
     const notifyRequester = payload?.notifyRequester === true
+    const notifyReceiver = payload?.notifyReceiver !== false
 
     if (!receiverId) {
       return json({ error: 'Missing receiverId' }, 400)
@@ -40,7 +56,6 @@ serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     })
 
-    // Resolve the actor (requester) from the Bearer token
     const authHeader = req.headers.get('Authorization') ?? ''
     const token = authHeader.replace(/^Bearer\s+/i, '').trim()
     if (!token) return json({ error: 'Missing authorization' }, 401)
@@ -59,7 +74,6 @@ serve(async (req: Request) => {
     if (requesterError) return json({ error: requesterError.message }, 500)
     if (!requester?.id) return json({ error: 'Requester not found' }, 404)
 
-    // Verify a pending friendship exists (prevents unsolicited notifications)
     const { data: friendship, error: friendshipError } = await admin
       .from('friendships')
       .select('id')
@@ -71,7 +85,6 @@ serve(async (req: Request) => {
     if (friendshipError) return json({ error: friendshipError.message }, 500)
     if (!friendship) return json({ error: 'No pending friendship found' }, 404)
 
-    // Fetch receiver's telegram_id
     const { data: receiver, error: receiverError } = await admin
       .from('users')
       .select('id, name, telegram_id')
@@ -81,28 +94,22 @@ serve(async (req: Request) => {
     if (receiverError) return json({ error: receiverError.message }, 500)
     if (!receiver) return json({ error: 'Receiver not found' }, 404)
 
-    if (!receiver.telegram_id) {
-      return json({ ok: true, status: 'skipped', reason: 'receiver_has_no_telegram' })
-    }
+    let receiverMessageId: number | null = null
+    if (notifyReceiver) {
+      if (!receiver.telegram_id) {
+        return json({ ok: true, status: 'skipped', reason: 'receiver_has_no_telegram' })
+      }
 
-    const senderName = requester.name?.trim() || 'Кто-то'
-    const text = `${senderName} хочет добавить вас в друзья.`
+      const senderName = requester.name?.trim() || 'Кто-то'
+      const text = `${senderName} хочет добавить вас в друзья.`
 
-    console.log('[send-friend-notification] sending', JSON.stringify({
-      requesterId: requester.id,
-      receiverId: receiver.id,
-      targetChatId: receiver.telegram_id,
-    }))
+      console.log('[send-friend-notification] sending receiver notification', JSON.stringify({
+        requesterId: requester.id,
+        receiverId: receiver.id,
+        targetChatId: receiver.telegram_id,
+      }))
 
-    const tgRes = await fetch(`${TG_API}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: receiver.telegram_id, text }),
-    })
-    const tgJson = await tgRes.json()
-
-    if (!tgJson.ok) {
-      return json({ ok: false, error: tgJson.description ?? 'Telegram sendMessage failed' }, 500)
+      receiverMessageId = await sendTelegramMessage(receiver.telegram_id, text)
     }
 
     let requesterMessageId: number | null = null
@@ -110,29 +117,22 @@ serve(async (req: Request) => {
       const receiverName = typeof receiver.name === 'string' && receiver.name.trim()
         ? receiver.name.trim()
         : 'этому человеку'
-      const requesterText = [
+      const text = [
         `Заявка в друзья ${receiverName} отправлена.`,
         'Теперь нужно немного подождать, пока ее примут.',
       ].join('\n')
 
-      const requesterRes = await fetch(`${TG_API}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: requester.telegram_id, text: requesterText }),
-      })
-      const requesterJson = await requesterRes.json()
-
-      if (!requesterJson.ok) {
-        console.warn('[send-friend-notification] requester confirmation failed:', requesterJson.description)
-      } else {
-        requesterMessageId = requesterJson?.result?.message_id ?? null
+      try {
+        requesterMessageId = await sendTelegramMessage(requester.telegram_id, text)
+      } catch (error) {
+        console.warn('[send-friend-notification] requester confirmation failed:', (error as Error).message)
       }
     }
 
     return json({
       ok: true,
       status: 'sent',
-      message_id: tgJson?.result?.message_id ?? null,
+      message_id: receiverMessageId,
       requester_message_id: requesterMessageId,
     })
   } catch (error) {
