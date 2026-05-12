@@ -1040,12 +1040,15 @@ export default function PublicProfile() {
           void trackEvent('public_profile_viewed', { profile_user_id: user.id })
         }
 
+        const canShowMoments = Boolean(isAlreadyFriend || viewerCanSeeFriendMoments)
+        const visibleMoments = canShowMoments ? publicMoments : []
+
         setProfileUser(user)
-        setMoments(publicMoments)
-        setPublicMomentsTotal(total ?? 0)
-        setPublicMonthsCount(monthCount ?? uniqueMonths(publicMoments))
+        setMoments(visibleMoments)
+        setPublicMomentsTotal(canShowMoments ? (total ?? 0) : 0)
+        setPublicMonthsCount(canShowMoments ? (monthCount ?? uniqueMonths(visibleMoments)) : 0)
         setPublicFriendsCount(friendCount ?? 0)
-        setCanViewFriendMoments(Boolean(viewerCanSeeFriendMoments))
+        setCanViewFriendMoments(canShowMoments)
       } catch {
         setProfileUser(null)
         setMoments([])

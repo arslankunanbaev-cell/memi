@@ -834,15 +834,17 @@ export async function getUserProfile(userId, viewerId = null, options = {}) {
   let moments = []
   let total = 0
 
-  try {
-    const momentsResult = await getProfileMomentsResult(sb, userId, canSeeFriendMoments, true)
+  if (canSeeFriendMoments) {
+    try {
+      const momentsResult = await getProfileMomentsResult(sb, userId, canSeeFriendMoments, true)
 
-    if (momentsResult.error) throw momentsResult.error
+      if (momentsResult.error) throw momentsResult.error
 
-    moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
-    total = momentsResult.count ?? 0
-  } catch (error) {
-    console.warn('[getUserProfile] moments lookup failed:', error?.message)
+      moments = (momentsResult.data ?? []).map((moment) => normalizeMomentMedia(moment))
+      total = momentsResult.count ?? 0
+    } catch (error) {
+      console.warn('[getUserProfile] moments lookup failed:', error?.message)
+    }
   }
 
   const sortedMoments = [...moments].sort(compareMomentsByDisplayAt)

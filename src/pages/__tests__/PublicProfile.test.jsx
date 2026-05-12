@@ -93,6 +93,34 @@ describe('PublicProfile', () => {
     expect(screen.getByText('Another Memory')).toBeInTheDocument()
   })
 
+  it('hides profile moments from users who are not friends yet', async () => {
+    mockGetUserProfile.mockResolvedValue({
+      user: {
+        id: 'user-2',
+        name: 'Mila',
+        created_at: '2024-01-01T00:00:00Z',
+        public_profile_enabled: true,
+        bio: 'Warm bio',
+        featured_moment_id: 'm1',
+      },
+      moments: [
+        { id: 'm1', title: 'Private Friend Memory', created_at: '2024-02-01T00:00:00Z', photo_url: null },
+      ],
+      total: 1,
+      monthCount: 1,
+      friendCount: 3,
+      viewerCanSeeFriendMoments: false,
+    })
+
+    renderPublicProfile()
+
+    expect(await screen.findByText('Warm bio')).toBeInTheDocument()
+    expect(mockGetUserProfile).toHaveBeenCalledWith('user-2', 'user-1', { assumeFriend: false })
+    expect(screen.getByRole('button', { name: 'Добавить в друзья' })).toBeInTheDocument()
+    expect(screen.queryByText('Private Friend Memory')).not.toBeInTheDocument()
+    expect(screen.getByText('Моменты видны только друзьям')).toBeInTheDocument()
+  })
+
   it('shows an empty public state when the profile is open but has no public moments', async () => {
     useAppStore.setState({
       currentUser: { id: 'user-1', name: 'Me' },

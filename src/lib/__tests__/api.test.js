@@ -485,7 +485,7 @@ describe('getUserProfile', () => {
       bio: 'Warm bio',
       featured_moment_id: 'm1',
     })
-    expect(result.total).toBe(1)
+    expect(result.total).toBe(0)
     expect(result.friendCount).toBe(5)
   })
 
@@ -499,6 +499,11 @@ describe('getUserProfile', () => {
       public_profile_enabled: true,
       bio: 'Warm bio',
       featured_moment_id: null,
+      banner_url: null,
+      favorite_song_title: null,
+      favorite_song_artist: null,
+      favorite_song_cover: null,
+      favorite_song_preview_url: null,
     }
 
     mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
@@ -553,8 +558,8 @@ describe('getUserProfile', () => {
       public_profile_enabled: true,
       bio: 'Warm bio',
     })
-    expect(result.moments).toHaveLength(1)
-    expect(result.total).toBe(1)
+    expect(result.moments).toHaveLength(0)
+    expect(result.total).toBe(0)
     expect(result.viewerCanSeeFriendMoments).toBe(false)
   })
 
@@ -568,6 +573,11 @@ describe('getUserProfile', () => {
       public_profile_enabled: true,
       bio: 'Warm bio',
       featured_moment_id: null,
+      banner_url: null,
+      favorite_song_title: null,
+      favorite_song_artist: null,
+      favorite_song_cover: null,
+      favorite_song_preview_url: null,
     }
 
     mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
@@ -627,6 +637,11 @@ describe('getUserProfile', () => {
       public_profile_enabled: true,
       bio: 'Warm bio',
       featured_moment_id: null,
+      banner_url: null,
+      favorite_song_title: null,
+      favorite_song_artist: null,
+      favorite_song_cover: null,
+      favorite_song_preview_url: null,
     }
 
     mockRpc.mockResolvedValue({ data: [rpcUser], error: null })
