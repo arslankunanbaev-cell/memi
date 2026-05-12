@@ -757,7 +757,11 @@ export async function getFriendsFeedMoments(friendIds) {
   const sb = assertSupabase()
   const { data, error } = await sb
     .from('moments')
-    .select('*')
+    .select(`
+      *,
+      people:moment_people(person:people(id, name, avatar_color, photo_url, linked_user_id)),
+      participants:moment_participants(user:users(id, name, photo_url))
+    `)
     .in('user_id', friendIds)
     .in('visibility', ['friends', 'public'])
     .order('created_at', { ascending: false })
@@ -765,10 +769,7 @@ export async function getFriendsFeedMoments(friendIds) {
   if (error) throw error
 
   return (data ?? [])
-    .map((moment) => normalizeMomentMedia({
-      ...moment,
-      isFriendFeed: true,
-    }))
+    .map((moment) => normalizeMomentRecord(moment, { isFriendFeed: true }))
     .sort(compareMomentsByAddedAt)
 }
 

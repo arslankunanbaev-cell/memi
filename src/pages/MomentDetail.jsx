@@ -10,6 +10,7 @@ import {
   upsertMomentReaction,
 } from '../lib/api'
 import { getMomentDisplayAt } from '../lib/momentTime'
+import { navigateWithTransition } from '../lib/navigation'
 import { tgHaptic } from '../lib/telegram'
 import { trackEvent } from '../lib/analytics'
 import { useAppStore } from '../store/useAppStore'
@@ -63,10 +64,19 @@ function CircleButton({ onClick, children, light = false, ariaLabel }) {
   )
 }
 
-function PersonChip({ person }) {
+function PersonChip({ person, onClick }) {
+  const ChipTag = onClick ? 'button' : 'div'
+
   return (
-    <div
-      className="surface-card flex items-center gap-2 rounded-[20px]"
+    <ChipTag
+      {...(onClick
+        ? {
+            type: 'button',
+            onClick,
+            'aria-label': `Открыть профиль ${person.name}`,
+          }
+        : {})}
+      className="surface-card flex items-center gap-2 rounded-[20px] transition-opacity active:opacity-60"
       style={{
         padding: '6px 12px 6px 6px',
         backgroundColor: 'var(--moment-surface)',
@@ -93,7 +103,7 @@ function PersonChip({ person }) {
       <span className="font-sans" style={{ color: 'var(--text)', fontSize: 14, fontWeight: 500 }}>
         {person.name}
       </span>
-    </div>
+    </ChipTag>
   )
 }
 
@@ -407,6 +417,7 @@ export default function MomentDetail() {
       name: linkedFriend?.name ?? person.name,
       photo_url: linkedFriend?.photo_url ?? person.photo_url ?? null,
       avatar_color: person.avatar_color ?? 'var(--accent)',
+      profileUserId: person.linked_user_id ?? null,
     }
   })
 
@@ -415,9 +426,14 @@ export default function MomentDetail() {
     name: friend.name,
     photo_url: friend.photo_url ?? null,
     avatar_color: 'var(--accent)',
+    profileUserId: friend.id,
   }))
 
   const allPeople = [...people, ...taggedFriends]
+  const openProfile = (userId) => {
+    if (!userId || userId === currentUser?.id) return
+    navigateWithTransition(navigate, `/profile/${userId}`)
+  }
   const reactionBlock = (
     <div style={{ marginBottom: 24 }}>
       <p
@@ -597,7 +613,11 @@ export default function MomentDetail() {
 
                   <div className="flex flex-wrap gap-2" style={{ marginBottom: 24 }}>
                     {allPeople.map((person) => (
-                      <PersonChip key={person.id} person={person} />
+                      <PersonChip
+                        key={person.id}
+                        person={person}
+                        onClick={person.profileUserId ? () => openProfile(person.profileUserId) : null}
+                      />
                     ))}
                   </div>
                 </>

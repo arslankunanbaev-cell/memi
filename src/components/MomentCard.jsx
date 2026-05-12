@@ -69,6 +69,37 @@ function PhotoChip({ children, center = false }) {
   )
 }
 
+function ParticipantChip({ person, onClick }) {
+  const isClickable = typeof onClick === 'function'
+  const handleClick = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    onClick?.()
+  }
+
+  return (
+    <div
+      role={isClickable ? 'button' : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      aria-label={isClickable ? `Открыть профиль ${person.name}` : undefined}
+      className={`flex items-center gap-2${isClickable ? ' cursor-pointer transition-opacity active:opacity-60' : ''}`}
+      onClick={isClickable ? handleClick : undefined}
+      onKeyDown={isClickable
+        ? (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              handleClick(event)
+            }
+          }
+        : undefined}
+    >
+      <Avatar person={person} />
+      <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
+        {person.name}
+      </span>
+    </div>
+  )
+}
+
 export default function MomentCard({ moment, onLongPress }) {
   const navigate = useNavigate()
   const openingRef = useRef(false)
@@ -88,12 +119,14 @@ export default function MomentCard({ moment, onLongPress }) {
       name: person.name,
       photo_url: person.photo_url ?? null,
       avatar_color: person.avatar_color ?? 'var(--accent)',
+      profileUserId: person.linked_user_id ?? null,
     })),
     ...(moment.taggedFriends ?? []).map((friend) => ({
       id: `friend-${friend.id}`,
       name: friend.name,
       photo_url: friend.photo_url ?? null,
       avatar_color: 'var(--accent)',
+      profileUserId: friend.id,
     })),
   ]
 
@@ -101,6 +134,11 @@ export default function MomentCard({ moment, onLongPress }) {
     if (openingRef.current) return
     openingRef.current = true
     navigateWithTransition(navigate, `/moment/${moment.id}`)
+  }
+
+  const openProfile = (userId) => {
+    if (!userId || userId === currentUser?.id) return
+    navigateWithTransition(navigate, `/profile/${userId}`)
   }
 
   const clearLongPressTimer = () => {
@@ -287,12 +325,11 @@ export default function MomentCard({ moment, onLongPress }) {
           {participants.length > 0 && (
             <div className="flex flex-wrap gap-2" style={{ marginTop: 14, paddingTop: 2 }}>
               {participants.map((person) => (
-                <div key={person.id} className="flex items-center gap-2">
-                  <Avatar person={person} />
-                  <span className="font-sans type-support" style={{ color: 'var(--mid)' }}>
-                    {person.name}
-                  </span>
-                </div>
+                <ParticipantChip
+                  key={person.id}
+                  person={person}
+                  onClick={person.profileUserId ? () => openProfile(person.profileUserId) : null}
+                />
               ))}
             </div>
           )}
