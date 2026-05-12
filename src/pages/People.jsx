@@ -584,8 +584,8 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
       style={{
         marginBottom: 18,
         borderRadius: 24,
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.46)), var(--moment-surface)',
-        border: '1px solid rgba(160, 94, 44, 0.1)',
+        background: 'var(--people-search-bg)',
+        border: '1px solid var(--people-group-border)',
         boxShadow: 'var(--shadow-card)',
         padding: 12,
       }}
@@ -621,8 +621,8 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
         className="flex items-center gap-2"
         style={{
           borderRadius: 18,
-          backgroundColor: 'var(--base)',
-          border: normalizedTelegramQuery ? '1.5px solid rgba(217, 139, 82, 0.72)' : '1.5px solid rgba(184, 168, 152, 0.18)',
+          backgroundColor: 'var(--people-search-field-bg)',
+          border: normalizedTelegramQuery ? '1.5px solid rgba(217, 139, 82, 0.72)' : '1.5px solid var(--people-search-field-border)',
           boxShadow: normalizedTelegramQuery ? '0 8px 20px rgba(160, 94, 44, 0.09)' : 'inset 0 1px 0 rgba(255,255,255,0.6)',
           padding: '5px 5px 5px 12px',
         }}
@@ -686,8 +686,8 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
           style={{
             marginTop: 12,
             borderRadius: 18,
-            backgroundColor: 'rgba(255,255,255,0.44)',
-            border: '1px solid rgba(160, 94, 44, 0.1)',
+            backgroundColor: 'var(--people-search-result-bg)',
+            border: '1px solid var(--people-search-result-border)',
             padding: '10px 10px',
           }}
         >

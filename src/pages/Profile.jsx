@@ -466,7 +466,7 @@ const THEMES = [
   {
     id: 'dark',
     label: 'Тёмная',
-    description: 'Как у Locket — глубокий и сдержанный',
+    description: 'Глубокая и сдержанная',
     swatch: ['#0E0D0C', '#1E1C1A', '#D98B52'],
   },
 ]
