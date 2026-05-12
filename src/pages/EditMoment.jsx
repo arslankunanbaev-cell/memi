@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { useAppStore } from '../store/useAppStore'
-import { updateMoment as updateMomentApi, createPerson, uploadPhoto } from '../lib/api'
+import { updateMoment as updateMomentApi, createPerson, uploadPhoto, addMomentParticipants, notifyTaggedFriends } from '../lib/api'
 import { assertSupabase } from '../lib/supabase'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
@@ -133,6 +133,7 @@ export default function EditMoment() {
   const { id } = useParams()
   const currentUser     = useAppStore((s) => s.currentUser)
   const allPeople       = useAppStore((s) => s.people)
+  const friends         = useAppStore((s) => s.friends)
   const moments         = useAppStore((s) => s.moments)
   const updateMomentStore = useAppStore((s) => s.updateMoment)
 
@@ -145,6 +146,9 @@ export default function EditMoment() {
   const [location, setLocation] = useState(moment?.location ?? '')
   const [selectedPeople, setSelectedPeople] = useState(
     () => (moment?.people ?? []).map((p) => p.id)
+  )
+  const [taggedFriends, setTaggedFriends] = useState(
+    () => (moment?.taggedFriends ?? []).map((friend) => friend.id)
   )
 
   // Song: map from moment fields to song object
@@ -203,6 +207,12 @@ export default function EditMoment() {
     )
   }
 
+  function toggleFriend(friendId) {
+    setTaggedFriends((prev) =>
+      prev.includes(friendId) ? prev.filter((id) => id !== friendId) : [...prev, friendId]
+    )
+  }
+
   function handlePersonCreated(person) {
     setSelectedPeople((prev) => [...prev, person.id])
   }
@@ -245,9 +255,32 @@ export default function EditMoment() {
         )
       }
 
+      const selectedLinkedUserIds = new Set(
+        allPeople
+          .filter((person) => selectedPeople.includes(person.id))
+          .map((person) => person.linked_user_id)
+          .filter(Boolean)
+      )
+      const nextTaggedFriends = taggedFriends.filter((friendId) => !selectedLinkedUserIds.has(friendId))
+      const previousTaggedFriends = new Set((moment.taggedFriends ?? []).map((friend) => friend.id))
+      const newlyTaggedFriends = nextTaggedFriends.filter((friendId) => !previousTaggedFriends.has(friendId))
+
+      await sb.from('moment_participants').delete().eq('moment_id', moment.id)
+      if (nextTaggedFriends.length > 0) {
+        await addMomentParticipants(moment.id, nextTaggedFriends)
+        if (newlyTaggedFriends.length > 0) {
+          try {
+            await notifyTaggedFriends(moment.id, newlyTaggedFriends)
+          } catch (notificationErr) {
+            console.warn('[EditMoment] tag notification failed (non-fatal):', notificationErr?.message)
+          }
+        }
+      }
+
       // Build full moment with people objects
       const fullPeople = allPeople.filter((p) => selectedPeople.includes(p.id))
-      const fullMoment = { ...updated, people: fullPeople }
+      const fullTaggedFriends = friends.filter((friend) => nextTaggedFriends.includes(friend.id))
+      const fullMoment = { ...updated, people: fullPeople, taggedFriends: fullTaggedFriends }
       updateMomentStore(moment.id, fullMoment)
 
       goBack()
@@ -257,6 +290,9 @@ export default function EditMoment() {
       setSaving(false)
     }
   }
+
+  const linkedUserIds = new Set(allPeople.map((p) => p.linked_user_id).filter(Boolean))
+  const unlinkedFriends = friends.filter((friend) => !linkedUserIds.has(friend.id))
 
   return (
     <div
@@ -493,6 +529,40 @@ export default function EditMoment() {
                   </button>
                 )
               })}
+              {unlinkedFriends.map((friend) => {
+                const active = taggedFriends.includes(friend.id)
+                return (
+                  <button
+                    key={friend.id}
+                    onClick={() => toggleFriend(friend.id)}
+                    className="flex items-center gap-2 transition-all active:opacity-70"
+                    style={{
+                      borderRadius: 9999,
+                      padding: '7px 14px 7px 9px',
+                      backgroundColor: active ? 'var(--accent)' : 'var(--moment-surface)',
+                      border: 'none',
+                      boxShadow: '0 2px 8px rgba(80,50,30,0.08)',
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-full font-sans font-medium overflow-hidden"
+                      style={{
+                        width: 24, height: 24,
+                        backgroundColor: active ? 'rgba(255,255,255,0.3)' : 'var(--accent)',
+                        color: '#fff', fontSize: 10, flexShrink: 0,
+                        border: '2px solid rgba(255,255,255,0.6)',
+                      }}
+                    >
+                      {friend.photo_url
+                        ? <img src={friend.photo_url} alt={friend.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : friend.name?.[0]?.toUpperCase() ?? '?'}
+                    </div>
+                    <span className="font-sans" style={{ fontSize: 14, color: active ? '#fff' : 'var(--text)', fontWeight: active ? 500 : 400 }}>
+                      {friend.name}
+                    </span>
+                  </button>
+                )
+              })}
               <button
                 onClick={() => setShowAddPerson(true)}
                 className="flex items-center gap-2 transition-opacity active:opacity-70"
@@ -515,7 +585,7 @@ export default function EditMoment() {
                   +
                 </div>
                 <span className="font-sans" style={{ fontSize: 14, color: 'var(--accent)' }}>
-                  {allPeople.length === 0 ? 'Добавить человека' : 'Новый'}
+                  {allPeople.length === 0 && unlinkedFriends.length === 0 ? 'Добавить человека' : 'Новый'}
                 </span>
               </button>
             </div>
