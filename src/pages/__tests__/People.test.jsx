@@ -104,7 +104,6 @@ describe('People', () => {
     })
 
     renderPeople()
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить человека' }))
     await userEvent.type(screen.getByPlaceholderText('@username'), '@Mila')
     fireEvent.click(screen.getByText('Найти'))
 
@@ -125,7 +124,6 @@ describe('People', () => {
     mockFindUserByTelegramUsername.mockResolvedValue(null)
 
     renderPeople()
-    fireEvent.click(screen.getByRole('button', { name: 'Добавить человека' }))
     await userEvent.type(screen.getByPlaceholderText('@username'), '@missing_user')
     fireEvent.click(screen.getByText('Найти'))
 
