@@ -30,6 +30,7 @@ serve(async (req: Request) => {
   try {
     const payload = await req.json()
     const receiverId = typeof payload?.receiverId === 'string' ? payload.receiverId : ''
+    const notifyRequester = payload?.notifyRequester === true
 
     if (!receiverId) {
       return json({ error: 'Missing receiverId' }, 400)
@@ -51,7 +52,7 @@ serve(async (req: Request) => {
 
     const { data: requester, error: requesterError } = await admin
       .from('users')
-      .select('id, name')
+      .select('id, name, telegram_id')
       .eq('auth_id', authData.user.id)
       .maybeSingle()
 
@@ -73,7 +74,7 @@ serve(async (req: Request) => {
     // Fetch receiver's telegram_id
     const { data: receiver, error: receiverError } = await admin
       .from('users')
-      .select('id, telegram_id')
+      .select('id, name, telegram_id')
       .eq('id', receiverId)
       .maybeSingle()
 
@@ -104,7 +105,36 @@ serve(async (req: Request) => {
       return json({ ok: false, error: tgJson.description ?? 'Telegram sendMessage failed' }, 500)
     }
 
-    return json({ ok: true, status: 'sent', message_id: tgJson?.result?.message_id ?? null })
+    let requesterMessageId: number | null = null
+    if (notifyRequester && requester.telegram_id) {
+      const receiverName = typeof receiver.name === 'string' && receiver.name.trim()
+        ? receiver.name.trim()
+        : 'этому человеку'
+      const requesterText = [
+        `Заявка в друзья ${receiverName} отправлена.`,
+        'Теперь нужно немного подождать, пока ее примут.',
+      ].join('\n')
+
+      const requesterRes = await fetch(`${TG_API}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: requester.telegram_id, text: requesterText }),
+      })
+      const requesterJson = await requesterRes.json()
+
+      if (!requesterJson.ok) {
+        console.warn('[send-friend-notification] requester confirmation failed:', requesterJson.description)
+      } else {
+        requesterMessageId = requesterJson?.result?.message_id ?? null
+      }
+    }
+
+    return json({
+      ok: true,
+      status: 'sent',
+      message_id: tgJson?.result?.message_id ?? null,
+      requester_message_id: requesterMessageId,
+    })
   } catch (error) {
     console.error('[send-friend-notification] error:', error)
     return json({ error: (error as Error).message }, 500)

@@ -230,7 +230,7 @@ export default function App() {
             }
 
             if (refUser?.id && refUser.id !== user.id) {
-              const friendship = await sendFriendRequest(user.id, refUser.id).catch(() => null)
+              const friendship = await sendFriendRequest(user.id, refUser.id, { notifyRequester: true }).catch(() => null)
               if (friendship?.id) {
                 void trackEvent('friend_added', { source: 'invite' })
               }

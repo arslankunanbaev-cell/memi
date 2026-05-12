@@ -594,7 +594,7 @@ export async function getMomentsByPerson(userId, personId) {
 
 // ── Friends ───────────────────────────────────────────────────────────────────
 
-export async function sendFriendRequest(requesterId, receiverId) {
+export async function sendFriendRequest(requesterId, receiverId, options = {}) {
   if (!requesterId || !receiverId || requesterId === receiverId) return null
   const sb = assertSupabase()
   const { data, error } = await sb
@@ -609,7 +609,10 @@ export async function sendFriendRequest(requesterId, receiverId) {
 
   // Notify the receiver via Telegram (fire-and-forget, errors are non-fatal)
   if (data) {
-    invokeEdgeFunction(sb, 'send-friend-notification', { receiverId }).catch((err) => {
+    invokeEdgeFunction(sb, 'send-friend-notification', {
+      receiverId,
+      notifyRequester: Boolean(options.notifyRequester),
+    }).catch((err) => {
       console.warn('[sendFriendRequest] notification failed:', err)
     })
   }

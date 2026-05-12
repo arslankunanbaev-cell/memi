@@ -14,6 +14,7 @@ const mockOrder       = vi.fn()
 const mockUpload      = vi.fn()
 const mockGetPublicUrl = vi.fn()
 const mockRpc         = vi.fn()
+const mockFunctionsInvoke = vi.fn()
 
 const mockFrom = vi.fn(() => ({
   select:     mockSelect,
@@ -41,6 +42,7 @@ vi.mock('../supabase.js', () => ({
   assertSupabase: () => ({
     from:    mockFrom,
     rpc:     mockRpc,
+    functions: { invoke: mockFunctionsInvoke },
     storage: { from: mockStorageFrom },
   }),
 }))
@@ -54,6 +56,7 @@ import {
   normalizeMomentRecord,
   mergeMomentCollections,
   joinCollectionByInviteCode,
+  sendFriendRequest,
 } from '../api.js'
 
 // ── saveUser ──────────────────────────────────────────────────────────────────
@@ -175,6 +178,48 @@ describe('collection helpers', () => {
     mockRpc.mockResolvedValue({ data: [], error: null })
 
     await expect(joinCollectionByInviteCode('missing', 'user-1')).resolves.toBeNull()
+  })
+})
+
+describe('sendFriendRequest', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFunctionsInvoke.mockResolvedValue({ data: { ok: true }, error: null })
+  })
+
+  it('passes requester confirmation flag to the Telegram notification function', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: 'friendship-1', requester_id: 'user-1', receiver_id: 'user-2', status: 'pending' },
+      error: null,
+    })
+    const select = vi.fn(() => ({ maybeSingle }))
+    const upsert = vi.fn(() => ({ select }))
+    mockFrom.mockReturnValueOnce({ upsert })
+
+    const result = await sendFriendRequest('user-1', 'user-2', { notifyRequester: true })
+
+    expect(result?.id).toBe('friendship-1')
+    expect(upsert).toHaveBeenCalledWith(
+      { requester_id: 'user-1', receiver_id: 'user-2', status: 'pending' },
+      { onConflict: 'requester_id,receiver_id', ignoreDuplicates: true },
+    )
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
+      body: { receiverId: 'user-2', notifyRequester: true },
+    })
+  })
+
+  it('keeps requester confirmation disabled by default', async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({
+      data: { id: 'friendship-2', requester_id: 'user-1', receiver_id: 'user-2', status: 'pending' },
+      error: null,
+    })
+    mockFrom.mockReturnValueOnce({ upsert: () => ({ select: () => ({ maybeSingle }) }) })
+
+    await sendFriendRequest('user-1', 'user-2')
+
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
+      body: { receiverId: 'user-2', notifyRequester: false },
+    })
   })
 })
 
