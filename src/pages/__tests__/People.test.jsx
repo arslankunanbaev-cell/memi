@@ -104,8 +104,8 @@ describe('People', () => {
     })
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@Mila')
-    fireEvent.click(screen.getByText('Найти'))
+    await userEvent.type(screen.getByRole('textbox'), '@Mila')
+    fireEvent.click(screen.getByRole('button', { name: 'Найти' }))
 
     await waitFor(() => expect(screen.getByText('Mila')).toBeInTheDocument())
     const addTelegramUserButton = screen
@@ -124,8 +124,8 @@ describe('People', () => {
     mockFindUserByTelegramUsername.mockResolvedValue(null)
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@missing_user')
-    fireEvent.click(screen.getByText('Найти'))
+    await userEvent.type(screen.getByRole('textbox'), '@missing_user')
+    fireEvent.click(screen.getByRole('button', { name: 'Найти' }))
 
     await waitFor(() => expect(screen.getByText('Пригласить')).toBeInTheDocument())
     fireEvent.click(screen.getByText('Пригласить'))
@@ -143,8 +143,8 @@ describe('People', () => {
     })
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), '@mila_friend')
-    fireEvent.click(screen.getByText('Найти'))
+    await userEvent.type(screen.getByRole('textbox'), '@mila_friend')
+    fireEvent.click(screen.getByRole('button', { name: 'Найти' }))
 
     await waitFor(() => expect(screen.getAllByText('Mila Friend').length).toBeGreaterThan(0))
     expect(screen.getByText('Уже друг')).toBeInTheDocument()
@@ -161,8 +161,8 @@ describe('People', () => {
     })
 
     renderPeople()
-    await userEvent.type(screen.getByPlaceholderText('Имя или @username'), 'Arslan')
-    fireEvent.click(screen.getByText('Найти'))
+    await userEvent.type(screen.getByRole('textbox'), 'Arslan')
+    fireEvent.click(screen.getByRole('button', { name: 'Найти' }))
 
     await waitFor(() => expect(screen.getAllByText('Arslan K').length).toBeGreaterThan(0))
     expect(screen.getByText('Уже друг')).toBeInTheDocument()

@@ -572,21 +572,64 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
   const isFriendSent = telegramResult
     ? sentFriendIds.has(telegramResult.id)
     : false
+  const resultSubtitle = telegramResult?.telegram_username
+    ? `@${telegramResult.telegram_username}`
+    : isAlreadyFriend
+      ? 'Уже в твоих друзьях'
+      : `@${normalizedTelegramQuery}`
 
   return (
     <div
+      className="surface-card"
       style={{
         marginBottom: 18,
-        borderRadius: 20,
-        backgroundColor: 'var(--moment-surface)',
+        borderRadius: 24,
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.46)), var(--moment-surface)',
+        border: '1px solid rgba(160, 94, 44, 0.1)',
         boxShadow: 'var(--shadow-card)',
-        padding: 14,
+        padding: 12,
       }}
     >
-      <label className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
-        Имя или Telegram username
-      </label>
-      <div className="flex items-center gap-2" style={{ marginTop: 8 }}>
+      <div className="flex items-center gap-2" style={{ marginBottom: 10, padding: '0 2px' }}>
+        <div
+          className="flex items-center justify-center"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 999,
+            backgroundColor: 'rgba(217, 139, 82, 0.13)',
+            color: 'var(--accent)',
+          }}
+          aria-hidden="true"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="2" />
+            <path d="M16 16l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+        <div className="min-w-0 flex-1">
+          <label className="font-sans type-meta" style={{ color: 'var(--text)', fontWeight: 800 }}>
+            Найти в memi
+          </label>
+          <p className="font-sans type-support truncate" style={{ color: 'var(--mid)', marginTop: 1 }}>
+            Имя друга или Telegram username
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="flex items-center gap-2"
+        style={{
+          borderRadius: 18,
+          backgroundColor: 'var(--base)',
+          border: normalizedTelegramQuery ? '1.5px solid rgba(217, 139, 82, 0.72)' : '1.5px solid rgba(184, 168, 152, 0.18)',
+          boxShadow: normalizedTelegramQuery ? '0 8px 20px rgba(160, 94, 44, 0.09)' : 'inset 0 1px 0 rgba(255,255,255,0.6)',
+          padding: '5px 5px 5px 12px',
+        }}
+      >
+        <span className="font-sans" style={{ color: normalizedTelegramQuery ? 'var(--accent)' : 'var(--soft)', fontSize: 16 }} aria-hidden="true">
+          @
+        </span>
         <input
           value={telegramQuery}
           onChange={(event) => {
@@ -601,45 +644,60 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
               handleTelegramSearch()
             }
           }}
-          placeholder="Имя или @username"
-          className="min-w-0 flex-1 outline-none"
+          placeholder="Имя или username"
+          className="min-w-0 flex-1 font-sans outline-none"
           style={{
-            backgroundColor: 'var(--base)',
-            border: normalizedTelegramQuery ? '1.5px solid var(--accent)' : '1.5px solid transparent',
-            borderRadius: 14,
+            background: 'transparent',
+            border: 'none',
             color: 'var(--text)',
             fontSize: 15,
-            padding: '12px 14px',
+            padding: '9px 0',
           }}
         />
         <button
           type="button"
           onClick={handleTelegramSearch}
           disabled={!canSearchTelegram}
-          className="font-sans transition-opacity active:opacity-70"
+          aria-label="Найти"
+          className="flex items-center justify-center transition-opacity active:opacity-70"
           style={{
             border: 'none',
             borderRadius: 14,
             backgroundColor: canSearchTelegram ? 'var(--accent)' : 'var(--surface)',
             color: canSearchTelegram ? '#fff' : 'var(--soft)',
-            fontSize: 14,
-            fontWeight: 700,
-            padding: '12px 14px',
+            width: 42,
+            height: 42,
+            flexShrink: 0,
           }}
         >
-          {telegramStatus === 'searching' ? 'Ищем...' : 'Найти'}
+          {telegramStatus === 'searching' ? (
+            <span className="font-sans" style={{ fontSize: 12, fontWeight: 800 }}>...</span>
+          ) : (
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
         </button>
       </div>
 
       {telegramStatus === 'found' && telegramResult && (
-        <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
+        <div
+          className="flex items-center gap-3"
+          style={{
+            marginTop: 12,
+            borderRadius: 18,
+            backgroundColor: 'rgba(255,255,255,0.44)',
+            border: '1px solid rgba(160, 94, 44, 0.1)',
+            padding: '10px 10px',
+          }}
+        >
           <Avatar person={telegramResult} size={44} />
           <div className="min-w-0 flex-1">
             <p className="font-sans type-button truncate" style={{ color: 'var(--text)' }}>
               {telegramResult.name}
             </p>
             <p className="font-sans type-support truncate" style={{ color: 'var(--mid)', marginTop: 1 }}>
-              @{telegramResult.telegram_username ?? normalizedTelegramQuery}
+              {resultSubtitle}
             </p>
           </div>
           <button
@@ -650,11 +708,11 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
             style={{
               border: 'none',
               borderRadius: 999,
-              backgroundColor: isAlreadyFriend || isFriendSent ? 'var(--surface)' : 'rgba(217, 139, 82, 0.14)',
-              color: isAlreadyFriend || isFriendSent ? 'var(--mid)' : 'var(--accent)',
+              backgroundColor: isAlreadyFriend || isFriendSent ? 'rgba(184, 168, 152, 0.16)' : 'var(--accent)',
+              color: isAlreadyFriend || isFriendSent ? 'var(--mid)' : '#fff',
               fontSize: 13,
               fontWeight: 700,
-              padding: '8px 12px',
+              padding: '9px 13px',
               whiteSpace: 'nowrap',
             }}
           >
@@ -664,13 +722,21 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
       )}
 
       {telegramStatus === 'self' && (
-        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, lineHeight: 1.45, marginTop: 10 }}>
+        <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, lineHeight: 1.45, marginTop: 10, padding: '0 2px' }}>
           Это твой аккаунт. Для себя заявка не нужна.
         </p>
       )}
 
       {telegramStatus === 'not_found' && (
-        <div style={{ marginTop: 10 }}>
+        <div
+          style={{
+            marginTop: 12,
+            borderRadius: 18,
+            backgroundColor: 'rgba(217, 139, 82, 0.08)',
+            border: '1px solid rgba(217, 139, 82, 0.12)',
+            padding: '11px 12px',
+          }}
+        >
           <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, lineHeight: 1.45 }}>
             Не нашли в memi. Можно отправить приглашение, а когда человек зайдёт в приложение, он появится в поиске.
           </p>
@@ -694,7 +760,7 @@ function TelegramUserSearch({ currentUser, friends, searchablePeople, onInvite }
       )}
 
       {telegramError && (
-        <p className="font-sans" style={{ color: '#E05252', fontSize: 12, lineHeight: 1.45, marginTop: 10 }}>
+        <p className="font-sans" style={{ color: '#E05252', fontSize: 12, lineHeight: 1.45, marginTop: 10, padding: '0 2px' }}>
           {telegramError}
         </p>
       )}
