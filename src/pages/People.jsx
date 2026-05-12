@@ -1,6 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { acceptFriendRequest, createPerson, getFriendships, linkPersonToUser } from '../lib/api'
+import {
+  acceptFriendRequest,
+  createPerson,
+  findUserByTelegramUsername,
+  getFriendships,
+  linkPersonToUser,
+  sendFriendRequest,
+} from '../lib/api'
 import { tgHaptic } from '../lib/telegram'
 import { navigateWithTransition } from '../lib/navigation'
 import { plural } from '../lib/ruPlural'
@@ -11,6 +18,10 @@ import SectionLabel from '../components/SectionLabel'
 import { useAppStore } from '../store/useAppStore'
 
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
+
+function normalizeTelegramUsername(value) {
+  return String(value ?? '').trim().replace(/^@+/, '').toLowerCase()
+}
 
 function RefreshIcon() {
   return (
@@ -467,11 +478,17 @@ function RequestRow({ request, onAccept }) {
   )
 }
 
-function AddPersonSheet({ onClose, onCreated }) {
+function AddPersonSheet({ friends, onClose, onCreated, onInvite }) {
   const currentUser = useAppStore((state) => state.currentUser)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [telegramQuery, setTelegramQuery] = useState('')
+  const [telegramResult, setTelegramResult] = useState(null)
+  const [telegramStatus, setTelegramStatus] = useState('idle')
+  const [telegramError, setTelegramError] = useState(null)
+  const [sendingFriendId, setSendingFriendId] = useState(null)
+  const [sentFriendIds, setSentFriendIds] = useState(() => new Set())
   const [photoFile, setPhotoFile] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [color] = useState(() => AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)])
@@ -509,9 +526,187 @@ function AddPersonSheet({ onClose, onCreated }) {
     }
   }
 
+  async function handleTelegramSearch() {
+    const username = normalizeTelegramUsername(telegramQuery)
+    if (!username || telegramStatus === 'searching') return
+
+    tgHaptic('light')
+    setTelegramStatus('searching')
+    setTelegramResult(null)
+    setTelegramError(null)
+
+    try {
+      const foundUser = await findUserByTelegramUsername(username)
+      if (!foundUser) {
+        setTelegramStatus('not_found')
+        return
+      }
+
+      setTelegramResult(foundUser)
+      setTelegramStatus(foundUser.id === currentUser?.id ? 'self' : 'found')
+    } catch (err) {
+      console.error('[AddPerson] telegram username search error:', err)
+      setTelegramError('Не удалось найти по username. Попробуй ещё раз.')
+      setTelegramStatus('error')
+    }
+  }
+
+  async function handleSendFriendRequest(userId) {
+    if (!currentUser?.id || !userId || sendingFriendId) return
+
+    tgHaptic('medium')
+    setSendingFriendId(userId)
+    setTelegramError(null)
+
+    try {
+      await sendFriendRequest(currentUser.id, userId, { notifyRequester: true })
+      setSentFriendIds((prev) => new Set([...prev, userId]))
+    } catch (err) {
+      console.error('[AddPerson] send friend request error:', err)
+      setTelegramError('Не удалось отправить заявку. Попробуй ещё раз.')
+    } finally {
+      setSendingFriendId(null)
+    }
+  }
+
+  const normalizedTelegramQuery = normalizeTelegramUsername(telegramQuery)
+  const canSearchTelegram = normalizedTelegramQuery.length > 0 && telegramStatus !== 'searching'
+  const isAlreadyFriend = telegramResult
+    ? friends.some((friend) => friend.id === telegramResult.id)
+    : false
+  const isFriendSent = telegramResult
+    ? sentFriendIds.has(telegramResult.id)
+    : false
+
   return (
     <BottomSheet onClose={onClose} title="Добавить человека">
       <div className="px-4 pb-4">
+        <div
+          style={{
+            marginBottom: 22,
+            borderRadius: 18,
+            backgroundColor: 'var(--moment-surface)',
+            boxShadow: 'var(--shadow-card)',
+            padding: 14,
+          }}
+        >
+          <label className="font-sans" style={{ color: 'var(--mid)', fontSize: 13 }}>
+            Telegram username
+          </label>
+          <div className="flex items-center gap-2" style={{ marginTop: 8 }}>
+            <input
+              value={telegramQuery}
+              onChange={(event) => {
+                setTelegramQuery(event.target.value)
+                setTelegramStatus('idle')
+                setTelegramResult(null)
+                setTelegramError(null)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  handleTelegramSearch()
+                }
+              }}
+              placeholder="@username"
+              className="min-w-0 flex-1 outline-none"
+              style={{
+                backgroundColor: 'var(--base)',
+                border: normalizedTelegramQuery ? '1.5px solid var(--accent)' : '1.5px solid transparent',
+                borderRadius: 14,
+                color: 'var(--text)',
+                fontSize: 15,
+                padding: '12px 14px',
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleTelegramSearch}
+              disabled={!canSearchTelegram}
+              className="font-sans transition-opacity active:opacity-70"
+              style={{
+                border: 'none',
+                borderRadius: 14,
+                backgroundColor: canSearchTelegram ? 'var(--accent)' : 'var(--surface)',
+                color: canSearchTelegram ? '#fff' : 'var(--soft)',
+                fontSize: 14,
+                fontWeight: 700,
+                padding: '12px 14px',
+              }}
+            >
+              {telegramStatus === 'searching' ? 'Ищем...' : 'Найти'}
+            </button>
+          </div>
+
+          {telegramStatus === 'found' && telegramResult && (
+            <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
+              <Avatar person={telegramResult} size={44} />
+              <div className="min-w-0 flex-1">
+                <p className="font-sans type-button truncate" style={{ color: 'var(--text)' }}>
+                  {telegramResult.name}
+                </p>
+                <p className="font-sans type-support truncate" style={{ color: 'var(--mid)', marginTop: 1 }}>
+                  @{telegramResult.telegram_username ?? normalizedTelegramQuery}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleSendFriendRequest(telegramResult.id)}
+                disabled={isAlreadyFriend || isFriendSent || sendingFriendId === telegramResult.id}
+                className="font-sans transition-opacity active:opacity-70"
+                style={{
+                  border: 'none',
+                  borderRadius: 999,
+                  backgroundColor: isAlreadyFriend || isFriendSent ? 'var(--surface)' : 'rgba(217, 139, 82, 0.14)',
+                  color: isAlreadyFriend || isFriendSent ? 'var(--mid)' : 'var(--accent)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  padding: '8px 12px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isAlreadyFriend ? 'Уже друг' : isFriendSent ? 'Отправлено' : sendingFriendId === telegramResult.id ? '...' : 'Добавить'}
+              </button>
+            </div>
+          )}
+
+          {telegramStatus === 'self' && (
+            <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, lineHeight: 1.45, marginTop: 10 }}>
+              Это твой аккаунт. Для себя заявка не нужна.
+            </p>
+          )}
+
+          {telegramStatus === 'not_found' && (
+            <div style={{ marginTop: 10 }}>
+              <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 12, lineHeight: 1.45 }}>
+                Не нашли в memi. Можно отправить приглашение, а когда человек зайдёт в приложение, он появится в поиске.
+              </p>
+              <button
+                type="button"
+                onClick={onInvite}
+                className="font-sans transition-opacity active:opacity-70"
+                style={{
+                  marginTop: 10,
+                  border: 'none',
+                  background: 'none',
+                  color: 'var(--accent)',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  padding: 0,
+                }}
+              >
+                Пригласить
+              </button>
+            </div>
+          )}
+
+          {telegramError && (
+            <p className="font-sans" style={{ color: '#E05252', fontSize: 12, lineHeight: 1.45, marginTop: 10 }}>
+              {telegramError}
+            </p>
+          )}
+        </div>
+
         <div className="flex justify-center" style={{ marginBottom: 24 }}>
           <button
             type="button"
@@ -1052,8 +1247,10 @@ export default function People() {
 
       {showAdd && (
         <AddPersonSheet
+          friends={friends}
           onClose={() => setShowAdd(false)}
           onCreated={addPerson}
+          onInvite={handleInvite}
         />
       )}
 

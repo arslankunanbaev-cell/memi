@@ -222,6 +222,7 @@ export async function uploadPhoto(sb, userId, file, subfolder = '') {
 // Returns { user, isNew }
 export async function saveUser(tgUser) {
   const sb = assertSupabase()
+  const telegramUsername = tgUser.username ? String(tgUser.username).replace(/^@+/, '').toLowerCase() : null
 
   const { data: existing, error: selectError } = await sb
     .from('users')
@@ -234,13 +235,16 @@ export async function saveUser(tgUser) {
   if (existing) {
     const newName     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
     const newPhotoUrl = tgUser.photo_url ?? null
-    const needsUpdate = existing.name !== newName || existing.photo_url !== newPhotoUrl
+    const needsUpdate = existing.name !== newName
+      || existing.photo_url !== newPhotoUrl
+      || existing.telegram_username !== telegramUsername
     if (needsUpdate) {
       await sb.from('users')
-        .update({ name: newName, photo_url: newPhotoUrl })
+        .update({ name: newName, photo_url: newPhotoUrl, telegram_username: telegramUsername })
         .eq('id', existing.id)
       existing.name      = newName
       existing.photo_url = newPhotoUrl
+      existing.telegram_username = telegramUsername
     }
     return { user: normalizePhotoEntity(existing), isNew: false }
   }
@@ -248,7 +252,7 @@ export async function saveUser(tgUser) {
   const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
   const { data: newUser, error: insertError } = await sb
     .from('users')
-    .insert({ telegram_id: tgUser.id, name, photo_url: tgUser.photo_url ?? null })
+    .insert({ telegram_id: tgUser.id, name, photo_url: tgUser.photo_url ?? null, telegram_username: telegramUsername })
     .select()
     .single()
 
@@ -345,6 +349,17 @@ export async function findUserByTelegramIdSafe(telegramId) {
   const sb = assertSupabase()
   const { data, error } = await sb
     .rpc('find_user_by_telegram_id_safe', { p_telegram_id: telegramId })
+  if (error) throw error
+  return normalizePhotoEntity(data?.[0] ?? null)
+}
+
+export async function findUserByTelegramUsername(username) {
+  const normalized = String(username ?? '').trim().replace(/^@+/, '').toLowerCase()
+  if (!normalized) return null
+
+  const sb = assertSupabase()
+  const { data, error } = await sb
+    .rpc('find_user_by_telegram_username', { p_username: normalized })
   if (error) throw error
   return normalizePhotoEntity(data?.[0] ?? null)
 }

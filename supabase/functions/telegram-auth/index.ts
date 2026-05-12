@@ -72,7 +72,7 @@ serve(async (req: Request) => {
     const { initData } = await req.json()
 
     // ── Определяем пользователя Telegram ──────────────────────────────────────
-    let tgUser: { id: number; first_name: string; last_name?: string; photo_url?: string }
+    let tgUser: { id: number; first_name: string; last_name?: string; username?: string; photo_url?: string }
 
     const isDev = !BOT_TOKEN
     if (isDev) {
@@ -111,6 +111,9 @@ serve(async (req: Request) => {
     const email    = `tg_${tgUser.id}@memi.internal`
     const name     = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Пользователь'
     const password = await derivePassword(tgUser.id)
+    const telegramUsername = typeof tgUser.username === 'string' && tgUser.username.trim()
+      ? tgUser.username.trim().replace(/^@+/, '').toLowerCase()
+      : null
 
     // Stable public code: SHA-256 hex of telegram_id.
     const hashBytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(tgUser.id)))
@@ -123,7 +126,7 @@ serve(async (req: Request) => {
       email,
       password,
       email_confirm: true,
-      user_metadata: { telegram_id: tgUser.id, name, photo_url: tgUser.photo_url ?? null },
+      user_metadata: { telegram_id: tgUser.id, name, username: telegramUsername, photo_url: tgUser.photo_url ?? null },
     })
 
     if (createErr) {
@@ -134,7 +137,7 @@ serve(async (req: Request) => {
     // ── Синхронизируем public.users ────────────────────────────────────────────
     const { data: existingUser } = await admin
       .from('users')
-      .select('id, auth_id, name, photo_url, public_code')
+      .select('id, auth_id, name, photo_url, public_code, telegram_username')
       .eq('telegram_id', tgUser.id)
       .maybeSingle()
 
@@ -144,6 +147,7 @@ serve(async (req: Request) => {
       if (existingUser.name      !== name)                                    updates.name        = name
       if (existingUser.photo_url !== (tgUser.photo_url ?? null))              updates.photo_url   = tgUser.photo_url ?? null
       if (!existingUser.public_code)                                          updates.public_code = publicCode
+      if (existingUser.telegram_username !== telegramUsername)                 updates.telegram_username = telegramUsername
       if (Object.keys(updates).length > 0) {
         await admin.from('users').update(updates).eq('id', existingUser.id)
       }
@@ -151,6 +155,7 @@ serve(async (req: Request) => {
       await admin.from('users').insert({
         auth_id:     authId,
         telegram_id: tgUser.id,
+        telegram_username: telegramUsername,
         name,
         photo_url:   tgUser.photo_url ?? null,
         public_code: publicCode,

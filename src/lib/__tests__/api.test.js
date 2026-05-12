@@ -58,6 +58,7 @@ import {
   joinCollectionByInviteCode,
   sendFriendRequest,
   acceptFriendRequest,
+  findUserByTelegramUsername,
 } from '../api.js'
 
 // ── saveUser ──────────────────────────────────────────────────────────────────
@@ -179,6 +180,29 @@ describe('collection helpers', () => {
     mockRpc.mockResolvedValue({ data: [], error: null })
 
     await expect(joinCollectionByInviteCode('missing', 'user-1')).resolves.toBeNull()
+  })
+})
+
+describe('findUserByTelegramUsername', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('normalizes @username and unwraps the RPC result', async () => {
+    mockRpc.mockResolvedValue({
+      data: [{ id: 'user-2', name: 'Mila', telegram_username: 'mila' }],
+      error: null,
+    })
+
+    const result = await findUserByTelegramUsername('@Mila')
+
+    expect(mockRpc).toHaveBeenCalledWith('find_user_by_telegram_username', { p_username: 'mila' })
+    expect(result).toMatchObject({ id: 'user-2', name: 'Mila', telegram_username: 'mila' })
+  })
+
+  it('returns null for an empty username without calling RPC', async () => {
+    const result = await findUserByTelegramUsername('  @  ')
+
+    expect(result).toBeNull()
+    expect(mockRpc).not.toHaveBeenCalled()
   })
 })
 
