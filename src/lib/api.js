@@ -666,6 +666,15 @@ export async function acceptFriendRequest(friendshipId) {
     .select()
     .single()
   if (error) throw error
+
+  if (data?.id) {
+    invokeEdgeFunction(sb, 'send-friend-accepted-notification', {
+      friendshipId: data.id,
+    }).catch((err) => {
+      console.warn('[acceptFriendRequest] notification failed:', err)
+    })
+  }
+
   return data
 }
 

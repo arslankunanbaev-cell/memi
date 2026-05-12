@@ -57,6 +57,7 @@ import {
   mergeMomentCollections,
   joinCollectionByInviteCode,
   sendFriendRequest,
+  acceptFriendRequest,
 } from '../api.js'
 
 // ── saveUser ──────────────────────────────────────────────────────────────────
@@ -231,6 +232,38 @@ describe('sendFriendRequest', () => {
     expect(result).toBeNull()
     expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-notification', {
       body: { receiverId: 'user-2', notifyRequester: true, notifyReceiver: false },
+    })
+  })
+})
+
+describe('acceptFriendRequest', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFunctionsInvoke.mockResolvedValue({ data: { ok: true }, error: null })
+  })
+
+  it('notifies the requester after accepting a friend request', async () => {
+    const single = vi.fn().mockResolvedValue({
+      data: {
+        id: 'friendship-1',
+        requester_id: 'user-1',
+        receiver_id: 'user-2',
+        status: 'accepted',
+      },
+      error: null,
+    })
+    const select = vi.fn(() => ({ single }))
+    const eqById = vi.fn(() => ({ select }))
+    const update = vi.fn(() => ({ eq: eqById }))
+    mockFrom.mockReturnValueOnce({ update })
+
+    const result = await acceptFriendRequest('friendship-1')
+
+    expect(result?.status).toBe('accepted')
+    expect(update).toHaveBeenCalledWith({ status: 'accepted' })
+    expect(eqById).toHaveBeenCalledWith('id', 'friendship-1')
+    expect(mockFunctionsInvoke).toHaveBeenCalledWith('send-friend-accepted-notification', {
+      body: { friendshipId: 'friendship-1' },
     })
   })
 })
