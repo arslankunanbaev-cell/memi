@@ -89,7 +89,13 @@ describe('People', () => {
     expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('startapp%3Dref_test-code'))
   })
 
-  it('finds a registered user by Telegram username and sends a friend request', async () => {
+  it('temporarily hides the Telegram search entry point', () => {
+    renderPeople()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'РќР°Р№С‚Рё' })).not.toBeInTheDocument()
+  })
+
+  it.skip('finds a registered user by Telegram username and sends a friend request', async () => {
     mockFindUserByTelegramUsername.mockResolvedValue({
       id: 'user-2',
       name: 'Mila',
@@ -120,7 +126,7 @@ describe('People', () => {
     })
   })
 
-  it('offers invite when Telegram username is not registered in memi', async () => {
+  it.skip('offers invite when Telegram username is not registered in memi', async () => {
     mockFindUserByTelegramUsername.mockResolvedValue(null)
 
     renderPeople()
@@ -133,7 +139,7 @@ describe('People', () => {
     expect(mockOpenTelegramLink).toHaveBeenCalledWith(expect.stringContaining('startapp%3Dref_test-code'))
   })
 
-  it('finds an existing friend locally before searching remote usernames', async () => {
+  it.skip('finds an existing friend locally before searching remote usernames', async () => {
     useAppStore.setState({
       currentUser: { id: 'user-1', name: 'Test', public_code: 'test-code' },
       people: [],
@@ -151,7 +157,7 @@ describe('People', () => {
     expect(mockFindUserByTelegramUsername).not.toHaveBeenCalled()
   })
 
-  it('finds an existing friend by displayed name when username is not saved yet', async () => {
+  it.skip('finds an existing friend by displayed name when username is not saved yet', async () => {
     useAppStore.setState({
       currentUser: { id: 'user-1', name: 'Test', public_code: 'test-code' },
       people: [],

@@ -18,6 +18,7 @@ import SectionLabel from '../components/SectionLabel'
 import { useAppStore } from '../store/useAppStore'
 
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
+const SHOW_PEOPLE_SEARCH = false
 
 function normalizeTelegramUsername(value) {
   return String(value ?? '').trim().replace(/^@+/, '').toLowerCase()
@@ -1248,12 +1249,14 @@ export default function People() {
           </div>
         )}
 
-        <TelegramUserSearch
-          currentUser={currentUser}
-          friends={friends}
-          searchablePeople={mergedPeople}
-          onInvite={handleInvite}
-        />
+        {SHOW_PEOPLE_SEARCH && (
+          <TelegramUserSearch
+            currentUser={currentUser}
+            friends={friends}
+            searchablePeople={mergedPeople}
+            onInvite={handleInvite}
+          />
+        )}
 
         {incomingRequests.length > 0 && (
           <section style={{ paddingBottom: 20 }}>
