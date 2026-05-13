@@ -15,6 +15,7 @@ import AddMoment from './AddMoment'
 import { RouteLoadingState } from '../components/LoadingState'
 import { saveCapsuleSlot, getMoments, getSharedMoments, getFriendsFeedMoments, mergeMomentCollections, addMomentToCollection, createCollection } from '../lib/api'
 import { FEATURES } from '../lib/features'
+import { isIntroOnboardingTester } from '../lib/onboarding'
 import { navigateWithTransition } from '../lib/navigation'
 import { tgHaptic } from '../lib/telegram'
 
@@ -300,6 +301,7 @@ export default function Home() {
       {topbarDate}
     </span>
   )
+  const showIntroHints = isIntroOnboardingTester(currentUser)
 
   useEffect(() => {
     if (!scrollRef.current || isEmpty) return
@@ -557,7 +559,7 @@ export default function Home() {
                 margin: 0,
               }}
             >
-              Первый момент
+              {showIntroHints ? 'Начни с первого момента' : 'Первый момент'}
             </h2>
 
             <p
@@ -568,7 +570,9 @@ export default function Home() {
                 marginTop: 12,
               }}
             >
-              Сохрани фото, слово или чувство, чтобы лента начала собираться сама.
+              {showIntroHints
+                ? 'Это твоя личная лента памяти. Добавь фото, мысль, музыку или место, а потом возвращайся к ним здесь.'
+                : 'Сохрани фото, слово или чувство, чтобы лента начала собираться сама.'}
             </p>
 
             <button
