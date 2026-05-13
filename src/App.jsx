@@ -31,7 +31,7 @@ import MomentSaved from './pages/MomentSaved'
 import PublicProfile from './pages/PublicProfile'
 import { trackEvent } from './lib/analytics'
 import { FEATURES } from './lib/features'
-import { hasSeenIntroOnboarding, isIntroOnboardingTester } from './lib/onboarding'
+import { hasSeenIntroOnboarding } from './lib/onboarding'
 import { RouteLoadingState } from './components/LoadingState'
 
 let hasTrackedAppOpened = false
@@ -243,7 +243,7 @@ export default function App() {
 
         clearTimeout(fallbackTimer)
         if (!location.pathname.startsWith('/admin/stats')) {
-          const shouldShowIntroOnboarding = isIntroOnboardingTester(user) && !hasSeenIntroOnboarding()
+          const shouldShowIntroOnboarding = !hasSeenIntroOnboarding()
           navigate(shouldShowIntroOnboarding ? '/onboarding' : '/home', { replace: true })
         }
       } catch (err) {

@@ -1,9 +1,4 @@
-export const ONBOARDING_TEST_TELEGRAM_ID = 308362442
-export const ONBOARDING_STORAGE_KEY = 'memi_intro_onboarding_seen_v1'
-
-export function isIntroOnboardingTester(user) {
-  return Number(user?.telegram_id) === ONBOARDING_TEST_TELEGRAM_ID
-}
+export const ONBOARDING_STORAGE_KEY = 'memi_intro_onboarding_seen_v2'
 
 export function hasSeenIntroOnboarding() {
   try {

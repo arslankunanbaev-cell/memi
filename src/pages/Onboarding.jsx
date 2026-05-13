@@ -144,10 +144,10 @@ export default function Onboarding() {
             onClick={() => finish('skipped')}
             className="font-sans transition-opacity active:opacity-60"
             style={{
-              border: '1px solid rgba(160,94,44,0.1)',
+              border: '1px solid rgba(160,94,44,0.16)',
               borderRadius: 999,
-              background: 'rgba(255,255,255,0.48)',
-              color: 'var(--mid)',
+              background: 'var(--moment-surface)',
+              color: 'var(--text)',
               padding: '8px 12px',
               fontSize: 13,
               fontWeight: 600,

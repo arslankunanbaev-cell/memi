@@ -10,7 +10,6 @@ import {
 } from '../lib/api'
 import { tgHaptic } from '../lib/telegram'
 import { navigateWithTransition } from '../lib/navigation'
-import { isIntroOnboardingTester } from '../lib/onboarding'
 import { plural } from '../lib/ruPlural'
 import BottomNav from '../components/BottomNav'
 import BottomSheet from '../components/BottomSheet'
@@ -1060,7 +1059,6 @@ export default function People() {
   const inMemiList = mergedPeople.filter((person) => person.isInMemi && !person.isFriend)
   const othersList = mergedPeople.filter((person) => !person.isInMemi && !person.isFriend)
   const localPeopleList = [...inMemiList, ...othersList]
-  const showIntroHints = isIntroOnboardingTester(currentUser)
 
   function momentCountFor(personId) {
     return momentCountMap.get(personId) ?? 0
@@ -1351,8 +1349,8 @@ export default function People() {
                   <path d="M20 20c0-2.8-1.8-5.1-4.3-5.8" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
                 </svg>
               )}
-              title={showIntroHints ? 'Люди появятся из моментов' : 'Пока нет людей'}
-              description={showIntroHints ? 'Отмечай близких при создании момента. Memi соберет для каждого человека отдельную историю.' : 'Добавь близких в моменты или пригласи друзей в memi.'}
+              title="Люди появятся из моментов"
+              description="Отмечай близких при создании момента. Memi соберет для каждого человека отдельную историю."
               primaryLabel="Пригласить первого"
               onPrimary={handleInvite}
               secondaryLabel="Добавить вручную"

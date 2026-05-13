@@ -6,7 +6,6 @@ import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { navigateWithTransition } from '../lib/navigation'
-import { isIntroOnboardingTester } from '../lib/onboarding'
 import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { createCollection } from '../lib/api'
@@ -580,7 +579,6 @@ export default function Archive() {
     people: uniquePeopleCount(monthMoments),
   }), [monthMoments])
   const activeMonthTitle = monthParts(resolvedActiveMonth)
-  const showIntroHints = isIntroOnboardingTester(currentUser)
 
   return (
     <div className="archive-screen flex h-full flex-col">
@@ -808,14 +806,12 @@ export default function Archive() {
           >
             <span style={{ fontSize: 34, marginBottom: 12 }}>🗂️</span>
             <p className="font-sans type-button-strong" style={{ color: 'var(--text)', marginBottom: 6 }}>
-              {showIntroHints ? 'Архив заполнится сам' : 'Здесь пока пусто'}
+              Архив заполнится сам
             </p>
             <p className="font-sans type-topbar-meta text-center" style={{ color: 'var(--mid)' }}>
               {filterPeople.length > 0
                 ? 'Для выбранных людей в этом месяце нет моментов.'
-                : showIntroHints
-                  ? 'Когда ты сохраняешь моменты, они автоматически раскладываются здесь по месяцам.'
-                  : 'В выбранном месяце пока нет сохранённых моментов.'}
+                : 'Когда ты сохраняешь моменты, они автоматически раскладываются здесь по месяцам.'}
             </p>
             {filterPeople.length > 0 && (
               <button
