@@ -58,14 +58,6 @@ function StatsIcon() {
   )
 }
 
-function StarIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  )
-}
-
 // ── Capsule tile ───────────────────────────────────────────────────────────────
 
 function CapsuleTile({ slot, index, onEmpty, onFilled }) {
@@ -303,9 +295,12 @@ function PremiumSheet({ onClose }) {
     },
     {
       icon: (
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <>
+          <rect x="4" y="7" width="16" height="10" rx="5" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M9 12h6M12 9v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </>
       ),
-      text: 'Бейдж Premium на профиле',
+      text: 'Чип memi+ на профиле',
     },
     {
       icon: (
@@ -338,8 +333,12 @@ function PremiumSheet({ onClose }) {
         style={{
           position: 'relative',
           overflow: 'hidden',
-          background: 'linear-gradient(170deg, #3D1A06 0%, #7A3D18 30%, #C06830 62%, #E8A55A 85%, #F5CC88 100%)',
-          padding: '32px 24px 36px',
+          background: `
+            radial-gradient(circle at 18% 0%, rgba(255,255,255,0.88), transparent 34%),
+            radial-gradient(circle at 82% 16%, rgba(217,139,82,0.22), transparent 34%),
+            linear-gradient(145deg, #FFF7E8 0%, #F4DFBD 46%, #E0A05C 100%)
+          `,
+          padding: '34px 24px 38px',
           textAlign: 'center',
         }}
       >
@@ -347,30 +346,31 @@ function PremiumSheet({ onClose }) {
         <div
           aria-hidden="true"
           style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: '55%',
-            background: 'radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.22) 0%, transparent 68%)',
+            position: 'absolute', top: 12, left: '50%', width: 56, height: 5,
+            borderRadius: 999,
+            background: 'rgba(160,94,44,0.18)',
+            transform: 'translateX(-50%)',
             pointerEvents: 'none',
           }}
         />
-        {/* icon circle */}
+        {/* premium mark */}
         <div
           style={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.14)',
-            border: '1.5px solid rgba(255,255,255,0.28)',
+            width: 92, height: 92, borderRadius: 28,
+            background: 'rgba(255,255,255,0.44)',
+            border: '1px solid rgba(255,255,255,0.62)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 20px',
-            boxShadow: '0 0 32px rgba(255,200,100,0.25)',
+            margin: '4px auto 20px',
+            boxShadow: '0 16px 34px rgba(160,94,44,0.16), inset 0 1px 0 rgba(255,255,255,0.74)',
+            backdropFilter: 'blur(8px)',
           }}
         >
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
+          <PremiumBadge label="memi+" />
         </div>
-        <h2 className="font-sans" style={{ color: '#fff', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.3 }}>
-          Memi Premium
+        <h2 className="font-serif" style={{ color: 'var(--text)', fontSize: 34, fontWeight: 600, margin: 0, letterSpacing: 0, lineHeight: 1 }}>
+          Memi+
         </h2>
-        <p className="font-sans" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 10, lineHeight: 1.4 }}>
+        <p className="font-sans" style={{ color: 'var(--deep)', fontSize: 14, fontWeight: 600, marginTop: 10, lineHeight: 1.4 }}>
           Поддержи проект и получи особый статус
         </p>
       </div>
@@ -611,14 +611,13 @@ function PremiumRow({ onOpen }) {
         />
         <div
           className="flex items-center justify-center rounded-[12px] flex-shrink-0"
-          style={{ width: 38, height: 38, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.22)', color: '#fff' }}
+          style={{ width: 48, height: 38, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.22)', color: '#fff' }}
         >
-          <StarIcon />
+          <PremiumBadge label="memi+" compact />
         </div>
         <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
           <div className="flex items-center gap-2">
-            <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi Premium</p>
-            <PremiumBadge compact />
+            <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi+</p>
           </div>
           <p className="font-sans" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
         </div>
@@ -629,8 +628,8 @@ function PremiumRow({ onOpen }) {
 
   return (
     <SettingsRow
-      icon={<StarIcon />}
-      title="Memi Premium"
+      icon={<PremiumBadge label="memi+" compact />}
+      title="Memi+"
       subtitle="99 ⭐ в месяц"
       onPress={onOpen}
       isLast

@@ -690,18 +690,19 @@
     isolation: isolate;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    min-height: 25px;
+    justify-content: center;
+    min-height: 24px;
     overflow: hidden;
     border-radius: 999px;
-    padding: 3px 8px 3px 4px;
+    padding: 5px 10px;
     border: 1px solid rgba(255, 226, 163, 0.72);
     background:
-      linear-gradient(135deg, rgba(255, 248, 220, 0.95) 0%, rgba(245, 184, 99, 0.96) 44%, rgba(160, 94, 44, 0.98) 100%);
+      radial-gradient(circle at 18% 12%, rgba(255,255,255,0.8), transparent 32%),
+      linear-gradient(135deg, #FFF0B8 0%, #E7B35B 48%, #B8742F 100%);
     box-shadow:
-      0 7px 18px rgba(160, 94, 44, 0.26),
-      inset 0 1px 0 rgba(255, 255, 255, 0.62),
-      inset 0 -1px 0 rgba(92, 45, 14, 0.22);
+      0 8px 18px rgba(160, 94, 44, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
+      inset 0 -1px 0 rgba(92, 45, 14, 0.18);
     color: #FFF8DF;
     flex-shrink: 0;
     white-space: nowrap;
@@ -728,42 +729,11 @@
     pointer-events: none;
   }
 
-  .premium-badge-icon {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 19px;
-    height: 19px;
-    border-radius: 50%;
-    background:
-      radial-gradient(circle at 35% 26%, #FFFFFF 0%, #FFE7A5 29%, #E9A54E 62%, #A05E2C 100%);
-    color: #8E4D17;
-    box-shadow:
-      0 1px 4px rgba(80, 50, 30, 0.28),
-      inset 0 1px 0 rgba(255,255,255,0.82);
-  }
-
-  .premium-badge-orbit {
-    position: absolute;
-    left: 4px;
-    width: 19px;
-    height: 19px;
-    border-radius: 50%;
-    background: rgba(255, 236, 175, 0.55);
-    animation: premiumBadgePulse 2.8s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  .premium-badge-mark {
-    filter: drop-shadow(0 1px 0 rgba(255,255,255,0.45));
-  }
-
   .premium-badge-label {
     position: relative;
     color: #fff;
     font-family: var(--font-sans);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 1;
     letter-spacing: 0;
@@ -771,14 +741,8 @@
   }
 
   .premium-badge-compact {
-    min-height: 23px;
-    padding-right: 7px;
-  }
-
-  .premium-badge-compact .premium-badge-icon,
-  .premium-badge-compact .premium-badge-orbit {
-    width: 18px;
-    height: 18px;
+    min-height: 22px;
+    padding: 5px 9px;
   }
 
   html[data-theme="dark"] .bottom-sheet-panel {
