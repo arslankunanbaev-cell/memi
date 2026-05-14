@@ -530,7 +530,7 @@ export function PublicProfileContent({
   if (!profileUser) return null
 
   const name = displayName || linkedPerson?.name || profileUser.name || 'Пользователь'
-  const since = null
+  const since = sinceLabel(profileUser.created_at)
   const profileEnabled = profileUser.public_profile_enabled === true
   const bio = profileEnabled ? profileUser.bio?.trim() ?? '' : ''
   const favoriteSong = profileEnabled && profileUser.favorite_song_title
@@ -639,22 +639,6 @@ export function PublicProfileContent({
               {profileUserIsPremium && <PremiumBadge compact />}
             </div>
 
-            {since && (
-              <p
-                className="font-sans type-support"
-                style={{
-                  marginTop: 10,
-                  paddingLeft: 14,
-                  color: 'var(--mid)',
-                  backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: '0 50%',
-                  backgroundSize: '6px 6px',
-                }}
-              >
-                с memi с {since}
-              </p>
-            )}
 
             {bio && (
               <p
@@ -948,6 +932,20 @@ export function PublicProfileContent({
             )}
           </div>
         </div>
+      )}
+
+      {since && (
+        <p
+          className="font-sans type-support"
+          style={{
+            marginTop: 26,
+            marginBottom: 0,
+            textAlign: 'center',
+            color: 'var(--mid)',
+          }}
+        >
+          с memi с {since}
+        </p>
       )}
     </div>
   )

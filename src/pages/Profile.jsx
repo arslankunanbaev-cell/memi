@@ -757,22 +757,6 @@ export default function Profile() {
                     {isPremium && <PremiumBadge compact />}
                   </div>
 
-                  {since && (
-                    <p
-                      className="font-sans type-support"
-                      style={{
-                        marginTop: 10,
-                        paddingLeft: 14,
-                        color: 'var(--mid)',
-                        backgroundImage: 'radial-gradient(circle, var(--accent) 0 55%, transparent 56%)',
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: '0 50%',
-                        backgroundSize: '6px 6px',
-                      }}
-                    >
-                      с memi с {since}
-                    </p>
-                  )}
 
                   {favoriteSong && (
                     <ProfileSongCard
@@ -878,6 +862,20 @@ export default function Profile() {
                 isLast
               />
             </SettingsGroup>
+
+            {since && (
+              <p
+                className="font-sans type-support"
+                style={{
+                  marginTop: 26,
+                  marginBottom: 0,
+                  textAlign: 'center',
+                  color: 'var(--mid)',
+                }}
+              >
+                с memi с {since}
+              </p>
+            )}
           </div>
         </div>
       </div>
