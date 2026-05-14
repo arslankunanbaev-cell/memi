@@ -480,9 +480,12 @@
     background:
       linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.72)),
       var(--moment-surface);
-    border: 1px solid rgba(160, 94, 44, 0.08);
+    border: 1px solid rgba(160, 94, 44, 0.16);
     border-radius: 28px;
-    box-shadow: var(--shadow-card-strong);
+    box-shadow:
+      0 14px 34px rgba(80, 50, 30, 0.12),
+      0 0 26px rgba(217, 139, 82, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.76);
   }
 
   .person-profile-card {
@@ -829,6 +832,14 @@
       linear-gradient(180deg, rgba(35,33,32,0.92), rgba(30,28,26,0.84)),
       var(--moment-surface);
     border-color: rgba(255,255,255,0.06);
+  }
+
+  html[data-theme="dark"] .profile-hero-card {
+    border-color: rgba(255,255,255,0.1);
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.36),
+      0 0 26px rgba(217, 139, 82, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   html[data-theme="dark"] .person-profile-card {
