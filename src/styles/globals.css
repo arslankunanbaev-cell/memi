@@ -485,6 +485,14 @@
     box-shadow: var(--shadow-card-strong);
   }
 
+  .person-profile-card {
+    border: 1px solid rgba(160, 94, 44, 0.1);
+    box-shadow:
+      0 10px 26px rgba(80, 50, 30, 0.09),
+      0 0 22px rgba(217, 139, 82, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+
   .profile-hero-cover {
     position: relative;
     height: 150px;
@@ -821,6 +829,14 @@
       linear-gradient(180deg, rgba(35,33,32,0.92), rgba(30,28,26,0.84)),
       var(--moment-surface);
     border-color: rgba(255,255,255,0.06);
+  }
+
+  html[data-theme="dark"] .person-profile-card {
+    border-color: rgba(255,255,255,0.07);
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.3),
+      0 0 22px rgba(217, 139, 82, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   html[data-theme="dark"] .profile-song-card {

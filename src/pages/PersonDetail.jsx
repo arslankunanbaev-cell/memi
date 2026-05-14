@@ -861,7 +861,7 @@ export default function PersonDetail() {
 
       <div className="hide-scrollbar flex-1 overflow-y-auto px-4" style={{ paddingBottom: 170 }}>
         <div
-          className="surface-card-strong"
+          className="surface-card-strong person-profile-card"
           style={{
             marginTop: 20,
             backgroundColor: 'var(--moment-surface)',
