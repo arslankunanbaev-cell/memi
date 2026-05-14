@@ -586,31 +586,35 @@ function PremiumRow({ onOpen }) {
           position: 'relative',
           overflow: 'hidden',
           padding: '14px 16px',
-          border: 'none',
-          background: 'linear-gradient(125deg, #5C2D0E 0%, #9A4E20 35%, #D07838 65%, #EAA85C 100%)',
+          border: '1px solid rgba(160, 94, 44, 0.12)',
+          background: `
+            radial-gradient(circle at 12% 0%, rgba(255,255,255,0.78), transparent 34%),
+            linear-gradient(135deg, rgba(255,255,255,0.86), rgba(245,235,221,0.9))
+          `,
+          boxShadow: '0 10px 24px rgba(80,50,30,0.08), inset 0 1px 0 rgba(255,255,255,0.72)',
         }}
       >
         <div
           aria-hidden="true"
           style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'radial-gradient(ellipse at 80% 50%, rgba(255,220,140,0.18) 0%, transparent 60%)',
+            background: 'radial-gradient(ellipse at 88% 50%, rgba(217,139,82,0.12) 0%, transparent 58%)',
             pointerEvents: 'none',
           }}
         />
         <div
           className="flex items-center justify-center rounded-[12px] flex-shrink-0"
-          style={{ width: 48, height: 38, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.22)', color: '#fff' }}
+          style={{ width: 48, height: 38, background: 'rgba(217,139,82,0.08)', border: '1px solid rgba(217,139,82,0.14)', color: 'var(--deep)' }}
         >
           <PremiumBadge label="memi+" compact />
         </div>
         <div className="min-w-0 flex-1" style={{ position: 'relative' }}>
           <div className="flex items-center gap-2">
-            <p className="font-sans" style={{ color: '#fff', fontSize: 15, fontWeight: 600, margin: 0 }}>Memi+</p>
+            <p className="font-sans" style={{ color: 'var(--text)', fontSize: 15, fontWeight: 700, margin: 0 }}>Memi+</p>
           </div>
-          <p className="font-sans" style={{ color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
+          <p className="font-sans" style={{ color: 'var(--mid)', fontSize: 13, marginTop: 2 }}>Подписка активна</p>
         </div>
-        <ChevronRightIcon color="rgba(255,255,255,0.6)" />
+        <ChevronRightIcon color="var(--soft)" />
       </button>
     )
   }
