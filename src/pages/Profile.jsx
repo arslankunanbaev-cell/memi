@@ -420,11 +420,14 @@ function PremiumSheet({ onClose }) {
           style={{
             background: loading
               ? 'var(--surface)'
-              : 'linear-gradient(135deg, #7A3D18 0%, #C06830 50%, #E8A55A 100%)',
-            color: loading ? 'var(--soft)' : '#fff',
+              : `
+                linear-gradient(180deg, rgba(255,255,255,0.34), rgba(255,255,255,0)),
+                #D98B52
+              `,
+            color: loading ? 'var(--soft)' : '#FFF9F1',
             borderRadius: 9999, padding: '16px 0', fontSize: 17,
             border: 'none', marginBottom: 12, letterSpacing: -0.2,
-            boxShadow: loading ? 'none' : '0 6px 24px rgba(192,104,48,0.38)',
+            boxShadow: loading ? 'none' : '0 8px 20px rgba(160,94,44,0.18), inset 0 1px 0 rgba(255,255,255,0.38)',
           }}
         >
           {loading ? 'Открываю оплату...' : isPremium ? 'Продлить · 99 ⭐' : 'Подписаться · 99 ⭐ / мес'}
