@@ -342,17 +342,6 @@ function PremiumSheet({ onClose }) {
           textAlign: 'center',
         }}
       >
-        {/* top shimmer */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute', top: 12, left: '50%', width: 56, height: 5,
-            borderRadius: 999,
-            background: 'rgba(160,94,44,0.18)',
-            transform: 'translateX(-50%)',
-            pointerEvents: 'none',
-          }}
-        />
         {/* premium mark */}
         <div
           style={{
@@ -367,10 +356,10 @@ function PremiumSheet({ onClose }) {
         >
           <PremiumBadge label="memi+" />
         </div>
-        <h2 className="font-serif" style={{ color: 'var(--text)', fontSize: 34, fontWeight: 600, margin: 0, letterSpacing: 0, lineHeight: 1 }}>
+        <h2 className="font-serif" style={{ color: '#2B2117', fontSize: 34, fontWeight: 600, margin: 0, letterSpacing: 0, lineHeight: 1 }}>
           Memi+
         </h2>
-        <p className="font-sans" style={{ color: 'var(--deep)', fontSize: 14, fontWeight: 600, marginTop: 10, lineHeight: 1.4 }}>
+        <p className="font-sans" style={{ color: '#7A461F', fontSize: 14, fontWeight: 700, marginTop: 10, lineHeight: 1.4 }}>
           Поддержи проект и получи особый статус
         </p>
       </div>
