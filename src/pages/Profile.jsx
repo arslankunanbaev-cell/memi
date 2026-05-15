@@ -578,6 +578,8 @@ function SettingsRow({ icon, title, subtitle, onPress, isFirst, isLast, accent, 
 
 function PremiumRow({ onOpen }) {
   const isPremium = useAppStore((s) => s.isPremium)
+  const currentTheme = useAppStore((s) => s.currentTheme)
+  const isDarkTheme = currentTheme === 'dark'
 
   if (isPremium) {
     return (
@@ -589,25 +591,40 @@ function PremiumRow({ onOpen }) {
           position: 'relative',
           overflow: 'hidden',
           padding: '14px 16px',
-          border: '1px solid rgba(160, 94, 44, 0.12)',
-          background: `
-            radial-gradient(circle at 12% 0%, rgba(255,255,255,0.78), transparent 34%),
-            linear-gradient(135deg, rgba(255,255,255,0.86), rgba(245,235,221,0.9))
-          `,
-          boxShadow: '0 10px 24px rgba(80,50,30,0.08), inset 0 1px 0 rgba(255,255,255,0.72)',
+          border: isDarkTheme ? '1px solid rgba(232,169,107,0.18)' : '1px solid rgba(160, 94, 44, 0.12)',
+          background: isDarkTheme
+            ? `
+              radial-gradient(circle at 12% 0%, rgba(217,139,82,0.18), transparent 34%),
+              linear-gradient(135deg, rgba(35,33,32,0.98), rgba(26,24,22,0.94))
+            `
+            : `
+              radial-gradient(circle at 12% 0%, rgba(255,255,255,0.78), transparent 34%),
+              linear-gradient(135deg, rgba(255,255,255,0.86), rgba(245,235,221,0.9))
+            `,
+          boxShadow: isDarkTheme
+            ? '0 12px 28px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.05)'
+            : '0 10px 24px rgba(80,50,30,0.08), inset 0 1px 0 rgba(255,255,255,0.72)',
         }}
       >
         <div
           aria-hidden="true"
           style={{
             position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'radial-gradient(ellipse at 88% 50%, rgba(217,139,82,0.12) 0%, transparent 58%)',
+            background: isDarkTheme
+              ? 'radial-gradient(ellipse at 88% 50%, rgba(232,169,107,0.14) 0%, transparent 58%)'
+              : 'radial-gradient(ellipse at 88% 50%, rgba(217,139,82,0.12) 0%, transparent 58%)',
             pointerEvents: 'none',
           }}
         />
         <div
           className="flex items-center justify-center rounded-[12px] flex-shrink-0"
-          style={{ width: 48, height: 38, background: 'rgba(217,139,82,0.08)', border: '1px solid rgba(217,139,82,0.14)', color: 'var(--deep)' }}
+          style={{
+            width: 48,
+            height: 38,
+            background: isDarkTheme ? 'rgba(232,169,107,0.1)' : 'rgba(217,139,82,0.08)',
+            border: isDarkTheme ? '1px solid rgba(232,169,107,0.16)' : '1px solid rgba(217,139,82,0.14)',
+            color: 'var(--deep)',
+          }}
         >
           <PremiumBadge label="memi+" compact />
         </div>
