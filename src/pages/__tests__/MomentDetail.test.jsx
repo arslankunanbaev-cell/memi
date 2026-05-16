@@ -180,6 +180,36 @@ describe('MomentDetail', () => {
     expect(screen.getByText('Local Person').closest('button')).toBeNull()
   })
 
+  it('opens a zoomable photo preview from the moment photo', async () => {
+    mockLocation.state = {}
+    useAppStore.setState({
+      currentUser: { id: 'user-1', name: 'Me' },
+      moments: [{
+        id: 'moment-public',
+        user_id: 'user-1',
+        title: 'Photo Memory',
+        created_at: '2024-02-01T10:00:00Z',
+        photo_url: 'https://example.com/photo.jpg',
+        people: [],
+        taggedFriends: [],
+      }],
+      friends: [],
+      capsule: [null, null, null, null],
+    })
+
+    const user = userEvent.setup()
+
+    render(<MomentDetail />)
+
+    await user.click(screen.getByRole('button', { name: 'Открыть фото' }))
+
+    expect(screen.getByRole('dialog', { name: 'Просмотр фото' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Закрыть фото' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Просмотр фото' })).not.toBeInTheDocument()
+  })
+
   it('navigates back from a left-edge swipe', () => {
     mockLocation.state = {}
     useAppStore.setState({

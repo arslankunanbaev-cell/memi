@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import {
@@ -39,6 +39,17 @@ function formatFull(iso) {
 }
 
 const REACTION_EMOJIS = ['❤️', '🥹', '😄', '🔥', '🫶']
+const PHOTO_MIN_SCALE = 1
+const PHOTO_MAX_SCALE = 4
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function getTouchDistance(touches) {
+  const [first, second] = touches
+  return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY)
+}
 
 function CircleButton({ onClick, children, light = false, ariaLabel }) {
   return (
@@ -155,6 +166,204 @@ function MenuAction({ label, danger = false, onClick, children }) {
   )
 }
 
+function PhotoPreview({ src, alt, onClose }) {
+  const [scale, setScale] = useState(PHOTO_MIN_SCALE)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const gestureRef = useRef({
+    mode: null,
+    distance: 0,
+    scale: PHOTO_MIN_SCALE,
+    x: 0,
+    y: 0,
+    offset: { x: 0, y: 0 },
+  })
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onClose])
+
+  function setPreviewScale(nextScale) {
+    setScale(nextScale)
+    if (nextScale === PHOTO_MIN_SCALE) {
+      setOffset({ x: 0, y: 0 })
+    }
+  }
+
+  function handleWheel(event) {
+    event.preventDefault()
+    setPreviewScale(clamp(scale + (event.deltaY > 0 ? -0.25 : 0.25), PHOTO_MIN_SCALE, PHOTO_MAX_SCALE))
+  }
+
+  function handleDoubleClick(event) {
+    event.preventDefault()
+    setPreviewScale(scale > PHOTO_MIN_SCALE ? PHOTO_MIN_SCALE : 2.4)
+  }
+
+  function handleTouchStart(event) {
+    if (event.touches.length === 2) {
+      gestureRef.current = {
+        mode: 'pinch',
+        distance: getTouchDistance(event.touches),
+        scale,
+        x: 0,
+        y: 0,
+        offset,
+      }
+      return
+    }
+
+    if (event.touches.length === 1 && scale > PHOTO_MIN_SCALE) {
+      const touch = event.touches[0]
+      gestureRef.current = {
+        mode: 'pan',
+        distance: 0,
+        scale,
+        x: touch.clientX,
+        y: touch.clientY,
+        offset,
+      }
+    }
+  }
+
+  function handleTouchMove(event) {
+    const gesture = gestureRef.current
+
+    if (gesture.mode === 'pinch' && event.touches.length === 2) {
+      event.preventDefault()
+      const ratio = getTouchDistance(event.touches) / Math.max(gesture.distance, 1)
+      setPreviewScale(clamp(gesture.scale * ratio, PHOTO_MIN_SCALE, PHOTO_MAX_SCALE))
+      return
+    }
+
+    if (gesture.mode === 'pan' && event.touches.length === 1 && scale > PHOTO_MIN_SCALE) {
+      event.preventDefault()
+      const touch = event.touches[0]
+      setOffset({
+        x: gesture.offset.x + touch.clientX - gesture.x,
+        y: gesture.offset.y + touch.clientY - gesture.y,
+      })
+    }
+  }
+
+  function handleGestureEnd(event) {
+    if (!event.touches || event.touches.length === 0) {
+      gestureRef.current.mode = null
+    }
+  }
+
+  function handlePointerDown(event) {
+    if (scale === PHOTO_MIN_SCALE || event.pointerType === 'touch') return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    gestureRef.current = {
+      mode: 'pan',
+      distance: 0,
+      scale,
+      x: event.clientX,
+      y: event.clientY,
+      offset,
+    }
+  }
+
+  function handlePointerMove(event) {
+    const gesture = gestureRef.current
+    if (gesture.mode !== 'pan' || event.pointerType === 'touch') return
+
+    setOffset({
+      x: gesture.offset.x + event.clientX - gesture.x,
+      y: gesture.offset.y + event.clientY - gesture.y,
+    })
+  }
+
+  function handlePointerUp() {
+    gestureRef.current.mode = null
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Просмотр фото"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.92)', touchAction: 'none' }}
+    >
+      <button
+        type="button"
+        aria-label="Закрыть фото"
+        onClick={onClose}
+        className="flex items-center justify-center transition-opacity active:opacity-60"
+        style={{
+          position: 'absolute',
+          top: 'max(16px, env(safe-area-inset-top))',
+          right: 16,
+          width: 40,
+          height: 40,
+          border: 'none',
+          borderRadius: 20,
+          background: 'rgba(255,255,255,0.16)',
+          color: '#fff',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          zIndex: 2,
+        }}
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      <div
+        onWheel={handleWheel}
+        onDoubleClick={handleDoubleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleGestureEnd}
+        onTouchCancel={handleGestureEnd}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className="flex h-full w-full items-center justify-center"
+        style={{
+          cursor: scale > PHOTO_MIN_SCALE ? 'grab' : 'zoom-in',
+          overflow: 'hidden',
+          padding: 'max(64px, env(safe-area-inset-top)) 0 max(36px, env(safe-area-inset-bottom))',
+          touchAction: 'none',
+        }}
+      >
+        <img
+          src={src}
+          alt={alt}
+          draggable={false}
+          style={{
+            maxWidth: '100vw',
+            maxHeight: '100%',
+            objectFit: 'contain',
+            transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${scale})`,
+            transition: gestureRef.current.mode ? 'none' : 'transform 160ms ease-out',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            touchAction: 'none',
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function MomentDetail() {
   const { id } = useParams()
   const location = useLocation()
@@ -179,8 +388,9 @@ export default function MomentDetail() {
   const [reactions, setReactions] = useState([])
   const [loadingReactions, setLoadingReactions] = useState(false)
   const [reactingEmoji, setReactingEmoji] = useState(null)
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const { goBack, swipeBackHandlers } = useSwipeBack({
-    enabled: !showMenu && !showCapsuleSheet,
+    enabled: !showMenu && !showCapsuleSheet && !photoPreviewOpen,
     fallbackPath: '/home',
   })
 
@@ -507,16 +717,32 @@ export default function MomentDetail() {
           }}
         >
           {moment.photo_url && (
-            <img
-              src={moment.photo_url}
-              alt={moment.title || 'Момент'}
-              draggable={false}
+            <button
+              type="button"
+              aria-label="Открыть фото"
+              onClick={() => setPhotoPreviewOpen(true)}
               onDoubleClick={preventPhotoDoubleTap}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
-            />
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'block',
+                width: '100%',
+                height: '100%',
+                padding: 0,
+                border: 'none',
+                background: 'none',
+              }}
+            >
+              <img
+                src={moment.photo_url}
+                alt={moment.title || 'Момент'}
+                draggable={false}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
+              />
+            </button>
           )}
 
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 34%, rgba(0,0,0,0.68) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, transparent 34%, rgba(0,0,0,0.68) 100%)' }} />
 
           <div className="flex items-center justify-between px-4 pt-topbar" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
             <CircleButton onClick={goBack} light ariaLabel="Назад">
@@ -813,6 +1039,14 @@ export default function MomentDetail() {
             })}
           </div>
         </BottomSheet>
+      )}
+
+      {photoPreviewOpen && moment.photo_url && (
+        <PhotoPreview
+          src={moment.photo_url}
+          alt={moment.title || 'Момент'}
+          onClose={() => setPhotoPreviewOpen(false)}
+        />
       )}
     </div>
   )
