@@ -519,7 +519,7 @@ async function drawHeader(ctx, data, dark) {
     ctx.font = '600 28px Inter, sans-serif'
     ctx.fillText('год в воспоминаниях', cx, 382)
 
-    drawPremiumPill(ctx, data.statsLine, cx, 434, dark)
+    drawPremiumPill(ctx, data.statsLine, cx, 404, dark)
   }
 }
 

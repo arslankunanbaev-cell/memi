@@ -595,6 +595,8 @@
 
   .archive-month-chip {
     position: relative;
+    flex: 0 0 auto;
+    width: max-content;
     overflow: hidden;
     border: 1px solid rgba(160,94,44,0.1);
     border-radius: 999px;
