@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import BottomSheet from './BottomSheet'
 import { getPhotoCropStyle, normalizePhotoCrop } from '../lib/photoCrop'
 
@@ -24,6 +24,7 @@ export function CropIcon({ size = 18, color = 'currentColor' }) {
 }
 
 export default function PhotoCropSheet({ photoUrl, crop, onChange, onClose }) {
+  const cropFrameRef = useRef(null)
   const dragRef = useRef(null)
   const value = normalizePhotoCrop(crop)
 
@@ -32,6 +33,8 @@ export default function PhotoCropSheet({ photoUrl, crop, onChange, onClose }) {
   }
 
   function handlePointerDown(event) {
+    event.preventDefault()
+    event.stopPropagation()
     event.currentTarget.setPointerCapture?.(event.pointerId)
     dragRef.current = {
       startX: event.clientX,
@@ -44,6 +47,8 @@ export default function PhotoCropSheet({ photoUrl, crop, onChange, onClose }) {
 
   function handlePointerMove(event) {
     if (!dragRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
     const drag = dragRef.current
     updateCrop({
       x: drag.crop.x - ((event.clientX - drag.startX) / drag.width) * 100,
@@ -52,9 +57,44 @@ export default function PhotoCropSheet({ photoUrl, crop, onChange, onClose }) {
   }
 
   function handlePointerUp(event) {
+    event.preventDefault()
+    event.stopPropagation()
     event.currentTarget.releasePointerCapture?.(event.pointerId)
     dragRef.current = null
   }
+
+  function blockTouchGesture(event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+
+  useEffect(() => {
+    const frame = cropFrameRef.current
+    if (!frame) return undefined
+
+    const blockNativeTouch = (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+
+    frame.addEventListener('touchstart', blockNativeTouch, { passive: false })
+    frame.addEventListener('touchmove', blockNativeTouch, { passive: false })
+    frame.addEventListener('touchend', blockNativeTouch, { passive: false })
+    frame.addEventListener('touchcancel', blockNativeTouch, { passive: false })
+
+    return () => {
+      frame.removeEventListener('touchstart', blockNativeTouch)
+      frame.removeEventListener('touchmove', blockNativeTouch)
+      frame.removeEventListener('touchend', blockNativeTouch)
+      frame.removeEventListener('touchcancel', blockNativeTouch)
+    }
+  }, [])
+
+  useEffect(() => {
+    const webApp = window.Telegram?.WebApp
+    webApp?.disableVerticalSwipes?.()
+    return () => webApp?.enableVerticalSwipes?.()
+  }, [])
 
   if (!photoUrl) return null
 
@@ -62,10 +102,15 @@ export default function PhotoCropSheet({ photoUrl, crop, onChange, onClose }) {
     <BottomSheet onClose={onClose} title="Кадр превью">
       <div className="px-4 flex flex-col gap-5 pb-5">
         <div
+          ref={cropFrameRef}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
+          onTouchStart={blockTouchGesture}
+          onTouchMove={blockTouchGesture}
+          onTouchEnd={blockTouchGesture}
+          onTouchCancel={blockTouchGesture}
           className="relative"
           style={{
             aspectRatio: '4 / 3',
