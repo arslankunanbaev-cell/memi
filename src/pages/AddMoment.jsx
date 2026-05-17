@@ -8,7 +8,7 @@ import { saveMoment, createPerson, addMomentParticipants, notifyTaggedFriends } 
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
-import PhotoCropSheet from '../components/PhotoCropSheet'
+import PhotoCropSheet, { CropIcon } from '../components/PhotoCropSheet'
 import { getPhotoCropStyle } from '../lib/photoCrop'
 
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
@@ -385,6 +385,9 @@ export default function AddMoment({
                     position: 'absolute',
                     right: 12,
                     bottom: 12,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
                     borderRadius: 999,
                     background: 'rgba(23,20,14,0.62)',
                     color: '#fff',
@@ -393,6 +396,7 @@ export default function AddMoment({
                     padding: '7px 12px',
                   }}
                 >
+                  <CropIcon size={14} color="#fff" />
                   Кадр
                 </span>
               </>

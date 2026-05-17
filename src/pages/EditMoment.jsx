@@ -7,7 +7,7 @@ import { assertSupabase } from '../lib/supabase'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
-import PhotoCropSheet from '../components/PhotoCropSheet'
+import PhotoCropSheet, { CropIcon } from '../components/PhotoCropSheet'
 import { tgHaptic } from '../lib/telegram'
 import { getMomentPhotoCrop, getPhotoCropStyle } from '../lib/photoCrop'
 import { useSwipeBack } from '../hooks/useSwipeBack'
@@ -379,6 +379,9 @@ export default function EditMoment() {
                       position: 'absolute',
                       right: 12,
                       bottom: 12,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
                       borderRadius: 999,
                       background: 'rgba(23,20,14,0.62)',
                       color: '#fff',
@@ -387,6 +390,7 @@ export default function EditMoment() {
                       padding: '7px 12px',
                     }}
                   >
+                    <CropIcon size={14} color="#fff" />
                     Кадр
                   </span>
                 </>
