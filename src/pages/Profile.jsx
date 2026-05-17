@@ -7,6 +7,7 @@ import PremiumBadge from '../components/PremiumBadge'
 import ProfileSongCard from '../components/ProfileSongCard'
 import { deleteCapsuleSlot, getPremiumStatus, openStarsPayment, saveCapsuleSlot } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import AddMoment from './AddMoment'
@@ -107,7 +108,7 @@ function CapsuleTile({ slot, index, onEmpty, onFilled }) {
         }}
       >
         {slot.photo_url && (
-          <img src={slot.photo_url} alt={slot.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={slot.photo_url} alt={slot.title || 'Момент'} style={{ width: '100%', height: '100%', ...getPhotoCropStyle(slot) }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.6) 0%, transparent 58%)' }} />
         <div
@@ -209,7 +210,7 @@ function PickMomentSheet({ onClose, onPick, onCreateNew }) {
           >
             <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: moment.photo_url ? 'none' : 'linear-gradient(160deg, #6A4B34 0%, #B87B4A 55%, #E8CAA1 100%)' }}>
               {moment.photo_url && (
-                <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }} />
               )}
             </div>
             <span className="font-sans flex-1" style={{ color: 'var(--text)', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

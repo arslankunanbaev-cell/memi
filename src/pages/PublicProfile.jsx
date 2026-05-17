@@ -11,6 +11,7 @@ import {
 } from '../lib/api'
 import { trackEvent } from '../lib/analytics'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { MONTHS_GENITIVE, pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { RouteLoadingState } from '../components/LoadingState'
@@ -382,7 +383,7 @@ function FeaturedMomentCard({ moment, onClick }) {
           }}
         >
         {moment.photo_url && (
-          <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }} />
         )}
 
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.72) 0%, rgba(23,20,14,0.2) 54%, transparent 100%)' }} />
@@ -457,7 +458,7 @@ function SharedMomentRow({ moment, sourceLabel, onClick }) {
           <img
             src={moment.photo_url}
             alt={moment.title || 'Момент'}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }}
           />
         ) : null}
       </div>
@@ -830,7 +831,7 @@ export function PublicProfileContent({
                       <img
                         src={moment.photo_url}
                         alt={moment.title || 'Момент'}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }}
                       />
                     ) : null}
                   </div>

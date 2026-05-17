@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import ProfileSongCard from './ProfileSongCard'
 import { getMomentDisplayAt } from '../lib/momentTime'
 import { navigateWithTransition } from '../lib/navigation'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { useAppStore } from '../store/useAppStore'
 
 function formatTime(iso) {
@@ -230,7 +231,7 @@ export default function MomentCard({ moment, onLongPress }) {
           <img
             src={moment.photo_url}
             alt={moment.title || 'Момент'}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.01)' }}
+            style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment), transform: 'scale(1.01)' }}
           />
         ) : (
           <div style={{ width: '100%', height: '100%', background: 'linear-gradient(160deg, #7C5436 0%, #C98957 48%, #F0D0A1 100%)' }} />

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import { deletePerson, updatePerson, uploadPhoto } from '../lib/api'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { assertSupabase } from '../lib/supabase'
 import { tgHaptic } from '../lib/telegram'
 import { plural } from '../lib/ruPlural'
@@ -204,7 +205,7 @@ function PersonExportCard({ person, moments, onClick }) {
                 <img
                   src={moment.photo_url}
                   alt={moment.title || 'Момент'}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }}
                 />
               )}
             </div>
@@ -353,7 +354,7 @@ function PersonMomentCard({ moment, featured = false, onClick }) {
         <img
           src={moment.photo_url}
           alt={moment.title || 'Момент'}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }}
         />
       )}
 

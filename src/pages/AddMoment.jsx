@@ -8,6 +8,8 @@ import { saveMoment, createPerson, addMomentParticipants, notifyTaggedFriends } 
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
+import PhotoCropSheet from '../components/PhotoCropSheet'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 
 const MOODS  = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
 const AVATAR_COLORS = ['#D98B52', '#A05E2C', '#8A7A6A', '#B8A898', '#6B8F71', '#7A6B8A']
@@ -166,6 +168,7 @@ export default function AddMoment({
   initialMomentDate,
   initialSong = null,
   initialPhotoPreview = null,
+  initialPhotoCrop = { x: 50, y: 50 },
   initialVisibility = 'friends',
   initialTaggedFriendIds = [],
   initialScrollTop = null,
@@ -192,6 +195,8 @@ export default function AddMoment({
   const photoRef = useRef(null)
   const [photoFile, setPhotoFile]     = useState(null)
   const [photoPreview, setPhotoPreview] = useState(initialPhotoPreview)
+  const [photoCrop, setPhotoCrop] = useState(initialPhotoCrop)
+  const [showPhotoCrop, setShowPhotoCrop] = useState(false)
 
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState(null)
@@ -223,6 +228,8 @@ export default function AddMoment({
     if (!file) return
     const previewUrl = URL.createObjectURL(file)
     setPhotoPreview(previewUrl)
+    setPhotoCrop({ x: 50, y: 50 })
+    setShowPhotoCrop(true)
     compressPhoto(file).then((compressed) => setPhotoFile(compressed))
   }
 
@@ -259,6 +266,8 @@ export default function AddMoment({
         song_cover:  song?.cover  ?? null,
         song_preview_url: song?.previewUrl ?? null,
         moment_at: momentAt,
+        photo_crop_x: photoPreview ? photoCrop.x : 50,
+        photo_crop_y: photoPreview ? photoCrop.y : 50,
       }
       if (location.trim()) addRecentLocation(location.trim())
 
@@ -360,7 +369,33 @@ export default function AddMoment({
             }}
           >
             {photoPreview ? (
-              <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <>
+                <img
+                  src={photoPreview}
+                  alt="preview"
+                  style={{ width: '100%', height: '100%', ...getPhotoCropStyle(photoCrop) }}
+                />
+                <span
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    setShowPhotoCrop(true)
+                  }}
+                  className="font-sans"
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    bottom: 12,
+                    borderRadius: 999,
+                    background: 'rgba(23,20,14,0.62)',
+                    color: '#fff',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    padding: '7px 12px',
+                  }}
+                >
+                  Кадр
+                </span>
+              </>
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <span style={{ fontSize: 28 }}>📷</span>
@@ -656,6 +691,15 @@ export default function AddMoment({
         <SongSearchSheet
           onClose={() => setShowSongSheet(false)}
           onSelect={(track) => setSong(track)}
+        />
+      )}
+
+      {showPhotoCrop && photoPreview && (
+        <PhotoCropSheet
+          photoUrl={photoPreview}
+          crop={photoCrop}
+          onChange={setPhotoCrop}
+          onClose={() => setShowPhotoCrop(false)}
         />
       )}
 

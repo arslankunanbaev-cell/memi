@@ -6,6 +6,7 @@ import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
 import { navigateWithTransition } from '../lib/navigation'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { pluralRu } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { createCollection } from '../lib/api'
@@ -97,7 +98,7 @@ function PreviewStack({ moments }) {
                 <img
                   src={moment.photo_url}
                   alt={moment.title || 'Момент'}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }}
                 />
               )}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.34), transparent 58%)' }} />
@@ -483,7 +484,7 @@ function GridCell({ moment }) {
       }}
     >
       {moment.photo_url && (
-        <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }} />
       )}
 
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(23,20,14,0.62) 0%, rgba(23,20,14,0.08) 58%, rgba(255,255,255,0.08) 100%)' }} />

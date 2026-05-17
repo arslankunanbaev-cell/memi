@@ -4,6 +4,7 @@ import SongSearchSheet from '../components/SongSearchSheet'
 import { updatePublicProfile } from '../lib/api'
 import { proxifyCoverUrl } from '../lib/imageProxy'
 import { compareMomentsByDisplayAt, getMomentDisplayAt } from '../lib/momentTime'
+import { getPhotoCropStyle } from '../lib/photoCrop'
 import { MONTHS_GENITIVE } from '../lib/ruPlural'
 import { useAppStore } from '../store/useAppStore'
 import { PublicProfileContent } from './PublicProfile'
@@ -434,7 +435,7 @@ function PublicProfileSheet({ currentUser, publicMoments, isPremium, onClose, on
                       }}
                     >
                       {moment.photo_url && (
-                        <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={moment.photo_url} alt={moment.title || 'Момент'} style={{ width: '100%', height: '100%', ...getPhotoCropStyle(moment) }} />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

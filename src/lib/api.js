@@ -59,6 +59,15 @@ function isMissingMomentAtColumn(error) {
   return details.includes('moment_at') && (details.includes('column') || details.includes('schema cache'))
 }
 
+function isMissingPhotoCropColumn(error) {
+  const details = [error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  return details.includes('photo_crop_') && (details.includes('column') || details.includes('schema cache'))
+}
+
 async function invokeEdgeFunction(sb, functionName, body) {
   if (typeof sb.functions?.invoke === 'function') {
     try {
@@ -159,12 +168,12 @@ async function getProfileMomentsResult(sb, userId, canSeeFriendMoments, withCoun
   let result = await buildProfileMomentsQuery(
     sb,
     userId,
-    'id, title, photo_url, created_at, moment_at, visibility',
+    'id, title, photo_url, photo_crop_x, photo_crop_y, created_at, moment_at, visibility',
     canSeeFriendMoments,
     withCount,
   )
 
-  if (result.error && isMissingMomentAtColumn(result.error)) {
+  if (result.error && (isMissingMomentAtColumn(result.error) || isMissingPhotoCropColumn(result.error))) {
     result = await buildProfileMomentsQuery(
       sb,
       userId,
@@ -404,9 +413,26 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
     .select()
     .single()
 
+  if (momentError && isMissingPhotoCropColumn(momentError)) {
+    const legacyFields = { ...normalizedFields }
+    delete legacyFields.photo_crop_x
+    delete legacyFields.photo_crop_y
+
+    ;({ data: moment, error: momentError } = await sb
+      .from('moments')
+      .insert({ user_id: userId, ...legacyFields, photo_url, photo_path })
+      .select()
+      .single())
+  }
+
   if (momentError && isMissingMomentAtColumn(momentError) && normalizedFields?.moment_at) {
     const legacyFields = { ...normalizedFields }
+    legacyFields.created_at = normalizedFields.moment_at
     delete legacyFields.moment_at
+    if (isMissingPhotoCropColumn(momentError)) {
+      delete legacyFields.photo_crop_x
+      delete legacyFields.photo_crop_y
+    }
 
     ;({ data: moment, error: momentError } = await sb
       .from('moments')
@@ -435,14 +461,21 @@ export async function saveMoment({ userId, fields, photoFile, peopleIds }) {
 
 export async function updateMoment(id, payload) {
   const sb = assertSupabase()
-  const nextPayload = payload?.visibility === undefined
+  let nextPayload = payload?.visibility === undefined
     ? payload
     : {
         ...payload,
         visibility: normalizeMomentVisibility(payload.visibility),
       }
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('moments').update(nextPayload).eq('id', id).select().single()
+  if (error && isMissingPhotoCropColumn(error)) {
+    nextPayload = { ...nextPayload }
+    delete nextPayload.photo_crop_x
+    delete nextPayload.photo_crop_y
+    ;({ data, error } = await sb
+      .from('moments').update(nextPayload).eq('id', id).select().single())
+  }
   if (error) throw error
   return normalizeMomentMedia(data)
 }
@@ -1086,12 +1119,20 @@ export async function getSharedMomentsWithFriend(currentUserId, friendUserId) {
   if (!links?.length) return []
 
   const momentIds = [...new Set(links.map((l) => l.moment_id))]
-  const { data: moments, error: momErr } = await sb
+  let { data: moments, error: momErr } = await sb
     .from('moments')
-    .select('id, title, photo_url, created_at, moment_at')
+    .select('id, title, photo_url, photo_crop_x, photo_crop_y, created_at, moment_at')
     .in('id', momentIds)
     .eq('user_id', currentUserId)
     .order('created_at', { ascending: false })
+  if (momErr && isMissingPhotoCropColumn(momErr)) {
+    ;({ data: moments, error: momErr } = await sb
+      .from('moments')
+      .select('id, title, photo_url, created_at, moment_at')
+      .in('id', momentIds)
+      .eq('user_id', currentUserId)
+      .order('created_at', { ascending: false }))
+  }
   if (momErr) throw momErr
   return (moments ?? [])
     .map((moment) => normalizeMomentMedia(moment))

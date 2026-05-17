@@ -7,7 +7,9 @@ import { assertSupabase } from '../lib/supabase'
 import SongSearchSheet from '../components/SongSearchSheet'
 import BottomSheet from '../components/BottomSheet'
 import SectionLabel from '../components/SectionLabel'
+import PhotoCropSheet from '../components/PhotoCropSheet'
 import { tgHaptic } from '../lib/telegram'
+import { getMomentPhotoCrop, getPhotoCropStyle } from '../lib/photoCrop'
 import { useSwipeBack } from '../hooks/useSwipeBack'
 
 const MOODS = ['😊', '🥹', '😌', '🤩', '😔', '🥰', '😤', '🌀', '🫶', '💭']
@@ -168,6 +170,8 @@ export default function EditMoment() {
   const photoRef = useRef(null)
   const [newPhotoFile, setNewPhotoFile]       = useState(null)
   const [photoPreview, setPhotoPreview]       = useState(moment?.photo_url ?? null)
+  const [photoCrop, setPhotoCrop] = useState(() => getMomentPhotoCrop(moment))
+  const [showPhotoCrop, setShowPhotoCrop] = useState(false)
 
   const [visibility, setVisibility] = useState(moment?.visibility === 'private' ? 'private' : 'friends')
 
@@ -199,6 +203,8 @@ export default function EditMoment() {
     if (!file) return
     setNewPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
+    setPhotoCrop({ x: 50, y: 50 })
+    setShowPhotoCrop(true)
   }
 
   function togglePerson(personId) {
@@ -244,6 +250,8 @@ export default function EditMoment() {
         song_preview_url: song?.previewUrl ?? null,
         photo_url,
         photo_path,
+        photo_crop_x: photoPreview ? photoCrop.x : 50,
+        photo_crop_y: photoPreview ? photoCrop.y : 50,
       })
 
       // Update people links: delete all, insert new
@@ -355,7 +363,33 @@ export default function EditMoment() {
               }}
             >
               {photoPreview ? (
-                <img src={photoPreview} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <>
+                  <img
+                    src={photoPreview}
+                    alt="preview"
+                    style={{ width: '100%', height: '100%', ...getPhotoCropStyle(photoCrop) }}
+                  />
+                  <span
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setShowPhotoCrop(true)
+                    }}
+                    className="font-sans"
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      bottom: 12,
+                      borderRadius: 999,
+                      background: 'rgba(23,20,14,0.62)',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      padding: '7px 12px',
+                    }}
+                  >
+                    Кадр
+                  </span>
+                </>
               ) : (
                 <div className="flex flex-col items-center gap-3">
                   <span style={{ fontSize: 28 }}>📷</span>
@@ -620,6 +654,15 @@ export default function EditMoment() {
         <SongSearchSheet
           onClose={() => setShowSongSheet(false)}
           onSelect={(track) => { setSong(track); setShowSongSheet(false) }}
+        />
+      )}
+
+      {showPhotoCrop && photoPreview && (
+        <PhotoCropSheet
+          photoUrl={photoPreview}
+          crop={photoCrop}
+          onChange={setPhotoCrop}
+          onClose={() => setShowPhotoCrop(false)}
         />
       )}
 
